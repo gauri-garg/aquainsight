@@ -7,36 +7,31 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Calendar as CalendarIcon,
-  Beaker,
-  Droplets,
-  Waves,
-  Thermometer,
-} from "lucide-react";
+import { Calendar as CalendarIcon, Wind, Droplets, Waves, Thermometer, Gauge } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
-import { chemicalOceanographyData } from "@/lib/data";
-import ChemicalOceanographyChart from "@/components/chemical-oceanography-chart";
+import { physicalOceanographyData } from "@/lib/data";
+import WaveformChart from "@/components/waveform-chart";
+import { Calendar } from "@/components/ui/calendar";
 
-type DataPoint = (typeof chemicalOceanographyData)[0];
+type DataPoint = typeof physicalOceanographyData[0];
 
-export default function ChemicalOceanographyPage() {
+export default function PhysicalOceanographyPage() {
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2025, 7, 2),
-    to: addDays(new Date(2025, 7, 2), 28),
+    from: new Date(2025, 7, 1),
+    to: addDays(new Date(2025, 7, 1), 29),
   });
   const [selectedData, setSelectedData] = useState<DataPoint | null>(null);
 
-  const filteredData = chemicalOceanographyData.filter((item) => {
+  const filteredData = physicalOceanographyData.filter((item) => {
     const itemDate = new Date(item.date);
     if (date?.from && itemDate < date.from) return false;
     if (date?.to && itemDate > date.to) return false;
@@ -53,9 +48,9 @@ export default function ChemicalOceanographyPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <div>
-              <CardTitle>Chemical Oceanography</CardTitle>
+              <CardTitle>Physical Oceanography</CardTitle>
               <CardDescription>
-                Visualize chemical parameters of the ocean.
+                Visualize wave height, tide, and other physical parameters.
               </CardDescription>
             </div>
             <Popover>
@@ -93,15 +88,12 @@ export default function ChemicalOceanographyPage() {
             </Popover>
           </CardHeader>
           <CardContent>
-            <ChemicalOceanographyChart data={filteredData} />
+            <WaveformChart data={filteredData} />
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Beaker className="h-6 w-6" />
-              <CardTitle>Raw Data</CardTitle>
-            </div>
+            <CardTitle>Raw Data</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="relative max-h-[400px] overflow-auto">
@@ -109,25 +101,21 @@ export default function ChemicalOceanographyPage() {
                 <thead className="sticky top-0 bg-card">
                   <tr>
                     <th className="p-2">Date</th>
-                    <th className="p-2">pH</th>
-                    <th className="p-2">Nitrate</th>
-                    <th className="p-2">Phosphate</th>
-                    <th className="p-2">Silicate</th>
+                    <th className="p-2">Temp (°C)</th>
+                    <th className="p-2">Salinity</th>
+                    <th className="p-2">Wave Height (m)</th>
+                    <th className="p-2">Tide (m)</th>
                     <th className="p-2 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((item, index) => (
-                    <tr
-                      key={index}
-                      className="border-b cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleRowClick(item)}
-                    >
+                  {filteredData.map((item) => (
+                    <tr key={item.date} className="border-b cursor-pointer hover:bg-muted/50" onClick={() => handleRowClick(item)}>
                       <td className="p-2">{item.date}</td>
-                      <td className="p-2">{item.pH.toFixed(2)}</td>
-                      <td className="p-2">{item.nitrate.toFixed(2)} μmol/L</td>
-                      <td className="p-2">{item.phosphate.toFixed(2)} μmol/L</td>
-                      <td className="p-2">{item.silicate.toFixed(2)} μmol/L</td>
+                      <td className="p-2">{item.temperature.toFixed(2)}</td>
+                      <td className="p-2">{item.salinity.toFixed(2)}</td>
+                      <td className="p-2">{item.waveHeight.toFixed(2)}</td>
+                      <td className="p-2">{item.tide.toFixed(2)}</td>
                       <td className="p-2 text-right">
                         <Button
                           variant="outline"
@@ -157,49 +145,38 @@ export default function ChemicalOceanographyPage() {
           </CardHeader>
           {selectedData ? (
             <CardContent className="grid gap-4 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Latitude</span>
-                <span>{selectedData.latitude}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Longitude</span>
-                <span>{selectedData.longitude}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground flex items-center">
-                  <Droplets className="mr-2 h-4 w-4" />
-                  Salinity
-                </span>
-                <span>{selectedData.salinity.toFixed(2)} PSU</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground flex items-center">
-                  <Waves className="mr-2 h-4 w-4" />
-                  pH
-                </span>
-                <span>{selectedData.pH.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground flex items-center">
-                  <Beaker className="mr-2 h-4 w-4" />
-                  Nitrate
-                </span>
-                <span>{selectedData.nitrate.toFixed(2)} μmol/L</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground flex items-center">
-                  <Beaker className="mr-2 h-4 w-4" />
-                  Phosphate
-                </span>
-                <span>{selectedData.phosphate.toFixed(2)} μmol/L</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground flex items-center">
-                  <Beaker className="mr-2 h-4 w-4" />
-                  Silicate
-                </span>
-                <span>{selectedData.silicate.toFixed(2)} μmol/L</span>
-              </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground flex items-center"><Thermometer className="mr-2 h-4 w-4"/>Temperature</span>
+                    <span>{selectedData.temperature.toFixed(2)}°C</span>
+                </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground flex items-center"><Droplets className="mr-2 h-4 w-4"/>Salinity</span>
+                    <span>{selectedData.salinity.toFixed(2)} PSU</span>
+                </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground flex items-center"><Gauge className="mr-2 h-4 w-4"/>Density</span>
+                    <span>{selectedData.density.toFixed(2)} kg/m³</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground flex items-center"><Waves className="mr-2 h-4 w-4"/>Wave Height</span>
+                    <span>{selectedData.waveHeight.toFixed(2)} m</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground flex items-center"><Waves className="mr-2 h-4 w-4"/>Tide</span>
+                    <span>{selectedData.tide.toFixed(2)} m</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground flex items-center"><Wind className="mr-2 h-4 w-4"/>Ventilation Speed</span>
+                    <span>{selectedData.ventSpeed.toFixed(2)} m/s</span>
+                </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground flex items-center"><Waves className="mr-2 h-4 w-4"/>Velocity Anomaly</span>
+                    <span>{selectedData.velAnomaly.toFixed(2)}</span>
+                </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground flex items-center"><Droplets className="mr-2 h-4 w-4"/>Mixing Index</span>
+                    <span>{selectedData.mixingIndex.toFixed(2)}</span>
+                </div>
             </CardContent>
           ) : (
             <CardContent>

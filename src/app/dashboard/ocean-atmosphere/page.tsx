@@ -42,7 +42,7 @@ export default function OceanAtmospherePage() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <div className="lg:col-span-2 grid gap-6">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
@@ -143,7 +143,7 @@ export default function OceanAtmospherePage() {
         </Card>
       </div>
       <div className="lg:col-span-1">
-        <Card className="sticky top-6">
+        <Card className="lg:sticky lg:top-6">
           <CardHeader>
             <CardTitle>Daily Summary</CardTitle>
             <CardDescription>
