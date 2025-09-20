@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -49,7 +50,7 @@ export default function RegisterPage() {
               Create your account to get started.
             </p>
           </div>
-          <Card>
+          <Card className="shadow-2xl">
             <CardHeader>
               <CardTitle className="text-2xl">Register</CardTitle>
               <CardDescription>
@@ -58,27 +59,6 @@ export default function RegisterPage() {
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="fullname">Full Name</Label>
-                <Input
-                  id="fullname"
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" required />
-              </div>
-               <div className="grid gap-2">
                 <Label htmlFor="role">Role</Label>
                 <Select
                   onValueChange={(value: UserRole) => setSelectedRole(value)}
@@ -94,12 +74,42 @@ export default function RegisterPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full" onClick={handleRegister}>
+
+              {selectedRole !== "CMLRE" && (
+                <div className="grid gap-2 animate-accordion-down">
+                  <Label htmlFor="fullname">Full Name</Label>
+                  <Input id="fullname" placeholder="John Doe" required />
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                />
+              </div>
+              
+              {selectedRole === "CMLRE" && (
+                <div className="grid gap-2 animate-accordion-down">
+                  <Label htmlFor="approved-id">Approved ID</Label>
+                  <Input id="approved-id" placeholder="CMLRE-XYZ-123" required />
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" required />
+              </div>
+
+              <Button className="w-full mt-4" onClick={handleRegister}>
                 Create an account
               </Button>
               <div className="mt-4 text-center text-sm">
                 Already have an account?{" "}
-                <Link href="/" className="underline">
+                <Link href="/" className="underline text-primary">
                   Sign in
                 </Link>
               </div>
