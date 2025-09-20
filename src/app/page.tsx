@@ -13,13 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FlaskConical, Loader2 } from "lucide-react";
-import { useAuth, UserRole } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { signIn, signInAsDemo } = useAuth();
+  const { signIn } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("cmlre.user@example.com");
@@ -41,22 +41,6 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-  
-  const handleDemoLogin = async (role: UserRole) => {
-    setIsLoading(true);
-    try {
-      await signInAsDemo(role);
-      router.push("/dashboard");
-    } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
@@ -126,12 +110,6 @@ export default function LoginPage() {
                   Sign up
                 </Link>
               </div>
-               <p className="text-center text-sm text-muted-foreground">Or sign in as a demo user:</p>
-               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <Button variant="outline" className="w-full" onClick={() => handleDemoLogin("CMLRE")} disabled={isLoading}>CMLRE</Button>
-                  <Button variant="outline" className="w-full" onClick={() => handleDemoLogin("Researcher")} disabled={isLoading}>Researcher</Button>
-                  <Button variant="outline" className="w-full" onClick={() => handleDemoLogin("Student")} disabled={isLoading}>Student</Button>
-               </div>
             </CardContent>
           </Card>
         </div>

@@ -31,7 +31,6 @@ interface AuthContextType {
     details: { fullName?: string; approvedId?: string }
   ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signInAsDemo: (role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -84,39 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   };
   
-  const signInAsDemo = async (demoRole: UserRole) => {
-    let email, password;
-    switch(demoRole) {
-      case 'CMLRE':
-        email = 'cmlre.user@example.com';
-        password = 'password';
-        break;
-      case 'Researcher':
-        email = 'researcher.user@example.com';
-        password = 'password';
-        break;
-      case 'Student':
-      default:
-        email = 'student.user@example.com';
-        password = 'password';
-        break;
-    }
-    
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error: any) {
-       if (error.code === 'auth/user-not-found') {
-        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-        await set(ref(database, "users/" + newUser.uid), {
-          role: demoRole,
-          email: newUser.email,
-        });
-       } else {
-         throw error;
-       }
-    }
-  }
-
   const signUp = async (
     email: string,
     password: string,
@@ -144,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, signUp, signIn, logout, signInAsDemo }}>
+    <AuthContext.Provider value={{ user, role, loading, signUp, signIn, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );
