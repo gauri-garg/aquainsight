@@ -161,6 +161,7 @@ export const chemicalOceanographyData = [
   { date: "2025-08-28", latitude: 10.353, longitude: 72.5702, salinity: 34.59, pH: 8.09, nitrate: 0.29, phosphate: 0.22, silicate: 0.72 },
   { date: "2025-08-29", latitude: 10.8975, longitude: 72.2076, salinity: 34.75, pH: 8.08, nitrate: 0.44, phosphate: 0.24, silicate: 0.63 },
   { date: "2025-08-30", latitude: 10.5217, longitude: 72.1706, salinity: 34.68, pH: 8.11, nitrate: 0.18, phosphate: 0.21, silicate: 1.08 },
+  { date: "2025-08-31", latitude: 10.353, longitude: 72.5702, salinity: 34.71, pH: 8.08, nitrate: 0.24, phosphate: 0.23, silicate: 1.09 },
 ];
 
 export const oceanAtmosphereData = [
@@ -263,3 +264,4 @@ export const oceanAtmosphereData = [
     
 
     
+

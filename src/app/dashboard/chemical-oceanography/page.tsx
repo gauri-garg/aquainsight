@@ -15,22 +15,28 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Thermometer } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Beaker,
+  Droplets,
+  Waves,
+  Thermometer,
+} from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
-import { oceanAtmosphereData } from "@/lib/data";
-import OceanAtmosphereChart from "@/components/ocean-atmosphere-chart";
+import { chemicalOceanographyData } from "@/lib/data";
+import ChemicalOceanographyChart from "@/components/chemical-oceanography-chart";
 
-type DataPoint = (typeof oceanAtmosphereData)[0];
+type DataPoint = (typeof chemicalOceanographyData)[0];
 
-export default function OceanAtmospherePage() {
+export default function ChemicalOceanographyPage() {
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2025, 7, 1),
-    to: addDays(new Date(2025, 7, 1), 29),
+    from: new Date(2025, 7, 2),
+    to: addDays(new Date(2025, 7, 2), 28),
   });
   const [selectedData, setSelectedData] = useState<DataPoint | null>(null);
 
-  const filteredData = oceanAtmosphereData.filter((item) => {
+  const filteredData = chemicalOceanographyData.filter((item) => {
     const itemDate = new Date(item.date);
     if (date?.from && itemDate < date.from) return false;
     if (date?.to && itemDate > date.to) return false;
@@ -47,56 +53,53 @@ export default function OceanAtmospherePage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <div>
-              <CardTitle>Ocean Atmosphere Analysis</CardTitle>
+              <CardTitle>Chemical Oceanography</CardTitle>
               <CardDescription>
-                Visualize atmospheric and ocean surface data.
+                Visualize chemical parameters of the ocean.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="date"
-                    variant={"outline"}
-                    className="w-[300px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(date.from, "LLL dd, y")
-                      )
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className="w-[300px] justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, "LLL dd, y")} -{" "}
+                        {format(date.to, "LLL dd, y")}
+                      </>
                     ) : (
-                      <span>Pick a date range</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={date?.from}
-                    selected={date}
-                    onSelect={setDate}
-                    numberOfMonths={2}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+                      format(date.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
           </CardHeader>
           <CardContent>
-            <OceanAtmosphereChart data={filteredData} />
+            <ChemicalOceanographyChart data={filteredData} />
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Thermometer className="h-6 w-6" />
+              <Beaker className="h-6 w-6" />
               <CardTitle>Raw Data</CardTitle>
             </div>
           </CardHeader>
@@ -106,10 +109,10 @@ export default function OceanAtmospherePage() {
                 <thead className="sticky top-0 bg-card">
                   <tr>
                     <th className="p-2">Date</th>
-                    <th className="p-2">Skin Temp</th>
-                    <th className="p-2">Air Temp (3m)</th>
-                    <th className="p-2">Vent Temp</th>
-                    <th className="p-2">Pressure</th>
+                    <th className="p-2">pH</th>
+                    <th className="p-2">Nitrate</th>
+                    <th className="p-2">Phosphate</th>
+                    <th className="p-2">Silicate</th>
                     <th className="p-2 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -121,10 +124,10 @@ export default function OceanAtmospherePage() {
                       onClick={() => handleRowClick(item)}
                     >
                       <td className="p-2">{item.date}</td>
-                      <td className="p-2">{item.skinTemp.toFixed(2)}°C</td>
-                      <td className="p-2">{item.airTemp3m.toFixed(2)}°C</td>
-                      <td className="p-2">{item.ventTemp.toFixed(2)}°C</td>
-                      <td className="p-2">{item.pressure.toFixed(2)} hPa</td>
+                      <td className="p-2">{item.pH.toFixed(2)}</td>
+                      <td className="p-2">{item.nitrate.toFixed(2)} μmol/L</td>
+                      <td className="p-2">{item.phosphate.toFixed(2)} μmol/L</td>
+                      <td className="p-2">{item.silicate.toFixed(2)} μmol/L</td>
                       <td className="p-2 text-right">
                         <Button
                           variant="outline"
@@ -163,24 +166,39 @@ export default function OceanAtmospherePage() {
                 <span>{selectedData.longitude}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Skin Temp</span>
-                <span>{selectedData.skinTemp.toFixed(2)}°C</span>
+                <span className="text-muted-foreground flex items-center">
+                  <Droplets className="mr-2 h-4 w-4" />
+                  Salinity
+                </span>
+                <span>{selectedData.salinity.toFixed(2)} PSU</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Air Temp (3m)</span>
-                <span>{selectedData.airTemp3m.toFixed(2)}°C</span>
+                <span className="text-muted-foreground flex items-center">
+                  <Waves className="mr-2 h-4 w-4" />
+                  pH
+                </span>
+                <span>{selectedData.pH.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Vent Temp</span>
-                <span>{selectedData.ventTemp.toFixed(2)}°C</span>
+                <span className="text-muted-foreground flex items-center">
+                  <Beaker className="mr-2 h-4 w-4" />
+                  Nitrate
+                </span>
+                <span>{selectedData.nitrate.toFixed(2)} μmol/L</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Vent Speed</span>
-                <span>{selectedData.ventSpeed.toFixed(2)} m/s</span>
+                <span className="text-muted-foreground flex items-center">
+                  <Beaker className="mr-2 h-4 w-4" />
+                  Phosphate
+                </span>
+                <span>{selectedData.phosphate.toFixed(2)} μmol/L</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Pressure</span>
-                <span>{selectedData.pressure.toFixed(2)} hPa</span>
+                <span className="text-muted-foreground flex items-center">
+                  <Beaker className="mr-2 h-4 w-4" />
+                  Silicate
+                </span>
+                <span>{selectedData.silicate.toFixed(2)} μmol/L</span>
               </div>
             </CardContent>
           ) : (
