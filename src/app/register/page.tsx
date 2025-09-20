@@ -24,14 +24,29 @@ import { FlaskConical } from "lucide-react";
 import { useAuth, UserRole } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { cmlreApprovedIds } from "@/lib/data";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterPage() {
   const { setRole } = useAuth();
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<UserRole>("Student");
+  const [approvedId, setApprovedId] = useState("");
+  const { toast } = useToast();
 
   const handleRegister = () => {
     // In a real application, you would handle registration logic here.
+    if (selectedRole === "CMLRE") {
+      if (!cmlreApprovedIds.includes(approvedId)) {
+        toast({
+          title: "Registration Failed",
+          description: "The provided Approved ID is not valid.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     // For this demo, we'll just set the role and redirect.
     setRole(selectedRole);
     router.push("/dashboard");
@@ -95,7 +110,13 @@ export default function RegisterPage() {
               {selectedRole === "CMLRE" && (
                 <div className="grid gap-2 animate-accordion-down">
                   <Label htmlFor="approved-id">Approved ID</Label>
-                  <Input id="approved-id" placeholder="CMLRE-XYZ-123" required />
+                  <Input 
+                    id="approved-id" 
+                    placeholder="CMLRE-XYZ-123" 
+                    required 
+                    value={approvedId}
+                    onChange={(e) => setApprovedId(e.target.value)}
+                  />
                 </div>
               )}
 
