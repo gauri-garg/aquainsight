@@ -115,8 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password
     );
     await set(ref(database, "users/" + newUser.uid), {
-      role: role,
       email: newUser.email,
+      role: role,
       ...details
     });
   };
