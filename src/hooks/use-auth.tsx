@@ -44,11 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
       if (user) {
-        const role = await getUserRole(user.uid);
-        setRole(role);
+        const userRole = await getUserRole(user.uid);
+        setRole(userRole);
+        setUser(user);
       } else {
+        setUser(null);
         setRole(null);
       }
       setLoading(false);
@@ -81,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password = 'password';
         break;
       case 'Student':
+      default:
         email = 'student.user@example.com';
         password = 'password';
         break;
