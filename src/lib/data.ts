@@ -75,12 +75,6 @@ export const datasets: Dataset[] = [
   },
 ];
 
-export const cmlreApprovedIds: string[] = [
-  "CMLRE-XYZ-123",
-  "CMLRE-ABC-789",
-  "CMLRE-QWE-456",
-];
-
 export const speciesDistributionData = [
   { species: "Antarctic Krill", count: 450, fill: "var(--color-chart-1)" },
   { species: "Icefish", count: 280, fill: "var(--color-chart-2)" },
@@ -332,5 +326,3 @@ export const geographicDistribution = [
     { name: "Pacific Station Alpha", x: 200, y: 100 },
     { name: "Deep Pacific Station", x: 400, y: 150 },
 ]
-
-

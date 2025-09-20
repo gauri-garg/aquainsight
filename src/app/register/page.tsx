@@ -23,9 +23,10 @@ import {
 import { FlaskConical, Loader2 } from "lucide-react";
 import { useAuth, UserRole } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { cmlreApprovedIds } from "@/lib/data";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { database } from "@/lib/firebase";
+import { ref, get } from "firebase/database";
 
 export default function RegisterPage() {
   const { signUp } = useAuth();
@@ -36,8 +37,19 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [cmlreApprovedIds, setCmlreApprovedIds] = useState<string[]>([]);
 
   const { toast } = useToast();
+  
+  useEffect(() => {
+    const fetchApprovedIds = async () => {
+      const snapshot = await get(ref(database, 'cmlreApprovedIds'));
+      if (snapshot.exists()) {
+        setCmlreApprovedIds(snapshot.val());
+      }
+    };
+    fetchApprovedIds();
+  }, []);
 
   const handleRegister = async () => {
     setIsLoading(true);
