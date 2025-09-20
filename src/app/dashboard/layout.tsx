@@ -59,6 +59,7 @@ export default function DashboardLayout({
     { href: "/dashboard/oceanography", label: "Physical Oceanography", icon: Wind, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/chemical-oceanography", label: "Chemical Oceanography", icon: Beaker, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/ocean-atmosphere", label: "Ocean Atmosphere", icon: Thermometer, roles: ["CMLRE", "Researcher", "Student"] },
+    { href: "/dashboard/marine-weather", label: "Marine Weather", icon: Wind, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/analysis", label: "Analysis", icon: LineChart, roles: ["Researcher", "Student"] },
     { href: "/dashboard/user", label: "User", icon: Users, roles: ["CMLRE", "Researcher", "Student"] }
   ];
@@ -198,5 +199,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-
-    
