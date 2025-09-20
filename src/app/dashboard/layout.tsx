@@ -12,6 +12,9 @@ import {
   Search,
   Menu,
   Users,
+  Wind,
+  Beaker,
+  Thermometer,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +44,7 @@ export default function DashboardLayout({
   
   const navLinks = [
     { href: "/dashboard", label: "Dashboard", icon: Home, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/submission", label: "Data Submission", icon: Upload, roles: ["Researcher"] },
+    { href: "/dashboard/submission", label: "Data Submission", icon: Upload, roles: ["Researcher", "Student"] },
     { href: "/dashboard/edna", label: "eDNA Matching", icon: Dna, roles: ["Researcher", "Student"] },
     {
       href: "/dashboard/approval",
@@ -50,6 +53,9 @@ export default function DashboardLayout({
       badge: 2,
       roles: ["CMLRE"]
     },
+    { href: "/dashboard/oceanography", label: "Physical Oceanography", icon: Wind, roles: ["CMLRE", "Researcher", "Student"] },
+    { href: "/dashboard/chemical-oceanography", label: "Chemical Oceanography", icon: Beaker, roles: ["CMLRE", "Researcher", "Student"] },
+    { href: "/dashboard/ocean-atmosphere", label: "Ocean Atmosphere", icon: Thermometer, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/analysis", label: "Analysis", icon: LineChart, roles: ["Researcher", "Student"] },
     { href: "/dashboard/user", label: "User", icon: Users, roles: ["CMLRE", "Researcher", "Student"] }
   ];
@@ -185,3 +191,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+    

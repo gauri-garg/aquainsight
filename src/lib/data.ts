@@ -161,3 +161,38 @@ export const chemicalOceanographyData = [
   { date: "2025-08-29", latitude: 10.8975, longitude: 72.2076, salinity: 34.75, pH: 8.08, nitrate: 0.44, phosphate: 0.24, silicate: 0.63 },
   { date: "2025-08-30", latitude: 10.5217, longitude: 72.1706, salinity: 34.68, pH: 8.11, nitrate: 0.18, phosphate: 0.21, silicate: 1.08 },
 ];
+
+export const oceanAtmosphereData = [
+  { date: "2025-08-01", latitude: 10.8975, longitude: 72.2076, skinTemp: 27.62, airTemp3m: 27.54, ventTemp: 27.32, ventSpeed: 0.61, pressure: 1009.85 },
+  { date: "2025-08-02", latitude: 10.5217, longitude: 72.1706, skinTemp: 28.08, airTemp3m: 27.96, ventTemp: 27.27, ventSpeed: 0.43, pressure: 1008.18 },
+  { date: "2025-08-03", latitude: 10.353, longitude: 72.5702, skinTemp: 27.35, airTemp3m: 27.31, ventTemp: 26.8, ventSpeed: 0.55, pressure: 1008.17 },
+  { date: "2025-08-04", latitude: 10.8975, longitude: 72.2076, skinTemp: 28.13, airTemp3m: 27.93, ventTemp: 27.42, ventSpeed: 0.69, pressure: 1009.61 },
+  { date: "2025-08-05", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.72, airTemp3m: 27.62, ventTemp: 26.85, ventSpeed: 0.42, pressure: 1009.59 },
+  { date: "2025-08-06", latitude: 10.353, longitude: 72.5702, skinTemp: 27.77, airTemp3m: 27.69, ventTemp: 27.05, ventSpeed: 0.52, pressure: 1009.59 },
+  { date: "2025-08-07", latitude: 10.8975, longitude: 72.2076, skinTemp: 27.47, airTemp3m: 27.38, ventTemp: 27.41, ventSpeed: 0.21, pressure: 1009.73 },
+  { date: "2025-08-08", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.57, airTemp3m: 27.44, ventTemp: 27.18, ventSpeed: 0.57, pressure: 1007.2 },
+  { date: "2025-08-09", latitude: 10.353, longitude: 72.5702, skinTemp: 27.76, airTemp3m: 27.68, ventTemp: 27.51, ventSpeed: 0.39, pressure: 1008.4 },
+  { date: "2025-08-10", latitude: 10.8975, longitude: 72.2076, skinTemp: 27.67, airTemp3m: 27.55, ventTemp: 27.52, ventSpeed: 0.5, pressure: 1008.81 },
+  { date: "2025-08-11", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.52, airTemp3m: 27.42, ventTemp: 26.8, ventSpeed: 0.32, pressure: 1009.61 },
+  { date: "2025-08-12", latitude: 10.353, longitude: 72.5702, skinTemp: 27.71, airTemp3m: 27.64, ventTemp: 27.17, ventSpeed: 0.22, pressure: 1010.09 },
+  { date: "2025-08-13", latitude: 10.8975, longitude: 72.2076, skinTemp: 27.62, airTemp3m: 27.51, ventTemp: 27.09, ventSpeed: 0.49, pressure: 1007.3 },
+  { date: "2025-08-14", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.65, airTemp3m: 27.52, ventTemp: 26.98, ventSpeed: 0.47, pressure: 1010.13 },
+  { date: "2025-08-15", latitude: 10.353, longitude: 72.5702, skinTemp: 27.74, airTemp3m: 27.68, ventTemp: 27.52, ventSpeed: 0.67, pressure: 1009.2 },
+  { date: "2025-08-16", latitude: 10.8975, longitude: 72.2076, skinTemp: 27.77, airTemp3m: 27.66, ventTemp: 27.6, ventSpeed: 0.45, pressure: 1009.29 },
+  { date: "2025-08-17", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.77, airTemp3m: 27.63, ventTemp: 27.2, ventSpeed: 0.45, pressure: 1007.51 },
+  { date: "2025-08-18", latitude: 10.353, longitude: 72.5702, skinTemp: 27.54, airTemp3m: 27.38, ventTemp: 26.94, ventSpeed: 0.61, pressure: 1007.99 },
+  { date: "2025-08-19", latitude: 10.8975, longitude: 72.2076, skinTemp: 27.55, airTemp3m: 27.4, ventTemp: 27.67, ventSpeed: 0.12, pressure: 1008.37 },
+  { date: "2025-08-20", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.83, airTemp3m: 27.73, ventTemp: 27.89, ventSpeed: 0.96, pressure: 1008.63 },
+  { date: "2025-08-21", latitude: 10.353, longitude: 72.5702, skinTemp: 27.56, airTemp3m: 27.5, ventTemp: 26.58, ventSpeed: 0.73, pressure: 1007.29 },
+  { date: "2025-08-22", latitude: 10.8975, longitude: 72.2076, skinTemp: 27.84, airTemp3m: 27.7, ventTemp: 27.06, ventSpeed: 0.34, pressure: 1008.12 },
+  { date: "2025-08-23", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.65, airTemp3m: 27.5, ventTemp: 27.84, ventSpeed: 0.57, pressure: 1009.14 },
+  { date: "2025-08-24", latitude: 10.353, longitude: 72.5702, skinTemp: 27.47, airTemp3m: 27.29, ventTemp: 27.97, ventSpeed: 0.63, pressure: 1007.39 },
+  { date: "2025-08-25", latitude: 10.8975, longitude: 72.2076, skinTemp: 27.66, airTemp3m: 27.61, ventTemp: 26.94, ventSpeed: 0.36, pressure: 1009.35 },
+  { date: "2025-08-26", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.58, airTemp3m: 27.47, ventTemp: 27.01, ventSpeed: 0.46, pressure: 1006.65 },
+  { date: "2025-08-27", latitude: 10.353, longitude: 72.5702, skinTemp: 27.48, airTemp3m: 27.36, ventTemp: 27.27, ventSpeed: 0.62, pressure: 1009.54 },
+  { date: "2025-08-28", latitude: 10.8975, longitude: 72.2076, skinTemp: 28.17, airTemp3m: 28.07, ventTemp: 26.83, ventSpeed: 0.53, pressure: 1009.96 },
+  { date: "2025-08-29", latitude: 10.5217, longitude: 72.1706, skinTemp: 27.54, airTemp3m: 27.48, ventTemp: 27.18, ventSpeed: 0.57, pressure: 1009.26 },
+  { date: "2025-08-30", latitude: 10.353, longitude: 72.5702, skinTemp: 27.86, airTemp3m: 27.72, ventTemp: 26.53, ventSpeed: 0.48, pressure: 1007.12 },
+];
+
+    
