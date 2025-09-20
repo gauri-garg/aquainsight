@@ -1,0 +1,122 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FlaskConical } from "lucide-react";
+import { useAuth, UserRole } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+export default function RegisterPage() {
+  const { setRole } = useAuth();
+  const router = useRouter();
+  const [selectedRole, setSelectedRole] = useState<UserRole>("Student");
+
+  const handleRegister = () => {
+    // In a real application, you would handle registration logic here.
+    // For this demo, we'll just set the role and redirect.
+    setRole(selectedRole);
+    router.push("/dashboard");
+  };
+
+  return (
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[380px] gap-6">
+          <div className="grid gap-2 text-center">
+            <div className="flex justify-center items-center gap-2">
+              <FlaskConical className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold">AquaInsight</h1>
+            </div>
+            <p className="text-balance text-muted-foreground">
+              Create your account to get started.
+            </p>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Register</CardTitle>
+              <CardDescription>
+                Enter your information to create an account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="fullname">Full Name</Label>
+                <Input
+                  id="fullname"
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" required />
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="role">Role</Label>
+                <Select
+                  onValueChange={(value: UserRole) => setSelectedRole(value)}
+                  defaultValue={selectedRole}
+                >
+                  <SelectTrigger id="role">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Researcher">Researcher</SelectItem>
+                    <SelectItem value="CMLRE">CMLRE Staff</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button className="w-full" onClick={handleRegister}>
+                Create an account
+              </Button>
+              <div className="mt-4 text-center text-sm">
+                Already have an account?{" "}
+                <Link href="/" className="underline">
+                  Sign in
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://picsum.photos/seed/ocean-reg/1200/1800"
+          alt="Ocean"
+          data-ai-hint="ocean water"
+          width="1200"
+          height="1800"
+          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        />
+      </div>
+    </div>
+  );
+}

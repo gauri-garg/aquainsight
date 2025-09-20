@@ -74,6 +74,12 @@ export default function LoginPage() {
                 />
               </div>
               <Button className="w-full" onClick={() => handleLogin("CMLRE")}>Login</Button>
+               <div className="mt-4 text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <Link href="/register" className="underline">
+                  Sign up
+                </Link>
+              </div>
                <p className="text-center text-sm text-muted-foreground">Or sign in as a demo user:</p>
                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <Button variant="outline" className="w-full" onClick={() => handleLogin("CMLRE")}>CMLRE</Button>
