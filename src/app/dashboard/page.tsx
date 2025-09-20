@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Activity,
   ArrowUpRight,
@@ -24,13 +26,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import { datasets } from "@/lib/data";
+import { datasets as initialDatasets } from "@/lib/data";
 import SpeciesDistributionChart from "@/components/species-distribution-chart";
 import OceanParameterChart from "@/components/ocean-parameter-chart";
+import { useAuth } from "@/hooks/use-auth";
+import { useState, useEffect } from "react";
 
 export default function Dashboard() {
+  const { role } = useAuth();
+  const [datasets, setDatasets] = useState(initialDatasets);
+  
+  useEffect(() => {
+    if (role === 'Student' || role === 'Researcher') {
+      setDatasets(initialDatasets.filter(d => d.status === 'Approved'));
+    } else {
+      setDatasets(initialDatasets);
+    }
+  }, [role]);
+
   const totalDatasets = datasets.length;
-  const pendingSubmissions = datasets.filter(
+  const pendingSubmissions = initialDatasets.filter(
     (d) => d.status === "Pending"
   ).length;
   const totalRecords = datasets.reduce((sum, d) => sum + d.records, 0);
@@ -46,7 +61,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{totalDatasets}</div>
             <p className="text-xs text-muted-foreground">
-              +2 since last month
+              {role === 'CMLRE' ? '+2 since last month' : 'Approved datasets'}
             </p>
           </CardContent>
         </Card>
@@ -99,7 +114,7 @@ export default function Dashboard() {
             <div className="grid gap-2">
               <CardTitle>Recent Datasets</CardTitle>
               <CardDescription>
-                Overview of the most recently added datasets.
+                Overview of the most recently {role === 'CMLRE' ? 'added' : 'approved'} datasets.
               </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">
@@ -115,7 +130,7 @@ export default function Dashboard() {
                 <TableRow>
                   <TableHead>Dataset</TableHead>
                   <TableHead className="hidden sm:table-cell">Type</TableHead>
-                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  {role === 'CMLRE' && <TableHead className="hidden sm:table-cell">Status</TableHead>}
                   <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead className="text-right">Records</TableHead>
                 </TableRow>
@@ -132,7 +147,7 @@ export default function Dashboard() {
                     <TableCell className="hidden sm:table-cell">
                       {dataset.type}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
+                    {role === 'CMLRE' && <TableCell className="hidden sm:table-cell">
                       <Badge
                         className="text-xs"
                         variant={
@@ -145,7 +160,7 @@ export default function Dashboard() {
                       >
                         {dataset.status}
                       </Badge>
-                    </TableCell>
+                    </TableCell>}
                     <TableCell className="hidden md:table-cell">
                       {dataset.date}
                     </TableCell>

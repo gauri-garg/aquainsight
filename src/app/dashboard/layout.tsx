@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   Bell,
@@ -9,6 +11,7 @@ import {
   CheckCircle,
   Search,
   Menu,
+  Users,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -27,24 +30,31 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { UserNav } from "@/components/user-nav";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { role } = useAuth();
+  
   const navLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: Home },
-    { href: "/dashboard/submission", label: "Data Submission", icon: Upload },
-    { href: "/dashboard/edna", label: "eDNA Matching", icon: Dna },
+    { href: "/dashboard", label: "Dashboard", icon: Home, roles: ["CMLRE", "Researcher", "Student"] },
+    { href: "/dashboard/submission", label: "Data Submission", icon: Upload, roles: ["Researcher"] },
+    { href: "/dashboard/edna", label: "eDNA Matching", icon: Dna, roles: ["Researcher", "Student"] },
     {
       href: "/dashboard/approval",
       label: "Data Approval",
       icon: CheckCircle,
       badge: 2,
+      roles: ["CMLRE"]
     },
-    { href: "/dashboard/analysis", label: "Analysis", icon: LineChart },
+    { href: "/dashboard/analysis", label: "Analysis", icon: LineChart, roles: ["Researcher", "Student"] },
+    { href: "/dashboard/user", label: "User", icon: Users, roles: ["CMLRE", "Researcher", "Student"] }
   ];
+  
+  const visibleNavLinks = navLinks.filter(link => role && link.roles.includes(role));
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -65,7 +75,7 @@ export default function DashboardLayout({
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              {navLinks.map((link) => (
+              {visibleNavLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -121,7 +131,7 @@ export default function DashboardLayout({
                   <FlaskConical className="h-6 w-6 text-primary" />
                   <span>AquaInsight</span>
                 </Link>
-                {navLinks.map((link) => (
+                {visibleNavLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,8 +13,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FlaskConical } from "lucide-react";
+import { useAuth, UserRole } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const { setRole } = useAuth();
+  const router = useRouter();
+
+  const handleLogin = (role: UserRole) => {
+    setRole(role);
+    router.push("/dashboard");
+  };
+
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
       <div className="flex items-center justify-center py-12">
@@ -61,20 +73,12 @@ export default function LoginPage() {
                   defaultValue="password"
                 />
               </div>
-              <Link href="/dashboard" className="w-full">
-                <Button className="w-full">Login</Button>
-              </Link>
+              <Button className="w-full" onClick={() => handleLogin("CMLRE")}>Login</Button>
                <p className="text-center text-sm text-muted-foreground">Or sign in as a demo user:</p>
                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                 <Link href="/dashboard">
-                   <Button variant="outline" className="w-full">CMLRE</Button>
-                 </Link>
-                 <Link href="/dashboard">
-                   <Button variant="outline" className="w-full">Researcher</Button>
-                 </Link>
-                 <Link href="/dashboard">
-                   <Button variant="outline" className="w-full">Student</Button>
-                 </Link>
+                  <Button variant="outline" className="w-full" onClick={() => handleLogin("CMLRE")}>CMLRE</Button>
+                  <Button variant="outline" className="w-full" onClick={() => handleLogin("Researcher")}>Researcher</Button>
+                  <Button variant="outline" className="w-full" onClick={() => handleLogin("Student")}>Student</Button>
                </div>
             </CardContent>
           </Card>

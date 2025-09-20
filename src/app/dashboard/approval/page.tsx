@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,13 +17,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { datasets } from "@/lib/data";
+import { useAuth } from "@/hooks/use-auth";
+import { Dataset, datasets as initialDatasets } from "@/lib/data";
 import { Check, Download, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function ApprovalPage() {
+  const { role } = useAuth();
+  const router = useRouter();
+  const [datasets, setDatasets] = useState<Dataset[]>(initialDatasets);
+
+  useEffect(() => {
+    if (role !== "CMLRE") {
+      router.push("/dashboard");
+    }
+  }, [role, router]);
+
+  const handleApproval = (datasetId: string, newStatus: "Approved" | "Rejected") => {
+    setDatasets(
+      datasets.map((d) => (d.id === datasetId ? { ...d, status: newStatus } : d))
+    );
+  };
+
   const pendingDatasets = datasets.filter(
     (d) => d.status === "Pending" || d.status === "Rejected"
   );
+  
+  if (role !== "CMLRE") {
+    return (
+        <Card className="flex flex-col items-center justify-center text-center p-8 min-h-[400px]">
+        <CardHeader>
+          <CardTitle>Access Denied</CardTitle>
+          <CardDescription>
+            You do not have permission to view this page.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
 
   return (
     <Card>
@@ -51,7 +85,11 @@ export default function ApprovalPage() {
                 <TableCell>
                   <Badge
                     variant={
-                      dataset.status === "Pending" ? "secondary" : "destructive"
+                      dataset.status === "Pending"
+                        ? "secondary"
+                        : dataset.status === "Approved"
+                        ? "default"
+                        : "destructive"
                     }
                   >
                     {dataset.status}
@@ -69,6 +107,7 @@ export default function ApprovalPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 text-green-600 hover:text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300"
+                          onClick={() => handleApproval(dataset.id, "Approved")}
                         >
                           <Check className="h-4 w-4" />
                         </Button>
@@ -76,6 +115,7 @@ export default function ApprovalPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
+                           onClick={() => handleApproval(dataset.id, "Rejected")}
                         >
                           <X className="h-4 w-4" />
                         </Button>
