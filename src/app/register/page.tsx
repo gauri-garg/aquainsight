@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, Loader2 } from "lucide-react";
 import { useAuth, UserRole } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -28,14 +28,19 @@ import { cmlreApprovedIds } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterPage() {
-  const { setRole } = useAuth();
+  const { signUp } = useAuth();
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<UserRole>("Student");
   const [approvedId, setApprovedId] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const { toast } = useToast();
 
-  const handleRegister = () => {
-    // In a real application, you would handle registration logic here.
+  const handleRegister = async () => {
+    setIsLoading(true);
     if (selectedRole === "CMLRE") {
       if (!cmlreApprovedIds.includes(approvedId)) {
         toast({
@@ -43,13 +48,27 @@ export default function RegisterPage() {
           description: "The provided Approved ID is not valid.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
     }
-    
-    // For this demo, we'll just set the role and redirect.
-    setRole(selectedRole);
-    router.push("/dashboard");
+
+    try {
+      await signUp(email, password, selectedRole, { fullName, approvedId });
+      toast({
+        title: "Registration Successful",
+        description: "Please login with your new account.",
+      });
+      router.push("/");
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -78,6 +97,7 @@ export default function RegisterPage() {
                 <Select
                   onValueChange={(value: UserRole) => setSelectedRole(value)}
                   defaultValue={selectedRole}
+                  disabled={isLoading}
                 >
                   <SelectTrigger id="role">
                     <SelectValue placeholder="Select a role" />
@@ -93,7 +113,14 @@ export default function RegisterPage() {
               {selectedRole !== "CMLRE" && (
                 <div className="grid gap-2 animate-accordion-down">
                   <Label htmlFor="fullname">Full Name</Label>
-                  <Input id="fullname" placeholder="John Doe" required />
+                  <Input
+                    id="fullname"
+                    placeholder="John Doe"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    disabled={isLoading}
+                  />
                 </div>
               )}
 
@@ -104,29 +131,51 @@ export default function RegisterPage() {
                   type="email"
                   placeholder="m@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
-              
+
               {selectedRole === "CMLRE" && (
                 <div className="grid gap-2 animate-accordion-down">
                   <Label htmlFor="approved-id">Approved ID</Label>
-                  <Input 
-                    id="approved-id" 
-                    placeholder="CMLRE-XYZ-123" 
-                    required 
+                  <Input
+                    id="approved-id"
+                    placeholder="CMLRE-XYZ-123"
+                    required
                     value={approvedId}
                     onChange={(e) => setApprovedId(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
               )}
 
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
 
-              <Button className="w-full mt-4" onClick={handleRegister}>
-                Create an account
+              <Button
+                className="w-full mt-4"
+                onClick={handleRegister}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  "Create an account"
+                )}
               </Button>
               <div className="mt-4 text-center text-sm">
                 Already have an account?{" "}

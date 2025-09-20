@@ -16,17 +16,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export function UserNav() {
-  const { role, setRole } = useAuth();
+  const { user, role, logout } = useAuth();
   const router = useRouter();
 
-  const handleLogout = () => {
-    setRole(null);
+  const handleLogout = async () => {
+    await logout();
     router.push("/");
   };
   
-  const user = {
-    name: `${role} User`,
-    email: `${role?.toLowerCase()}.user@example.com`
+  const userDetails = {
+    name: user?.displayName || `${role} User`,
+    email: user?.email || ""
   }
 
   return (
@@ -39,16 +39,16 @@ export function UserNav() {
               alt="@cmlre-user"
               data-ai-hint="person face"
             />
-            <AvatarFallback>{role?.charAt(0)}U</AvatarFallback>
+            <AvatarFallback>{role?.charAt(0)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-sm font-medium leading-none">{userDetails.name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
+              {userDetails.email}
             </p>
           </div>
         </DropdownMenuLabel>

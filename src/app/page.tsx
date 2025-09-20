@@ -12,18 +12,51 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, Loader2 } from "lucide-react";
 import { useAuth, UserRole } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { setRole } = useAuth();
+  const { signIn, signInAsDemo } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState("cmlre.user@example.com");
+  const [password, setPassword] = useState("password");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (role: UserRole) => {
-    setRole(role);
-    router.push("/dashboard");
+  const handleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await signIn(email, password);
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+  
+  const handleDemoLogin = async (role: UserRole) => {
+    setIsLoading(true);
+    try {
+      await signInAsDemo(role);
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
@@ -53,7 +86,9 @@ export default function LoginPage() {
                   type="email"
                   placeholder="m@example.com"
                   required
-                  defaultValue="cmlre.user@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -70,10 +105,21 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   required
-                  defaultValue="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
-              <Button className="w-full" onClick={() => handleLogin("CMLRE")}>Login</Button>
+              <Button className="w-full" onClick={handleLogin} disabled={isLoading}>
+                 {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  "Login"
+                )}
+              </Button>
                <div className="mt-4 text-center text-sm">
                 Don&apos;t have an account?{" "}
                 <Link href="/register" className="underline">
@@ -82,9 +128,9 @@ export default function LoginPage() {
               </div>
                <p className="text-center text-sm text-muted-foreground">Or sign in as a demo user:</p>
                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <Button variant="outline" className="w-full" onClick={() => handleLogin("CMLRE")}>CMLRE</Button>
-                  <Button variant="outline" className="w-full" onClick={() => handleLogin("Researcher")}>Researcher</Button>
-                  <Button variant="outline" className="w-full" onClick={() => handleLogin("Student")}>Student</Button>
+                  <Button variant="outline" className="w-full" onClick={() => handleDemoLogin("CMLRE")} disabled={isLoading}>CMLRE</Button>
+                  <Button variant="outline" className="w-full" onClick={() => handleDemoLogin("Researcher")} disabled={isLoading}>Researcher</Button>
+                  <Button variant="outline" className="w-full" onClick={() => handleDemoLogin("Student")} disabled={isLoading}>Student</Button>
                </div>
             </CardContent>
           </Card>
