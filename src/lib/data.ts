@@ -292,3 +292,38 @@ export const marineWeatherData = [
   { date: "2025-09-19", latitude: 10.9, longitude: 72.21, sstSkin: 28.38, airTemp: 27.3, currentSpeed: 0.37, airPressure: 1010.53, humidity: 83.12, windSpeed: 14.62, windDirection: 292.29, waveHeight: 1.32, waveDirection: 209.83, wavePeriod: 9.32, currentDirection: 108.38 },
   { date: "2025-09-20", latitude: 10.9, longitude: 72.21, sstSkin: 28.42, airTemp: 27.77, currentSpeed: 0.5, airPressure: 1010.21, humidity: 78.75, windSpeed: 14.19, windDirection: 295.33, waveHeight: 1.27, waveDirection: 198.67, wavePeriod: 10.21, currentDirection: 88.79 }
 ];
+
+export const dataCollectionTrends = [
+  { month: "Apr", oceanographic: 45, fisheries: 30, molecular: 15 },
+  { month: "May", oceanographic: 50, fisheries: 35, molecular: 20 },
+  { month: "Jun", oceanographic: 55, fisheries: 40, molecular: 25 },
+  { month: "Jul", oceanographic: 61, fisheries: 42, molecular: 27 },
+  { month: "Aug", oceanographic: 58, fisheries: 38, molecular: 22 },
+  { month: "Sep", oceanographic: 52, fisheries: 34, molecular: 18 },
+];
+
+export const dataQualityDistribution = [
+  { name: "High Quality", value: 2, fill: "hsl(var(--chart-1))" },
+  { name: "Medium Quality", value: 0, fill: "hsl(var(--chart-2))" },
+  { name: "Low Quality", value: 0, fill: "hsl(var(--chart-3))" },
+  { name: "Preliminary", value: 0, fill: "hsl(var(--chart-4))" },
+];
+
+export const recentActivity = [
+    {
+        type: "Oceanographic",
+        timestamp: "Sep 16, 17:29",
+        details: "Pacific Station Alpha - 12.5°C"
+    },
+    {
+        type: "Oceanographic",
+        timestamp: "Sep 16, 17:29",
+        details: "Deep Pacific Station - 4.2°C"
+    }
+];
+
+export const geographicDistribution = [
+    { name: "Pacific Station Alpha", x: 200, y: 100 },
+    { name: "Deep Pacific Station", x: 400, y: 150 },
+]
+
