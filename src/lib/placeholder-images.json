@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "login-hero",
+      "description": "A background image for the login page, depicting an ocean scene.",
+      "imageUrl": "https://picsum.photos/seed/ocean/1200/1800",
+      "imageHint": "ocean water"
+    },
+    {
+      "id": "user-avatar",
+      "description": "A placeholder avatar for the user navigation menu.",
+      "imageUrl": "https://picsum.photos/seed/user-avatar/100/100",
+      "imageHint": "person face"
+    }
+  ]
 }
