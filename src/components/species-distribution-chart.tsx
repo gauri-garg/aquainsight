@@ -47,12 +47,12 @@ export default function SpeciesDistributionChart() {
               <Cell key={entry.species} fill={entry.fill} />
             ))}
           </Pie>
+          <ChartLegend
+            content={<ChartLegendContent nameKey="species" />}
+            className="-mt-4"
+          />
         </PieChart>
       </ChartContainer>
-       <ChartLegend
-        content={<ChartLegendContent nameKey="species" />}
-        className="-mt-4"
-      />
     </div>
   );
 }
