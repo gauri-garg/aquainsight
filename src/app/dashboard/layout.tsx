@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/sheet";
 import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
   children,
@@ -41,6 +43,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { role } = useAuth();
+  const pathname = usePathname();
   
   const navLinks = [
     { href: "/dashboard", label: "Dashboard", icon: Home, roles: ["CMLRE", "Researcher", "Student"] },
@@ -85,7 +88,9 @@ export default function DashboardLayout({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", {
+                    "bg-muted text-primary": pathname === link.href,
+                  })}
                 >
                   <link.icon className="h-4 w-4" />
                   {link.label}
@@ -141,7 +146,9 @@ export default function DashboardLayout({
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                    className={cn("mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",{
+                      "bg-muted text-foreground": pathname === link.href,
+                    })}
                   >
                     <link.icon className="h-5 w-5" />
                     {link.label}

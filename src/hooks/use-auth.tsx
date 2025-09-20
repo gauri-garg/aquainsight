@@ -12,23 +12,40 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<UserRole | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem("userRole") as UserRole | null;
-    }
-    return null;
-  });
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (role) {
-      localStorage.setItem("userRole", role);
-    } else {
-      localStorage.removeItem("userRole");
+    setIsMounted(true);
+    try {
+      const storedRole = localStorage.getItem("userRole") as UserRole | null;
+      if (storedRole) {
+        setRole(storedRole);
+      }
+    } catch (error) {
+      console.error("Failed to read userRole from localStorage", error);
     }
-  }, [role]);
+  }, []);
+
+  const handleSetRole = (newRole: UserRole | null) => {
+    setRole(newRole);
+    try {
+       if (newRole) {
+        localStorage.setItem("userRole", newRole);
+      } else {
+        localStorage.removeItem("userRole");
+      }
+    } catch (error) {
+      console.error("Failed to save userRole to localStorage", error);
+    }
+  };
+  
+  if (!isMounted) {
+    return null;
+  }
 
   return (
-    <AuthContext.Provider value={{ role, setRole }}>
+    <AuthContext.Provider value={{ role, setRole: handleSetRole }}>
       {children}
     </AuthContext.Provider>
   );
