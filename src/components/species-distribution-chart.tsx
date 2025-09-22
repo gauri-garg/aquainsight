@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -11,20 +12,59 @@ import {
   ChartLegendContent,
   type ChartConfig
 } from "@/components/ui/chart";
-import { speciesDistributionData } from "@/lib/data";
+import { database } from "@/lib/firebase";
+import { ref, onValue } from "firebase/database";
 
-const chartConfig = {
-  count: {
-    label: "Count",
-  },
-  "Antarctic Krill": { label: "Antarctic Krill", color: "hsl(var(--chart-1))" },
-  Icefish: { label: "Icefish", color: "hsl(var(--chart-2))" },
-  Silverfish: { label: "Silverfish", color: "hsl(var(--chart-3))" },
-  Toothfish: { label: "Toothfish", color: "hsl(var(--chart-4))" },
-  Other: { label: "Other", color: "hsl(var(--chart-5))" },
-} satisfies ChartConfig;
+const chartColors = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+];
+
 
 export default function SpeciesDistributionChart() {
+  const [chartData, setChartData] = React.useState<any[]>([]);
+  const [chartConfig, setChartConfig] = React.useState<ChartConfig>({
+    count: {
+      label: "Count",
+    },
+  });
+
+  React.useEffect(() => {
+    const fisheriesRef = ref(database, 'fisheries_data');
+    onValue(fisheriesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const dataArray = Object.keys(data).map(key => data[key]);
+        
+        const speciesCount = dataArray.reduce((acc, item) => {
+          acc[item.species] = (acc[item.species] || 0) + 1;
+          return acc;
+        }, {} as {[key: string]: number});
+
+        const speciesDistribution = Object.keys(speciesCount).map((species, index) => ({
+          species,
+          count: speciesCount[species],
+          fill: chartColors[index % chartColors.length],
+        }));
+
+        const newChartConfig: ChartConfig = {
+          count: { label: "Count" },
+        };
+        speciesDistribution.forEach((item) => {
+          newChartConfig[item.species] = { label: item.species, color: item.fill };
+        });
+
+        setChartData(speciesDistribution);
+        setChartConfig(newChartConfig);
+      }
+    });
+  }, []);
+
   return (
     <div className="flex flex-col items-center">
       <ChartContainer
@@ -37,13 +77,13 @@ export default function SpeciesDistributionChart() {
             content={<ChartTooltipContent hideLabel />}
           />
           <Pie
-            data={speciesDistributionData}
+            data={chartData}
             dataKey="count"
             nameKey="species"
             innerRadius={60}
             strokeWidth={5}
           >
-            {speciesDistributionData.map((entry) => (
+            {chartData.map((entry) => (
               <Cell key={entry.species} fill={entry.fill} />
             ))}
           </Pie>
@@ -56,3 +96,4 @@ export default function SpeciesDistributionChart() {
     </div>
   );
 }
+

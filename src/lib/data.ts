@@ -20,106 +20,6 @@ export type Dataset = {
   summary?: string;
 };
 
-export const datasets: Dataset[] = [
-  {
-    id: "DS001",
-    name: "Antarctic Krill Survey 2023",
-    type: "Fisheries",
-    submittedBy: "Dr. Anya Sharma",
-    status: "Approved",
-    date: "2023-11-20",
-    records: 15203,
-  },
-  {
-    id: "DS002",
-    name: "Southern Ocean Salinity Profile",
-    type: "Physical Oceanography",
-    submittedBy: "Dr. Ben Carter",
-    status: "Approved",
-    date: "2023-10-05",
-    records: 8940,
-  },
-  {
-    id: "DS003",
-    name: "Ross Sea eDNA Metabarcoding",
-    type: "eDNA",
-    submittedBy: "Dr. Chloe Garcia",
-    status: "Pending",
-    date: "2024-01-15",
-    records: 34560,
-  },
-  {
-    id: "DS004",
-    name: "Otolith Microchemistry - Icefish",
-    type: "Fisheries",
-    submittedBy: "Dr. David Lee",
-    status: "Approved",
-    date: "2023-09-12",
-    records: 2100,
-  },
-  {
-    id: "DS005",
-    name: "Weddell Sea Phytoplankton Bloom",
-    type: "Chemical Oceanography",
-    submittedBy: "Dr. Emily White",
-    status: "Approved",
-    date: "2023-12-01",
-    records: 12500,
-  },
-  {
-    id: "DS006",
-    name: "Patagonian Toothfish Genetics",
-    type: "eDNA",
-    submittedBy: "Dr. Frank Miller",
-    status: "Rejected",
-    date: "2024-01-02",
-    records: 5800,
-  },
-  {
-    id: "DS007",
-    name: "Amundsen Sea Current Metrics",
-    type: "Physical Oceanography",
-    submittedBy: "Dr. Grace Hall",
-    status: "Pending",
-    date: "2024-01-22",
-    records: 11230,
-  },
-  {
-    id: "DS008",
-    name: "Indian Ocean Fish Species",
-    type: "Fisheries",
-    submittedBy: "Dr. Ishan Kumar",
-    status: "Approved",
-    date: "2024-02-10",
-    records: 6,
-    description: "A dataset of common fish species found in the Indian Ocean, with details on their scientific names and habitats.",
-    summary: "This dataset contains information about 6 key fish species in the Indian Ocean, including their scientific classification and preferred environmental conditions."
-  }
-];
-
-export const speciesDistributionData = [
-  { species: "Antarctic Krill", count: 450, fill: "var(--color-chart-1)" },
-  { species: "Icefish", count: 280, fill: "var(--color-chart-2)" },
-  { species: "Silverfish", count: 200, fill: "var(--color-chart-3)" },
-  { species: "Toothfish", count: 180, fill: "var(--color-chart-4)" },
-  { species: "Other", count: 150, fill: "var(--color-chart-5)" },
-];
-
-export const oceanParameterData = [
-  { month: "Jan", temp: 0.5, salinity: 34.1 },
-  { month: "Feb", temp: 0.2, salinity: 34.2 },
-  { month: "Mar", temp: -0.5, salinity: 34.3 },
-  { month: "Apr", temp: -1.0, salinity: 34.5 },
-  { month: "May", temp: -1.5, salinity: 34.7 },
-  { month: "Jun", temp: -1.8, salinity: 34.8 },
-  { month: "Jul", temp: -2.0, salinity: 34.9 },
-  { month: "Aug", temp: -2.1, salinity: 34.8 },
-  { month: "Sep", temp: -1.7, salinity: 34.6 },
-  { month: "Oct", temp: -1.2, salinity: 34.4 },
-  { month: "Nov", temp: -0.5, salinity: 34.2 },
-  { month: "Dec", temp: 0.1, salinity: 34.1 },
-];
-
 export const physicalOceanographyData = [
   { date: "2025-08-01", latitude: 10.8975, longitude: 72.2076, temperature: 27.53, salinity: 34.68, density: 1025.15, ventSpeed: 0.2, waveHeight: 1.21, tide: 1.15, velAnomaly: -1.91, mixingIndex: 0.41 },
   { date: "2025-08-02", latitude: 10.5217, longitude: 72.1706, temperature: 28, salinity: 34.58, density: 1024.97, ventSpeed: 0.48, waveHeight: 2.25, tide: 0.92, velAnomaly: 2.05, mixingIndex: 0.41 },
@@ -328,6 +228,76 @@ export const fisheriesData = [
     { date: "2025-03-05", latitude: 9.2, longitude: 77.0, species: "Red snapper", catch_kg: 750, gear_type: "Bottom longline", vessel: "FV Coral Queen" },
     { date: "2025-03-06", latitude: 8.8, longitude: 76.8, species: "Threadfin butterflyfish", catch_kg: 150, gear_type: "Handline", vessel: "FV Coral Queen" }
 ];
+
+export const datasets: Dataset[] = [
+  {
+    id: "DS001",
+    name: "Southern Ocean Physical Data",
+    type: "Physical Oceanography",
+    submittedBy: "AquaInsight System",
+    status: "Approved",
+    date: "2023-10-01",
+    records: physicalOceanographyData.length,
+    description: "A comprehensive dataset of physical oceanography parameters, including temperature, salinity, density, and wave height.",
+    summary: "This dataset contains time-series data on key physical oceanographic variables, useful for analyzing ocean dynamics and climate patterns."
+  },
+  {
+    id: "DS002",
+    name: "Ocean Chemical Parameters",
+    type: "Chemical Oceanography",
+    submittedBy: "AquaInsight System",
+    status: "Approved",
+    date: "2023-10-01",
+    records: chemicalOceanographyData.length,
+    description: "A dataset focusing on the chemical composition of seawater, including pH, nitrate, phosphate, and silicate levels.",
+    summary: "This dataset provides insights into ocean chemistry, essential for studies on marine life, nutrient cycles, and ocean acidification."
+  },
+  {
+    id: "DS003",
+    name: "Marine Weather Conditions",
+    type: "Marine Weather",
+    submittedBy: "AquaInsight System",
+    status: "Approved",
+    date: "2023-10-01",
+    records: marineWeatherData.length,
+    description: "Contains data on marine weather, including air temperature, wind speed and direction, wave height, and atmospheric pressure.",
+    summary: "A valuable resource for understanding the interactions between the ocean and atmosphere, crucial for weather forecasting and maritime operations."
+  },
+  {
+    id: "DS004",
+    name: "Ocean-Atmosphere Interaction Data",
+    type: "Ocean Atmosphere",
+    submittedBy: "AquaInsight System",
+    status: "Approved",
+    date: "2023-10-01",
+    records: oceanAtmosphereData.length,
+    description: "This dataset includes parameters that are key to understanding the exchange of energy and matter between the ocean and atmosphere.",
+    summary: "Focuses on the ocean-atmosphere interface, with data on skin temperature, air temperature at various heights, and ventilation speed."
+  },
+  {
+    id: "DS005",
+    name: "Antarctic & Indian Ocean Fisheries",
+    type: "Fisheries",
+    submittedBy: "AquaInsight System",
+    status: "Approved",
+    date: "2023-10-01",
+    records: fisheriesData.length,
+    description: "A collection of fisheries data, including species caught, catch volume (kg), gear type, and vessel information from various locations.",
+    summary: "Provides critical data for fisheries management, stock assessment, and understanding marine biodiversity and ecosystem health."
+  },
+  {
+    id: "DS006",
+    name: "eDNA Sequence Library",
+    type: "eDNA",
+    submittedBy: "AquaInsight System",
+    status: "Approved",
+    date: "2023-10-01",
+    records: 0,
+    description: "A placeholder for eDNA sequence data. This dataset will be populated with sequences for biodiversity monitoring.",
+    summary: "This dataset is intended for storing and analyzing environmental DNA to identify species present in a given marine environment."
+  },
+];
+
 
 export const recentActivity = [
     {

@@ -16,10 +16,10 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { oceanParameterData } from "@/lib/data";
+import { physicalOceanographyData } from "@/lib/data";
 
 const chartConfig = {
-  temp: {
+  temperature: {
     label: "Temperature (°C)",
     color: "hsl(var(--chart-1))",
   },
@@ -30,9 +30,15 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function OceanParameterChart() {
+  const chartData = physicalOceanographyData.map(d => ({
+      ...d,
+      month: new Date(d.date).toLocaleString('default', { month: 'short' }),
+  })).slice(0, 12);
+
+
   return (
     <ChartContainer config={chartConfig} className="h-[300px] w-full">
-      <ComposedChart data={oceanParameterData}>
+      <ComposedChart data={chartData}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="month"
@@ -46,7 +52,7 @@ export default function OceanParameterChart() {
           tickLine={false}
           axisLine={false}
           tickMargin={10}
-          domain={[-3, 2]}
+          domain={[27, 29]}
           tickFormatter={(value) => `${value}°C`}
         />
         <YAxis
@@ -65,9 +71,9 @@ export default function OceanParameterChart() {
         <ChartLegend content={<ChartLegendContent />} />
         <Line
           yAxisId="left"
-          dataKey="temp"
+          dataKey="temperature"
           type="monotone"
-          stroke="var(--color-temp)"
+          stroke="var(--color-temperature)"
           strokeWidth={2}
           dot={true}
         />
