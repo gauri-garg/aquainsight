@@ -84,6 +84,17 @@ export const datasets: Dataset[] = [
     date: "2024-01-22",
     records: 11230,
   },
+  {
+    id: "DS008",
+    name: "Indian Ocean Fish Species",
+    type: "Fisheries",
+    submittedBy: "Dr. Ishan Kumar",
+    status: "Approved",
+    date: "2024-02-10",
+    records: 6,
+    description: "A dataset of common fish species found in the Indian Ocean, with details on their scientific names and habitats.",
+    summary: "This dataset contains information about 6 key fish species in the Indian Ocean, including their scientific classification and preferred environmental conditions."
+  }
 ];
 
 export const speciesDistributionData = [
@@ -310,6 +321,12 @@ export const fisheriesData = [
     { date: "2025-02-01", latitude: -78.2, longitude: 165.5, species: "Antarctic Toothfish", catch_kg: 1200, gear_type: "Longline", vessel: "FV Southern Star" },
     { date: "2025-02-02", latitude: -78.4, longitude: 166.0, species: "Antarctic Toothfish", catch_kg: 1500, gear_type: "Longline", vessel: "FV Southern Star" },
     { date: "2025-02-20", latitude: -65.0, longitude: -62.8, species: "Mackerel Icefish", catch_kg: 800, gear_type: "Bottom trawl", vessel: "FV Ice Hunter" },
+    { date: "2025-03-01", latitude: 10.0, longitude: 75.0, species: "Skipjack tuna", catch_kg: 3200, gear_type: "Pelagic trawl", vessel: "FV Indian Star" },
+    { date: "2025-03-02", latitude: 9.5, longitude: 75.2, species: "Yellowfin tuna", catch_kg: 2100, gear_type: "Pelagic trawl", vessel: "FV Indian Star" },
+    { date: "2025-03-03", latitude: 12.1, longitude: 74.8, species: "Indian oil sardine", catch_kg: 10000, gear_type: "Purse seine", vessel: "FV Coastal Fisher" },
+    { date: "2025-03-04", latitude: 8.9, longitude: 76.5, species: "Blue trevally", catch_kg: 500, gear_type: "Handline", vessel: "FV Coral Queen" },
+    { date: "2025-03-05", latitude: 9.2, longitude: 77.0, species: "Red snapper", catch_kg: 750, gear_type: "Bottom longline", vessel: "FV Coral Queen" },
+    { date: "2025-03-06", latitude: 8.8, longitude: 76.8, species: "Threadfin butterflyfish", catch_kg: 150, gear_type: "Handline", vessel: "FV Coral Queen" }
 ];
 
 export const recentActivity = [
@@ -323,4 +340,27 @@ export const recentActivity = [
         timestamp: "5 days ago",
         details: "'Southern Ocean Salinity Profile' was approved by CMLRE."
     }
+];
+
+export const dataCollectionTrends = [
+  { month: 'Jan', oceanographic: 18, fisheries: 12, molecular: 8 },
+  { month: 'Feb', oceanographic: 22, fisheries: 15, molecular: 10 },
+  { month: 'Mar', oceanographic: 25, fisheries: 18, molecular: 14 },
+  { month: 'Apr', oceanographic: 23, fisheries: 20, molecular: 16 },
+  { month: 'May', oceanographic: 28, fisheries: 22, molecular: 18 },
+  { month: 'Jun', oceanographic: 30, fisheries: 25, molecular: 20 },
+];
+
+export const dataQualityDistribution = [
+  { name: 'High Quality', value: 125, fill: 'hsl(var(--chart-2))' },
+  { name: 'Medium Quality', value: 80, fill: 'hsl(var(--chart-3))' },
+  { name: 'Low Quality', value: 35, fill: 'hsl(var(--chart-4))' },
+  { name: 'Preliminary', value: 45, fill: 'hsl(var(--chart-5))' },
+];
+
+export const geographicDistribution = [
+    { name: "Station A", x: 25, y: 40 },
+    { name: "Station B", x: 35, y: 60 },
+    { name: "Station C", x: 55, y: 30 },
+    { name: "Station D", x: 75, y: 55 },
 ];
