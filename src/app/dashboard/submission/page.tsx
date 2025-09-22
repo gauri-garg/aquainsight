@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -65,6 +66,10 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+const datasetTypeToTableName = (type: DatasetType): string => {
+  return type.toLowerCase().replace(/ /g, '_');
+}
+
 export default function DataSubmissionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<GenerateDatasetSummaryOutput | null>(
@@ -107,7 +112,8 @@ export default function DataSubmissionPage() {
       });
       setSummary(aiSummary);
 
-      const datasetsRef = ref(database, "datasets");
+      const tableName = datasetTypeToTableName(data.datasetType);
+      const datasetsRef = ref(database, tableName);
       const newDatasetRef = push(datasetsRef);
 
       await set(newDatasetRef, {

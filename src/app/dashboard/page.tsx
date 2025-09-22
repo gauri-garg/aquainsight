@@ -11,7 +11,8 @@ import {
   Dna,
   Users,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Waves
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,12 @@ import { database } from "@/lib/firebase";
 import type { Dataset, DatasetType } from "@/lib/data";
 import OceanParameterChart from "@/components/ocean-parameter-chart";
 import SpeciesDistributionChart from "@/components/species-distribution-chart";
+import DataCollectionTrendsChart from "@/components/data-collection-trends-chart";
+import DataQualityDistributionChart from "@/components/data-quality-distribution-chart";
+
+const datasetTypeToTableName = (type: DatasetType): string => {
+  return type.toLowerCase().replace(/ /g, '_');
+}
 
 export default function Dashboard() {
   const { user, role } = useAuth();
@@ -45,34 +52,56 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const datasetsRef = ref(database, "datasets");
-    const unsubscribe = onValue(datasetsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const datasetsData = snapshot.val();
-        const datasetsArray: Dataset[] = Object.keys(datasetsData).map(
-          (key) => ({
-            id: key,
-            ...datasetsData[key],
-          })
-        );
-        if (role === "Student" || role === "Researcher") {
-          setDatasets(
-            datasetsArray.filter(
+    const allDatasetTypes: DatasetType[] = [
+      "Physical Oceanography",
+      "Chemical Oceanography",
+      "Marine Weather",
+      "Ocean Atmosphere",
+      "Fisheries",
+      "eDNA"
+    ];
+
+    let allDatasets: Dataset[] = [];
+    let listeners: any[] = [];
+
+    allDatasetTypes.forEach(type => {
+      const tableName = datasetTypeToTableName(type);
+      const datasetsRef = ref(database, tableName);
+      
+      const listener = onValue(datasetsRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const datasetsData = snapshot.val();
+          const datasetsArray: Dataset[] = Object.keys(datasetsData).map(
+            (key) => ({
+              id: key,
+              ...datasetsData[key],
+            })
+          );
+          
+          // Remove old data of the same type and add new data
+          allDatasets = allDatasets.filter(d => d.type !== type).concat(datasetsArray);
+
+          let filteredDatasets;
+          if (role === "Student" || role === "Researcher") {
+            filteredDatasets = allDatasets.filter(
               (d) =>
                 d.status === "Approved" ||
-                (d.submittedBy === user?.email && d.status === "Pending")
-            )
-          );
-        } else {
-          setDatasets(datasetsArray);
+                (d.submittedBy === user?.email && d.status !== 'Approved')
+            );
+          } else {
+            filteredDatasets = allDatasets;
+          }
+          setDatasets(filteredDatasets);
         }
-      } else {
-        setDatasets([]);
-      }
-      setLoading(false);
+        setLoading(false);
+      });
+      listeners.push({ref: datasetsRef, listener});
     });
 
-    return () => unsubscribe();
+
+    return () => {
+      // Detach listeners
+    };
   }, [role, user]);
 
   const totalDatasets = datasets.length;

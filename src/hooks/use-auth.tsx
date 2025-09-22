@@ -18,7 +18,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { ref, set, get } from "firebase/database";
-import { datasets as initialDatasets } from "@/lib/data";
+import { datasets as initialDatasets, DatasetType } from "@/lib/data";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
@@ -42,6 +42,10 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const datasetTypeToTableName = (type: DatasetType): string => {
+  return type.toLowerCase().replace(/ /g, '_');
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -77,14 +81,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await set(cmlreApprovedIdsRef, approvedIds);
       }
       
-      const datasetsRef = ref(database, 'datasets');
-      const datasetsSnapshot = await get(datasetsRef);
-      if (!datasetsSnapshot.exists()) {
-         const initialData: { [key: string]: any } = {};
-         initialDatasets.forEach(dataset => {
-            initialData[dataset.id] = dataset;
-         });
-         await set(datasetsRef, initialData);
+      const allDatasetTypes: DatasetType[] = [
+        "Physical Oceanography",
+        "Chemical Oceanography",
+        "Marine Weather",
+        "Ocean Atmosphere",
+        "Fisheries",
+        "eDNA"
+      ];
+
+      for (const type of allDatasetTypes) {
+        const tableName = datasetTypeToTableName(type);
+        const datasetsRef = ref(database, tableName);
+        const datasetsSnapshot = await get(datasetsRef);
+        if (!datasetsSnapshot.exists()) {
+          const initialDataForType = initialDatasets.filter(d => d.type === type);
+          if (initialDataForType.length > 0) {
+            const dataToSeed: { [key: string]: any } = {};
+            initialDataForType.forEach(dataset => {
+              dataToSeed[dataset.id] = dataset;
+            });
+            await set(datasetsRef, dataToSeed);
+          }
+        }
       }
     }
     
