@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Pie, PieChart, Cell } from "recharts";
@@ -44,18 +45,18 @@ export default function DataQualityDistributionChart() {
           outerRadius={80}
           strokeWidth={5}
         >
-          {dataQualityDistribution.map((entry) => (
-            <Cell key={entry.name} fill={entry.fill} />
+          {dataQualityDistribution.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
         <ChartLegend
             content={({ payload }) => (
                 <ul className="grid gap-2 text-sm">
-                    {payload?.map((item) => {
+                    {payload?.map((item, index) => {
                          const { name, value, payload } = item;
                          const dataEntry = dataQualityDistribution.find(d => d.name === name);
                         return (
-                            <li key={name} className="flex justify-between items-center">
+                            <li key={`legend-item-${index}`} className="flex justify-between items-center">
                                 <div className="flex items-center">
                                     <span className="w-2.5 h-2.5 mr-2 rounded-full" style={{backgroundColor: payload.fill}}></span>
                                     <span>{name}</span>
