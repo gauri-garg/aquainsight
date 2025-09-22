@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 
 export function UserNav() {
-  const { user, role, logout } = useAuth();
+  const { user, role, userDetails, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -26,11 +26,10 @@ export function UserNav() {
     router.push("/");
   };
   
-  const userDetails = {
-    name: user?.displayName || (role === 'CMLRE' ? "CMLRE Staff" : "Dr. Research"),
-    email: user?.email || "",
-    roleDescription: role === "CMLRE" ? "Staff" : "Marine Biologist"
-  }
+  const displayName = userDetails?.fullName || user?.email || "User";
+  const roleDescription = role === "CMLRE" ? "Staff" : role === "Researcher" ? "Researcher" : "Student";
+  const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
+
 
   return (
     <div className="flex items-center gap-2">
@@ -43,16 +42,16 @@ export function UserNav() {
             <div className="flex items-center gap-3 cursor-pointer">
                  <Avatar className="h-9 w-9">
                     <AvatarImage
-                    src="https://picsum.photos/seed/user-avatar/100/100"
-                    alt="@cmlre-user"
+                    src={user?.photoURL || "https://picsum.photos/seed/user-avatar/100/100"}
+                    alt={displayName}
                     data-ai-hint="person face"
                     />
-                    <AvatarFallback>{role?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{fallback}</AvatarFallback>
                 </Avatar>
                 <div className="hidden md:flex flex-col items-start">
-                    <p className="text-sm font-medium leading-none">{userDetails.name}</p>
+                    <p className="text-sm font-medium leading-none">{displayName}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                    {userDetails.roleDescription}
+                    {roleDescription}
                     </p>
                 </div>
             </div>
@@ -60,9 +59,9 @@ export function UserNav() {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{userDetails.name}</p>
+              <p className="text-sm font-medium leading-none">{displayName}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                {userDetails.email}
+                {user?.email}
               </p>
             </div>
           </DropdownMenuLabel>

@@ -15,21 +15,27 @@ import {
   signInWithEmailAndPassword,
   signOut,
   User,
+  updateProfile,
 } from "firebase/auth";
 import { ref, set, get } from "firebase/database";
 import { datasets as initialDatasets } from "@/lib/data";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
+interface UserDetails {
+  fullName?: string;
+  approvedId?: string;
+}
 interface AuthContextType {
   user: User | null;
   role: UserRole | null;
   loading: boolean;
+  userDetails: UserDetails | null;
   signUp: (
     email: string,
     password: string,
     role: UserRole,
-    details: { fullName?: string; approvedId?: string }
+    details: UserDetails
   ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -40,17 +46,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userRole = await getUserRole(user.uid);
+        const details = await getUserDetails(user.uid);
         setRole(userRole);
+        setUserDetails(details);
         setUser(user);
       } else {
         setUser(null);
         setRole(null);
+        setUserDetails(null);
       }
       setLoading(false);
     });
@@ -94,18 +104,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   };
+
+  const getUserDetails = async (uid: string): Promise<UserDetails | null> => {
+    try {
+      const snapshot = await get(ref(database, `users/${uid}`));
+      if (snapshot.exists()) {
+        return snapshot.val() as UserDetails;
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+    return null;
+  }
   
   const signUp = async (
     email: string,
     password: string,
     role: UserRole,
-    details: { fullName?: string; approvedId?: string }
+    details: UserDetails
   ) => {
     const { user: newUser } = await createUserWithEmailAndPassword(
       auth,
       email,
       password
     );
+
+    if (details.fullName) {
+        await updateProfile(newUser, { displayName: details.fullName });
+    }
+
     await set(ref(database, "users/" + newUser.uid), {
       email: newUser.email,
       role: role,
@@ -122,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, signUp, signIn, logout }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );
