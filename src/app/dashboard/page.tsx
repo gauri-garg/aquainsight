@@ -7,13 +7,11 @@ import {
   Database,
   FileClock,
   FlaskConical,
-  BarChart,
   Fish,
   Dna,
-  FolderKanban,
-  AreaChart,
-  LineChart as LineChartIcon,
-  Waves
+  Users,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,10 +36,8 @@ import { useState, useEffect } from "react";
 import { ref, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
 import type { Dataset, DatasetType } from "@/lib/data";
-import DataCollectionTrendsChart from "@/components/data-collection-trends-chart";
-import DataQualityDistributionChart from "@/components/data-quality-distribution-chart";
-import GeographicDistributionMap from "@/components/geographic-distribution-map";
-import { recentActivity } from "@/lib/data";
+import OceanParameterChart from "@/components/ocean-parameter-chart";
+import SpeciesDistributionChart from "@/components/species-distribution-chart";
 
 export default function Dashboard() {
   const { user, role } = useAuth();
@@ -60,7 +56,13 @@ export default function Dashboard() {
           })
         );
         if (role === "Student" || role === "Researcher") {
-          setDatasets(datasetsArray.filter((d) => d.status === "Approved"));
+          setDatasets(
+            datasetsArray.filter(
+              (d) =>
+                d.status === "Approved" ||
+                (d.submittedBy === user?.email && d.status === "Pending")
+            )
+          );
         } else {
           setDatasets(datasetsArray);
         }
@@ -71,149 +73,152 @@ export default function Dashboard() {
     });
 
     return () => unsubscribe();
-  }, [role]);
-  
+  }, [role, user]);
+
   const totalDatasets = datasets.length;
-  const oceanographicCount = datasets.filter(d => d.type === "Physical Oceanography" || d.type === "Chemical Oceanography").length;
-  const fisheriesCount = datasets.filter(d => d.type === "Fisheries").length;
-  const molecularCount = datasets.filter(d => d.type === "eDNA").length || 1; // Mocked
-  const activeProjects = 2; // Mocked
+  const pendingSubmissions = datasets.filter(
+    (d) => d.status === "Pending" && d.submittedBy === user?.email
+  ).length;
 
-  const getStatChange = (type: string) => {
-      switch(type) {
-          case 'total': return "+12% this month";
-          case 'oceanographic': return "+8% this week";
-          case 'fisheries': return "+15% this month";
-          case 'molecular': return "+6% this week";
-          case 'active': return "3 new projects";
-          default: return "";
-      }
-  }
+  const totalRecords = datasets.reduce(
+    (acc, dataset) => acc + (dataset.records || 0),
+    0
+  );
 
+  const recentActivityCount = datasets.filter((d) => {
+    const submissionDate = new Date(d.date);
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    return submissionDate > oneMonthAgo;
+  }).length;
+
+  const recentDatasets = [...datasets]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Ocean Intelligence Dashboard</h1>
-          <p className="text-muted-foreground">Unified insights across oceanographic, fisheries, and molecular biodiversity data</p>
-        </div>
-        <div className="flex gap-2">
-            <Button variant="outline"><LineChartIcon className="mr-2 h-4 w-4"/>Generate Report</Button>
-            <Button><BarChart className="mr-2 h-4 w-4"/>Run AI Analysis</Button>
-        </div>
+      <div className="flex items-center">
+        <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Datasets</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Datasets
+            </CardTitle>
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalDatasets}</div>
             <p className="text-xs text-muted-foreground">
-              {getStatChange('total')}
+              Available for analysis
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Oceanographic
+              Pending Submissions
             </CardTitle>
-            <AreaChart className="h-4 w-4 text-muted-foreground" />
+            <FileClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{oceanographicCount}</div>
-            <p className="text-xs text-muted-foreground">{getStatChange('oceanographic')}</p>
+            <div className="text-2xl font-bold">+{pendingSubmissions}</div>
+            <p className="text-xs text-muted-foreground">Awaiting approval</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Fisheries</CardTitle>
-            <Fish className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{fisheriesCount}</div>
+            <div className="text-2xl font-bold">{totalRecords.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              {getStatChange('fisheries')}
+              Across all datasets
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Molecular
+              Recent Activity
             </CardTitle>
-            <Dna className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{molecularCount}</div>
+            <div className="text-2xl font-bold">+{recentActivityCount}</div>
             <p className="text-xs text-muted-foreground">
-              {getStatChange('molecular')}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Projects
-            </CardTitle>
-            <FolderKanban className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeProjects}</div>
-            <p className="text-xs text-muted-foreground">
-              {getStatChange('active')}
+              Datasets added this month
             </p>
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
-            <CardHeader>
-                <CardTitle>Data Collection Trends</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <DataCollectionTrendsChart />
-            </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>Data Quality Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <DataQualityDistributionChart />
-            </CardContent>
-        </Card>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-         <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>Geographic Distribution</CardTitle>
-                <CardDescription>Location of recent data collection points.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <GeographicDistributionMap />
-            </CardContent>
-        </Card>
-         <Card>
-            <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                        <div className="bg-muted p-2 rounded-md">
-                            <Waves className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium">{activity.type} <span className="text-xs text-muted-foreground ml-2">{activity.timestamp}</span></p>
-                            <p className="text-sm text-muted-foreground">{activity.details}</p>
-                        </div>
-                    </div>
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
+          <CardHeader className="flex flex-row items-center">
+            <div className="grid gap-2">
+              <CardTitle>Recent Datasets</CardTitle>
+              <CardDescription>
+                Recently approved and submitted datasets.
+              </CardDescription>
+            </div>
+            <Button asChild size="sm" className="ml-auto gap-1">
+              <Link href="#">
+                View All
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dataset</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="text-right">Date Added</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentDatasets.map((dataset) => (
+                  <TableRow key={dataset.id}>
+                    <TableCell>
+                      <div className="font-medium">{dataset.name}</div>
+                      <div className="hidden text-sm text-muted-foreground md:inline">
+                        {dataset.records.toLocaleString()} records
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{dataset.type}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{dataset.date}</TableCell>
+                  </TableRow>
                 ))}
-            </CardContent>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Species Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SpeciesDistributionChart />
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ocean Parameter Trends</CardTitle>
+            <CardDescription>
+              Monthly average temperature and salinity in the Southern Ocean.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OceanParameterChart />
+          </CardContent>
         </Card>
       </div>
     </>

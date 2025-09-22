@@ -4,7 +4,8 @@ export type DatasetType =
   | "Chemical Oceanography"
   | "Marine Weather"
   | "Ocean Atmosphere"
-  | "Fisheries";
+  | "Fisheries"
+  | "eDNA";
 
 
 export type Dataset = {
@@ -15,6 +16,8 @@ export type Dataset = {
   status: "Approved" | "Pending" | "Rejected";
   date: string;
   records: number;
+  description?: string;
+  summary?: string;
 };
 
 export const datasets: Dataset[] = [
@@ -39,7 +42,7 @@ export const datasets: Dataset[] = [
   {
     id: "DS003",
     name: "Ross Sea eDNA Metabarcoding",
-    type: "Fisheries",
+    type: "eDNA",
     submittedBy: "Dr. Chloe Garcia",
     status: "Pending",
     date: "2024-01-15",
@@ -66,7 +69,7 @@ export const datasets: Dataset[] = [
   {
     id: "DS006",
     name: "Patagonian Toothfish Genetics",
-    type: "Fisheries",
+    type: "eDNA",
     submittedBy: "Dr. Frank Miller",
     status: "Rejected",
     date: "2024-01-02",
@@ -301,36 +304,15 @@ export const marineWeatherData = [
   { date: "2025-09-20", latitude: 10.9, longitude: 72.21, sstSkin: 28.42, airTemp: 27.77, currentSpeed: 0.5, airPressure: 1010.21, humidity: 78.75, windSpeed: 14.19, windDirection: 295.33, waveHeight: 1.27, waveDirection: 198.67, wavePeriod: 10.21, currentDirection: 88.79 }
 ];
 
-export const dataCollectionTrends = [
-  { month: "Apr", oceanographic: 45, fisheries: 30, molecular: 15 },
-  { month: "May", oceanographic: 50, fisheries: 35, molecular: 20 },
-  { month: "Jun", oceanographic: 55, fisheries: 40, molecular: 25 },
-  { month: "Jul", oceanographic: 61, fisheries: 42, molecular: 27 },
-  { month: "Aug", oceanographic: 58, fisheries: 38, molecular: 22 },
-  { month: "Sep", oceanographic: 52, fisheries: 34, molecular: 18 },
-];
-
-export const dataQualityDistribution = [
-  { name: "High Quality", value: 2, fill: "hsl(var(--chart-2))" },
-  { name: "Medium Quality", value: 0, fill: "hsl(var(--chart-3))" },
-  { name: "Low Quality", value: 0, fill: "hsl(var(--chart-4))" },
-  { name: "Preliminary", value: 0, fill: "hsl(var(--chart-5))" },
-];
-
 export const recentActivity = [
     {
-        type: "Oceanographic",
-        timestamp: "Sep 16, 17:29",
-        details: "Pacific Station Alpha - 12.5°C"
+        type: "New Dataset",
+        timestamp: "3 days ago",
+        details: "Dr. Anya Sharma submitted 'Antarctic Krill Survey 2023'"
     },
     {
-        type: "Oceanographic",
-        timestamp: "Sep 16, 17:29",
-        details: "Deep Pacific Station - 4.2°C"
+        type: "Data Approved",
+        timestamp: "5 days ago",
+        details: "'Southern Ocean Salinity Profile' was approved by CMLRE."
     }
 ];
-
-export const geographicDistribution = [
-    { name: "Pacific Station Alpha", x: 45, y: 40 },
-    { name: "Deep Pacific Station", x: 70, y: 60 },
-]
