@@ -23,10 +23,10 @@ export type MatchEdnaSequenceInput = z.infer<typeof MatchEdnaSequenceInputSchema
 const MatchEdnaSequenceOutputSchema = z.object({
   speciesMatches: z
     .array(z.string())
-    .describe('An array of species that match the eDNA sequence.'),
+    .describe('An array of species that match the eDNA sequence. If no matches are found, this will be an empty array.'),
   confidenceScores: z
     .array(z.number())
-    .describe('An array of confidence scores for each species match.'),
+    .describe('An array of confidence scores for each species match. If no matches are found, this will be an empty array.'),
 });
 export type MatchEdnaSequenceOutput = z.infer<typeof MatchEdnaSequenceOutputSchema>;
 
@@ -48,6 +48,8 @@ eDNA Sequence: {{{ednaSequence}}}
 Species Database Description: {{{speciesDatabaseDescription}}}
 
 Output the species matches and their corresponding confidence scores.
+
+If no plausible species are found in the described database for the given sequence, return empty arrays for both 'speciesMatches' and 'confidenceScores'.
 
 Format the output as a JSON object with 'speciesMatches' and 'confidenceScores' arrays.
 `,

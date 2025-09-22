@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Dna, Loader2, Microscope, Percent } from "lucide-react";
+import { Dna, Loader2, Microscope, Percent, SearchX } from "lucide-react";
 import {
   matchEdnaSequence,
   MatchEdnaSequenceOutput,
@@ -158,7 +158,7 @@ export default function EdanMatchingPage() {
               </p>
             </div>
           )}
-          {results && (
+          {results && results.speciesMatches.length > 0 && (
             <div className="space-y-4">
               {results.speciesMatches.map((species, index) => (
                 <div key={index} className="space-y-2">
@@ -175,6 +175,13 @@ export default function EdanMatchingPage() {
                   <Progress value={results.confidenceScores[index]} className="h-2" />
                 </div>
               ))}
+            </div>
+          )}
+           {results && results.speciesMatches.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+              <SearchX className="h-12 w-12 mb-4" />
+              <p className="font-semibold">No Records Found</p>
+              <p className="text-sm mt-1">No species match could be found for the provided sequence.</p>
             </div>
           )}
           {!isLoading && !results && (
