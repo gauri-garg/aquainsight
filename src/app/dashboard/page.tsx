@@ -7,7 +7,6 @@ import {
   FileClock,
   FlaskConical,
 } from "lucide-react";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,29 +25,52 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import { datasets as initialDatasets } from "@/lib/data";
 import SpeciesDistributionChart from "@/components/species-distribution-chart";
 import OceanParameterChart from "@/components/ocean-parameter-chart";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
+import { ref, onValue } from "firebase/database";
+import { database } from "@/lib/firebase";
+import type { Dataset } from "@/lib/data";
 
 export default function Dashboard() {
-  const { role } = useAuth();
-  const [datasets, setDatasets] = useState(initialDatasets);
-  
-  useEffect(() => {
-    if (role === 'Student' || role === 'Researcher') {
-      setDatasets(initialDatasets.filter(d => d.status === 'Approved'));
-    } else {
-      setDatasets(initialDatasets);
-    }
-  }, [role]);
+  const { user, role } = useAuth();
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const totalDatasets = datasets.length;
-  const pendingSubmissions = initialDatasets.filter(
-    (d) => d.status === "Pending"
-  ).length;
+  useEffect(() => {
+    const datasetsRef = ref(database, "datasets");
+    const unsubscribe = onValue(datasetsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const datasetsData = snapshot.val();
+        const datasetsArray: Dataset[] = Object.keys(datasetsData).map(
+          (key) => ({
+            id: key,
+            ...datasetsData[key],
+          })
+        );
+        if (role === "Student" || role === "Researcher") {
+          setDatasets(datasetsArray.filter((d) => d.status === "Approved"));
+        } else {
+          setDatasets(datasetsArray);
+        }
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [role]);
+  
+  const pendingSubmissions = datasets.filter(d => d.submittedBy === user?.email && d.status === "Pending").length;
   const totalRecords = datasets.reduce((sum, d) => sum + d.records, 0);
+
+  const recentActivity = datasets.filter(d => {
+    const submissionDate = new Date(d.date);
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    return submissionDate > lastMonth;
+  }).reduce((sum, d) => sum + d.records, 0)
+
 
   return (
     <>
@@ -59,16 +81,16 @@ export default function Dashboard() {
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalDatasets}</div>
+            <div className="text-2xl font-bold">{datasets.length}</div>
             <p className="text-xs text-muted-foreground">
-              {role === 'CMLRE' ? '+2 since last month' : 'Approved datasets'}
+              Approved datasets
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Pending Submissions
+              Your Pending Submissions
             </CardTitle>
             <FileClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -101,9 +123,13 @@ export default function Dashboard() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
+            <div className="text-2xl font-bold">
+                {Intl.NumberFormat("en-US", { notation: "compact" }).format(
+                recentActivity
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+              Records added in the last month
             </p>
           </CardContent>
         </Card>
@@ -114,7 +140,7 @@ export default function Dashboard() {
             <div className="grid gap-2">
               <CardTitle>Recent Datasets</CardTitle>
               <CardDescription>
-                Overview of the most recently {role === 'CMLRE' ? 'added' : 'approved'} datasets.
+                Overview of the most recently approved datasets.
               </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">
@@ -130,7 +156,7 @@ export default function Dashboard() {
                 <TableRow>
                   <TableHead>Dataset</TableHead>
                   <TableHead className="hidden sm:table-cell">Type</TableHead>
-                  {role === 'CMLRE' && <TableHead className="hidden sm:table-cell">Status</TableHead>}
+                   {role === 'CMLRE' && <TableHead className="hidden sm:table-cell">Status</TableHead>}
                   <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead className="text-right">Records</TableHead>
                 </TableRow>
@@ -147,7 +173,7 @@ export default function Dashboard() {
                     <TableCell className="hidden sm:table-cell">
                       {dataset.type}
                     </TableCell>
-                    {role === 'CMLRE' && <TableCell className="hidden sm:table-cell">
+                     {role === 'CMLRE' && <TableCell className="hidden sm:table-cell">
                       <Badge
                         className="text-xs"
                         variant={

@@ -17,6 +17,7 @@ import {
   User,
 } from "firebase/auth";
 import { ref, set, get } from "firebase/database";
+import { datasets as initialDatasets } from "@/lib/data";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
@@ -60,9 +61,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "CMLRE-ABC-789",
         "CMLRE-QWE-456",
       ];
-      const snapshot = await get(ref(database, 'cmlreApprovedIds'));
-      if (!snapshot.exists()) {
-        await set(ref(database, 'cmlreApprovedIds'), approvedIds);
+      const cmlreApprovedIdsRef = ref(database, 'cmlreApprovedIds');
+      const cmlreSnapshot = await get(cmlreApprovedIdsRef);
+      if (!cmlreSnapshot.exists()) {
+        await set(cmlreApprovedIdsRef, approvedIds);
+      }
+      
+      const datasetsRef = ref(database, 'datasets');
+      const datasetsSnapshot = await get(datasetsRef);
+      if (!datasetsSnapshot.exists()) {
+         const initialData: { [key: string]: any } = {};
+         initialDatasets.forEach(dataset => {
+            initialData[dataset.id] = dataset;
+         });
+         await set(datasetsRef, initialData);
       }
     }
     
