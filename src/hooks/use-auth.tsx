@@ -18,7 +18,14 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { ref, set, get } from "firebase/database";
-import { datasets as initialDatasets, DatasetType } from "@/lib/data";
+import { 
+  datasets as initialDatasets, 
+  DatasetType,
+  physicalOceanographyData,
+  chemicalOceanographyData,
+  marineWeatherData,
+  oceanAtmosphereData
+} from "@/lib/data";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
@@ -104,6 +111,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await set(datasetsRef, dataToSeed);
           }
         }
+      }
+
+      // Seed detailed data tables
+      const detailedData = [
+        { name: 'physical_oceanography_data', data: physicalOceanographyData },
+        { name: 'chemical_oceanography_data', data: chemicalOceanographyData },
+        { name: 'marine_weather_data', data: marineWeatherData },
+        { name: 'ocean_atmosphere_data', data: oceanAtmosphereData },
+      ];
+
+      for (const table of detailedData) {
+         const dataRef = ref(database, table.name);
+         const snapshot = await get(dataRef);
+         if (!snapshot.exists()) {
+            const dataToSeed: { [key: string]: any } = {};
+            table.data.forEach((item, index) => {
+              dataToSeed[`data_${index}`] = item;
+            });
+            await set(dataRef, dataToSeed);
+         }
       }
     }
     

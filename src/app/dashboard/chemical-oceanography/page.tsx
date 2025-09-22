@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -24,10 +24,21 @@ import {
 } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
-import { chemicalOceanographyData } from "@/lib/data";
 import ChemicalOceanographyChart from "@/components/chemical-oceanography-chart";
+import { ref, onValue } from "firebase/database";
+import { database } from "@/lib/firebase";
 
-type DataPoint = (typeof chemicalOceanographyData)[0];
+type DataPoint = {
+  date: string;
+  latitude: number;
+  longitude: number;
+  salinity: number;
+  pH: number;
+  nitrate: number;
+  phosphate: number;
+  silicate: number;
+};
+
 
 export default function ChemicalOceanographyPage() {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -35,6 +46,22 @@ export default function ChemicalOceanographyPage() {
     to: addDays(new Date(2025, 7, 2), 28),
   });
   const [selectedData, setSelectedData] = useState<DataPoint | null>(null);
+  const [chemicalOceanographyData, setChemicalOceanographyData] = useState<DataPoint[]>([]);
+
+  useEffect(() => {
+    const dataRef = ref(database, 'chemical_oceanography_data');
+    const listener = onValue(dataRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        setChemicalOceanographyData(dataArray);
+      }
+    });
+
+    return () => {
+      // Detach listener
+    };
+  }, []);
 
   const filteredData = chemicalOceanographyData.filter((item) => {
     const itemDate = new Date(item.date);

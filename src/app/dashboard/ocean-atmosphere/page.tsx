@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -18,10 +18,21 @@ import {
 import { Calendar as CalendarIcon, Thermometer } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
-import { oceanAtmosphereData } from "@/lib/data";
 import OceanAtmosphereChart from "@/components/ocean-atmosphere-chart";
+import { ref, onValue } from "firebase/database";
+import { database } from "@/lib/firebase";
 
-type DataPoint = (typeof oceanAtmosphereData)[0];
+type DataPoint = {
+    date: string;
+    latitude: number;
+    longitude: number;
+    skinTemp: number;
+    airTemp3m: number;
+    ventTemp: number;
+    ventSpeed: number;
+    pressure: number;
+};
+
 
 export default function OceanAtmospherePage() {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -29,6 +40,22 @@ export default function OceanAtmospherePage() {
     to: addDays(new Date(2025, 7, 1), 29),
   });
   const [selectedData, setSelectedData] = useState<DataPoint | null>(null);
+  const [oceanAtmosphereData, setOceanAtmosphereData] = useState<DataPoint[]>([]);
+
+  useEffect(() => {
+    const dataRef = ref(database, 'ocean_atmosphere_data');
+    const listener = onValue(dataRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        setOceanAtmosphereData(dataArray);
+      }
+    });
+
+    return () => {
+      // Detach listener
+    };
+  }, []);
 
   const filteredData = oceanAtmosphereData.filter((item) => {
     const itemDate = new Date(item.date);

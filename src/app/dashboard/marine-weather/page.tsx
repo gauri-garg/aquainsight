@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -25,10 +25,27 @@ import {
 } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
-import { marineWeatherData } from "@/lib/data";
 import MarineWeatherChart from "@/components/marine-weather-chart";
+import { ref, onValue } from "firebase/database";
+import { database } from "@/lib/firebase";
 
-type DataPoint = (typeof marineWeatherData)[0];
+type DataPoint = {
+    date: string;
+    latitude: number;
+    longitude: number;
+    sstSkin: number;
+    airTemp: number;
+    currentSpeed: number;
+    airPressure: number;
+    humidity: number;
+    windSpeed: number;
+    windDirection: number;
+    waveHeight: number;
+    waveDirection: number;
+    wavePeriod: number;
+    currentDirection: number;
+};
+
 
 export default function MarineWeatherPage() {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -36,6 +53,22 @@ export default function MarineWeatherPage() {
     to: addDays(new Date(2025, 7, 21), 30),
   });
   const [selectedData, setSelectedData] = useState<DataPoint | null>(null);
+  const [marineWeatherData, setMarineWeatherData] = useState<DataPoint[]>([]);
+
+  useEffect(() => {
+    const dataRef = ref(database, 'marine_weather_data');
+    const listener = onValue(dataRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        setMarineWeatherData(dataArray);
+      }
+    });
+
+    return () => {
+      // Detach listener
+    };
+  }, []);
 
   const filteredData = marineWeatherData.filter((item) => {
     const itemDate = new Date(item.date);
