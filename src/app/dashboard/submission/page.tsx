@@ -30,8 +30,20 @@ import {
   GenerateDatasetSummaryOutput,
 } from "@/ai/flows/generate-dataset-summary";
 import { useToast } from "@/hooks/use-toast";
+import { database } from "@/lib/firebase";
+import { ref, push, set } from "firebase/database";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
+  datasetName: z.string().min(5, "Dataset name must be at least 5 characters."),
+  datasetType: z.enum(["Oceanographic", "Fisheries", "Molecular"]),
   datasetDescription: z
     .string()
     .min(20, "Please provide a more detailed description."),
@@ -52,10 +64,12 @@ export default function DataSubmissionPage() {
     null
   );
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      datasetName: "",
       datasetDescription: "",
     },
   });
@@ -64,17 +78,43 @@ export default function DataSubmissionPage() {
     setIsLoading(true);
     setSummary(null);
 
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to submit a dataset.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const fileContent = await data.file.text();
-      // Use first 10 lines as a sample
-      const sample = fileContent.split("\n").slice(0, 10).join("\n");
+      const rows = fileContent.split("\n");
+      const recordCount = rows.length > 1 ? rows.length -1 : 0;
+      const sample = rows.slice(0, 10).join("\n");
 
-      const response = await generateDatasetSummary({
+      const aiSummary = await generateDatasetSummary({
         datasetDescription: data.datasetDescription,
         datasetSample: sample,
       });
+      setSummary(aiSummary);
 
-      setSummary(response);
+      const datasetsRef = ref(database, "datasets");
+      const newDatasetRef = push(datasetsRef);
+
+      await set(newDatasetRef, {
+        id: newDatasetRef.key,
+        name: data.datasetName,
+        type: data.datasetType,
+        submittedBy: user.email,
+        status: "Pending",
+        date: new Date().toISOString().split("T")[0],
+        records: recordCount,
+        description: data.datasetDescription,
+        summary: aiSummary.summary,
+      });
+
       toast({
         title: "Submission Successful",
         description: "Your dataset has been submitted for review.",
@@ -107,6 +147,42 @@ export default function DataSubmissionPage() {
           <CardContent className="space-y-6">
             <FormField
               control={form.control}
+              name="datasetName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dataset Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Antarctic Krill Survey 2024" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="datasetType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dataset Type</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a dataset type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Oceanographic">Oceanographic</SelectItem>
+                      <SelectItem value="Fisheries">Fisheries</SelectItem>
+                      <SelectItem value="Molecular">Molecular</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="file"
               render={({ field }) => (
                 <FormItem>
@@ -121,7 +197,7 @@ export default function DataSubmissionPage() {
                     />
                   </FormControl>
                   <FormDescription>
-                    Please upload your data in a comma-separated value format.
+                    Please upload your data in a comma-separated value format. The first row should be the header.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
