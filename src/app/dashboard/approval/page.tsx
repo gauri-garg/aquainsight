@@ -18,15 +18,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
-import { Dataset, datasets as initialDatasets } from "@/lib/data";
+import { Dataset, DatasetType } from "@/lib/data";
+import { database } from "@/lib/firebase";
 import { Check, Download, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ref, onValue, update } from "firebase/database";
+
+const datasetTypeToTableName = (type: DatasetType): string => {
+  return type.toLowerCase().replace(/ /g, '_');
+}
 
 export default function ApprovalPage() {
   const { role } = useAuth();
   const router = useRouter();
-  const [datasets, setDatasets] = useState<Dataset[]>(initialDatasets);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
 
   useEffect(() => {
     if (role !== "CMLRE") {
@@ -34,15 +40,51 @@ export default function ApprovalPage() {
     }
   }, [role, router]);
 
-  const handleApproval = (datasetId: string, newStatus: "Approved" | "Rejected") => {
-    setDatasets(
-      datasets.map((d) => (d.id === datasetId ? { ...d, status: newStatus } : d))
-    );
-  };
+  useEffect(() => {
+    const allDatasetTypes: DatasetType[] = [
+      "Physical Oceanography",
+      "Chemical Oceanography",
+      "Marine Weather",
+      "Ocean Atmosphere",
+      "Fisheries",
+      "eDNA"
+    ];
 
-  const pendingDatasets = datasets.filter(
-    (d) => d.status === "Pending" || d.status === "Rejected"
-  );
+    let allDatasets: Dataset[] = [];
+    let listeners: any[] = [];
+
+    allDatasetTypes.forEach(type => {
+      const tableName = datasetTypeToTableName(type);
+      const datasetsRef = ref(database, tableName);
+      
+      const listener = onValue(datasetsRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const datasetsData = snapshot.val();
+          const datasetsArray: Dataset[] = Object.keys(datasetsData).map(
+            (key) => ({
+              id: key,
+              ...datasetsData[key],
+            })
+          );
+          
+          allDatasets = allDatasets.filter(d => d.type !== type).concat(datasetsArray);
+          const pending = allDatasets.filter(d => d.status === "Pending");
+          setDatasets(pending);
+        }
+      });
+      listeners.push({ref: datasetsRef, listener});
+    });
+
+    return () => {
+      // Detach listeners
+    };
+  }, []);
+
+  const handleApproval = (dataset: Dataset, newStatus: "Approved" | "Rejected") => {
+    const tableName = datasetTypeToTableName(dataset.type);
+    const datasetRef = ref(database, `${tableName}/${dataset.id}`);
+    update(datasetRef, { status: newStatus });
+  };
   
   if (role !== "CMLRE") {
     return (
@@ -70,31 +112,19 @@ export default function ApprovalPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Dataset Name</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Submitted By</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pendingDatasets.map((dataset) => (
+            {datasets.map((dataset) => (
               <TableRow key={dataset.id}>
                 <TableCell className="font-medium">{dataset.name}</TableCell>
+                <TableCell><Badge variant="secondary">{dataset.type}</Badge></TableCell>
                 <TableCell>{dataset.submittedBy}</TableCell>
                 <TableCell>{dataset.date}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      dataset.status === "Pending"
-                        ? "secondary"
-                        : dataset.status === "Approved"
-                        ? "default"
-                        : "destructive"
-                    }
-                  >
-                    {dataset.status}
-                  </Badge>
-                </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-2">
                     <Button variant="outline" size="sm">
@@ -107,7 +137,7 @@ export default function ApprovalPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 text-green-600 hover:text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300"
-                          onClick={() => handleApproval(dataset.id, "Approved")}
+                          onClick={() => handleApproval(dataset, "Approved")}
                         >
                           <Check className="h-4 w-4" />
                         </Button>
@@ -115,7 +145,7 @@ export default function ApprovalPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
-                           onClick={() => handleApproval(dataset.id, "Rejected")}
+                           onClick={() => handleApproval(dataset, "Rejected")}
                         >
                           <X className="h-4 w-4" />
                         </Button>

@@ -24,7 +24,8 @@ import {
   physicalOceanographyData,
   chemicalOceanographyData,
   marineWeatherData,
-  oceanAtmosphereData
+  oceanAtmosphereData,
+  fisheriesData
 } from "@/lib/data";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
@@ -119,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         { name: 'chemical_oceanography_data', data: chemicalOceanographyData },
         { name: 'marine_weather_data', data: marineWeatherData },
         { name: 'ocean_atmosphere_data', data: oceanAtmosphereData },
+        { name: 'fisheries_data', data: fisheriesData }
       ];
 
       for (const table of detailedData) {

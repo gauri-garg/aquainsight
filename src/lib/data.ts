@@ -304,6 +304,14 @@ export const marineWeatherData = [
   { date: "2025-09-20", latitude: 10.9, longitude: 72.21, sstSkin: 28.42, airTemp: 27.77, currentSpeed: 0.5, airPressure: 1010.21, humidity: 78.75, windSpeed: 14.19, windDirection: 295.33, waveHeight: 1.27, waveDirection: 198.67, wavePeriod: 10.21, currentDirection: 88.79 }
 ];
 
+export const fisheriesData = [
+    { date: "2025-01-15", latitude: -75.5, longitude: -100.0, species: "Antarctic Krill", catch_kg: 5000, gear_type: "Pelagic trawl", vessel: "FV Ocean Explorer" },
+    { date: "2025-01-16", latitude: -75.6, longitude: -101.2, species: "Antarctic Krill", catch_kg: 7500, gear_type: "Pelagic trawl", vessel: "FV Ocean Explorer" },
+    { date: "2025-02-01", latitude: -78.2, longitude: 165.5, species: "Antarctic Toothfish", catch_kg: 1200, gear_type: "Longline", vessel: "FV Southern Star" },
+    { date: "2025-02-02", latitude: -78.4, longitude: 166.0, species: "Antarctic Toothfish", catch_kg: 1500, gear_type: "Longline", vessel: "FV Southern Star" },
+    { date: "2025-02-20", latitude: -65.0, longitude: -62.8, species: "Mackerel Icefish", catch_kg: 800, gear_type: "Bottom trawl", vessel: "FV Ice Hunter" },
+];
+
 export const recentActivity = [
     {
         type: "New Dataset",
