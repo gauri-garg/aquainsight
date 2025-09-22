@@ -40,10 +40,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatasetType } from "@/lib/data";
 
 const formSchema = z.object({
   datasetName: z.string().min(5, "Dataset name must be at least 5 characters."),
-  datasetType: z.enum(["Oceanographic", "Fisheries", "Molecular"]),
+  datasetType: z.enum([
+    "Physical Oceanography",
+    "Chemical Oceanography",
+    "Marine Weather",
+    "Ocean Atmosphere",
+    "Fisheries",
+  ]),
   datasetDescription: z
     .string()
     .min(20, "Please provide a more detailed description."),
@@ -91,7 +98,7 @@ export default function DataSubmissionPage() {
     try {
       const fileContent = await data.file.text();
       const rows = fileContent.split("\n");
-      const recordCount = rows.length > 1 ? rows.length -1 : 0;
+      const recordCount = rows.length > 1 ? rows.length - 1 : 0;
       const sample = rows.slice(0, 10).join("\n");
 
       const aiSummary = await generateDatasetSummary({
@@ -152,28 +159,44 @@ export default function DataSubmissionPage() {
                 <FormItem>
                   <FormLabel>Dataset Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Antarctic Krill Survey 2024" {...field} />
+                    <Input
+                      placeholder="e.g., Antarctic Krill Survey 2024"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
               name="datasetType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Dataset Type</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a dataset type" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Oceanographic">Oceanographic</SelectItem>
+                      <SelectItem value="Physical Oceanography">
+                        Physical Oceanography
+                      </SelectItem>
+                      <SelectItem value="Chemical Oceanography">
+                        Chemical Oceanography
+                      </SelectItem>
+                      <SelectItem value="Marine Weather">
+                        Marine Weather
+                      </SelectItem>
+                      <SelectItem value="Ocean Atmosphere">
+                        Ocean Atmosphere
+                      </SelectItem>
                       <SelectItem value="Fisheries">Fisheries</SelectItem>
-                      <SelectItem value="Molecular">Molecular</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -192,12 +215,15 @@ export default function DataSubmissionPage() {
                       type="file"
                       accept=".csv"
                       onChange={(e) =>
-                        field.onChange(e.target.files ? e.target.files[0] : null)
+                        field.onChange(
+                          e.target.files ? e.target.files[0] : null
+                        )
                       }
                     />
                   </FormControl>
                   <FormDescription>
-                    Please upload your data in a comma-separated value format. The first row should be the header.
+                    Please upload your data in a comma-separated value format.
+                    The first row should be the header.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

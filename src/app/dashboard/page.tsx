@@ -26,12 +26,14 @@ import {
 } from "@/components/ui/table";
 import Link from "next/link";
 import SpeciesDistributionChart from "@/components/species-distribution-chart";
-import OceanParameterChart from "@/components/ocean-parameter-chart";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import { ref, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
 import type { Dataset } from "@/lib/data";
+import DataCollectionTrendsChart from "@/components/data-collection-trends-chart";
+import DataQualityDistributionChart from "@/components/data-quality-distribution-chart";
+import GeographicDistributionMap from "@/components/geographic-distribution-map";
 
 export default function Dashboard() {
   const { user, role } = useAuth();
@@ -211,18 +213,35 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Ocean Parameter Trends</CardTitle>
-          <CardDescription>
-            Monthly average sea surface temperature and salinity in the Southern
-            Ocean.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <OceanParameterChart />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card>
+            <CardHeader>
+                <CardTitle>Data Collection Trends</CardTitle>
+                 <CardDescription>Recent dataset submissions by type.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <DataCollectionTrendsChart />
+            </CardContent>
+        </Card>
+         <Card>
+            <CardHeader>
+                <CardTitle>Data Quality Distribution</CardTitle>
+                <CardDescription>Distribution of datasets by quality status.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <DataQualityDistributionChart />
+            </CardContent>
+        </Card>
+         <Card>
+            <CardHeader>
+                <CardTitle>Geographic Distribution</CardTitle>
+                <CardDescription>Location of recent data collection points.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <GeographicDistributionMap />
+            </CardContent>
+        </Card>
+      </div>
     </>
   );
 }

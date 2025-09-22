@@ -1,8 +1,15 @@
+export type DatasetType =
+  | "Physical Oceanography"
+  | "Chemical Oceanography"
+  | "Marine Weather"
+  | "Ocean Atmosphere"
+  | "Fisheries";
+
 
 export type Dataset = {
   id: string;
   name: string;
-  type: "Oceanographic" | "Fisheries" | "Molecular";
+  type: DatasetType;
   submittedBy: string;
   status: "Approved" | "Pending" | "Rejected";
   date: string;
@@ -22,7 +29,7 @@ export const datasets: Dataset[] = [
   {
     id: "DS002",
     name: "Southern Ocean Salinity Profile",
-    type: "Oceanographic",
+    type: "Physical Oceanography",
     submittedBy: "Dr. Ben Carter",
     status: "Approved",
     date: "2023-10-05",
@@ -31,7 +38,7 @@ export const datasets: Dataset[] = [
   {
     id: "DS003",
     name: "Ross Sea eDNA Metabarcoding",
-    type: "Molecular",
+    type: "Fisheries",
     submittedBy: "Dr. Chloe Garcia",
     status: "Pending",
     date: "2024-01-15",
@@ -49,7 +56,7 @@ export const datasets: Dataset[] = [
   {
     id: "DS005",
     name: "Weddell Sea Phytoplankton Bloom",
-    type: "Oceanographic",
+    type: "Chemical Oceanography",
     submittedBy: "Dr. Emily White",
     status: "Approved",
     date: "2023-12-01",
@@ -58,7 +65,7 @@ export const datasets: Dataset[] = [
   {
     id: "DS006",
     name: "Patagonian Toothfish Genetics",
-    type: "Molecular",
+    type: "Fisheries",
     submittedBy: "Dr. Frank Miller",
     status: "Rejected",
     date: "2024-01-02",
@@ -67,7 +74,7 @@ export const datasets: Dataset[] = [
   {
     id: "DS007",
     name: "Amundsen Sea Current Metrics",
-    type: "Oceanographic",
+    type: "Physical Oceanography",
     submittedBy: "Dr. Grace Hall",
     status: "Pending",
     date: "2024-01-22",
@@ -294,12 +301,12 @@ export const marineWeatherData = [
 ];
 
 export const dataCollectionTrends = [
-  { month: "Apr", oceanographic: 45, fisheries: 30, molecular: 15 },
-  { month: "May", oceanographic: 50, fisheries: 35, molecular: 20 },
-  { month: "Jun", oceanographic: 55, fisheries: 40, molecular: 25 },
-  { month: "Jul", oceanographic: 61, fisheries: 42, molecular: 27 },
-  { month: "Aug", oceanographic: 58, fisheries: 38, molecular: 22 },
-  { month: "Sep", oceanographic: 52, fisheries: 34, molecular: 18 },
+  { month: "Apr", "Physical Oceanography": 45, "Fisheries": 30, "Chemical Oceanography": 15 },
+  { month: "May", "Physical Oceanography": 50, "Fisheries": 35, "Chemical Oceanography": 20 },
+  { month: "Jun", "Physical Oceanography": 55, "Fisheries": 40, "Chemical Oceanography": 25 },
+  { month: "Jul", "Physical Oceanography": 61, "Fisheries": 42, "Chemical Oceanography": 27 },
+  { month: "Aug", "Physical Oceanography": 58, "Fisheries": 38, "Chemical Oceanography": 22 },
+  { month: "Sep", "Physical Oceanography": 52, "Fisheries": 34, "Chemical Oceanography": 18 },
 ];
 
 export const dataQualityDistribution = [
@@ -311,12 +318,12 @@ export const dataQualityDistribution = [
 
 export const recentActivity = [
     {
-        type: "Oceanographic",
+        type: "Physical Oceanography",
         timestamp: "Sep 16, 17:29",
         details: "Pacific Station Alpha - 12.5°C"
     },
     {
-        type: "Oceanographic",
+        type: "Physical Oceanography",
         timestamp: "Sep 16, 17:29",
         details: "Deep Pacific Station - 4.2°C"
     }

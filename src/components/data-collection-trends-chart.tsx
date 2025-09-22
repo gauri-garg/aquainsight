@@ -11,16 +11,16 @@ import {
 import { dataCollectionTrends } from "@/lib/data";
 
 const chartConfig = {
-  oceanographic: {
-    label: "Oceanographic",
+  "Physical Oceanography": {
+    label: "Physical Oceanography",
     color: "hsl(var(--chart-1))",
   },
-  fisheries: {
+  "Fisheries": {
     label: "Fisheries",
     color: "hsl(var(--chart-2))",
   },
-  molecular: {
-    label: "Molecular",
+  "Chemical Oceanography": {
+    label: "Chemical Oceanography",
     color: "hsl(var(--chart-3))",
   },
 } satisfies ChartConfig;
@@ -68,27 +68,27 @@ export default function DataCollectionTrendsChart() {
           }
         />
         <Area
-          dataKey="oceanographic"
+          dataKey="Physical Oceanography"
           type="natural"
-          fill="var(--color-oceanographic)"
+          fill="var(--color-Physical Oceanography)"
           fillOpacity={0.4}
-          stroke="var(--color-oceanographic)"
+          stroke="var(--color-Physical Oceanography)"
           stackId="a"
         />
         <Area
-          dataKey="fisheries"
+          dataKey="Fisheries"
           type="natural"
-          fill="var(--color-fisheries)"
+          fill="var(--color-Fisheries)"
           fillOpacity={0.4}
-          stroke="var(--color-fisheries)"
+          stroke="var(--color-Fisheries)"
           stackId="a"
         />
         <Area
-          dataKey="molecular"
+          dataKey="Chemical Oceanography"
           type="natural"
-          fill="var(--color-molecular)"
+          fill="var(--color-Chemical Oceanography)"
           fillOpacity={0.4}
-          stroke="var(--color-molecular)"
+          stroke="var(--color-Chemical Oceanography)"
           stackId="a"
         />
       </AreaChart>
