@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,6 +15,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Bell } from "lucide-react";
 
 export function UserNav() {
   const { user, role, logout } = useAuth();
@@ -25,43 +27,56 @@ export function UserNav() {
   };
   
   const userDetails = {
-    name: user?.displayName || `${role} User`,
-    email: user?.email || ""
+    name: user?.displayName || (role === 'CMLRE' ? "CMLRE Staff" : "Dr. Research"),
+    email: user?.email || "",
+    roleDescription: role === "CMLRE" ? "Staff" : "Marine Biologist"
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-9 w-9">
-            <AvatarImage
-              src="https://picsum.photos/seed/user-avatar/100/100"
-              alt="@cmlre-user"
-              data-ai-hint="person face"
-            />
-            <AvatarFallback>{role?.charAt(0)}</AvatarFallback>
-          </Avatar>
+    <div className="flex items-center gap-2">
+       <Button variant="ghost" size="icon">
+          <Bell className="h-5 w-5" />
+          <span className="sr-only">Notifications</span>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{userDetails.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {userDetails.email}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          Log out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-3 cursor-pointer">
+                 <Avatar className="h-9 w-9">
+                    <AvatarImage
+                    src="https://picsum.photos/seed/user-avatar/100/100"
+                    alt="@cmlre-user"
+                    data-ai-hint="person face"
+                    />
+                    <AvatarFallback>{role?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="hidden md:flex flex-col items-start">
+                    <p className="text-sm font-medium leading-none">{userDetails.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                    {userDetails.roleDescription}
+                    </p>
+                </div>
+            </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{userDetails.name}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {userDetails.email}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem>Settings</DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

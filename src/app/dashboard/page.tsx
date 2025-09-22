@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -6,6 +7,12 @@ import {
   Database,
   FileClock,
   FlaskConical,
+  BarChart,
+  Fish,
+  Dna,
+  FolderKanban,
+  AreaChart,
+  LineChart as LineChartIcon
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,15 +32,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import SpeciesDistributionChart from "@/components/species-distribution-chart";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import { ref, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
-import type { Dataset } from "@/lib/data";
+import type { Dataset, DatasetType } from "@/lib/data";
 import DataCollectionTrendsChart from "@/components/data-collection-trends-chart";
 import DataQualityDistributionChart from "@/components/data-quality-distribution-chart";
 import GeographicDistributionMap from "@/components/geographic-distribution-map";
+import { recentActivity } from "@/lib/data";
 
 export default function Dashboard() {
   const { user, role } = useAuth();
@@ -56,6 +63,8 @@ export default function Dashboard() {
         } else {
           setDatasets(datasetsArray);
         }
+      } else {
+        setDatasets([]);
       }
       setLoading(false);
     });
@@ -63,182 +72,146 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [role]);
   
-  const pendingSubmissions = datasets.filter(d => d.submittedBy === user?.email && d.status === "Pending").length;
-  const totalRecords = datasets.reduce((sum, d) => sum + d.records, 0);
+  const totalDatasets = datasets.length;
+  const oceanographicCount = datasets.filter(d => d.type === "Physical Oceanography" || d.type === "Chemical Oceanography").length;
+  const fisheriesCount = datasets.filter(d => d.type === "Fisheries").length;
+  const molecularCount = datasets.filter(d => d.type === "eDNA").length || 1; // Mocked
+  const activeProjects = 2; // Mocked
 
-  const recentActivity = datasets.filter(d => {
-    const submissionDate = new Date(d.date);
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    return submissionDate > lastMonth;
-  }).reduce((sum, d) => sum + d.records, 0)
+  const getStatChange = (type: string) => {
+      switch(type) {
+          case 'total': return "+12% this month";
+          case 'oceanographic': return "+8% this week";
+          case 'fisheries': return "+15% this month";
+          case 'molecular': return "+6% this week";
+          case 'active': return "3 new projects";
+          default: return "";
+      }
+  }
 
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Ocean Intelligence Dashboard</h1>
+          <p className="text-muted-foreground">Unified insights across oceanographic, fisheries, and molecular biodiversity data</p>
+        </div>
+        <div className="flex gap-2">
+            <Button variant="outline"><LineChartIcon className="mr-2 h-4 w-4"/>Generate Report</Button>
+            <Button><BarChart className="mr-2 h-4 w-4"/>Run AI Analysis</Button>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Datasets</CardTitle>
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{datasets.length}</div>
+            <div className="text-2xl font-bold">{totalDatasets}</div>
             <p className="text-xs text-muted-foreground">
-              Approved datasets
+              {getStatChange('total')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Your Pending Submissions
+              Oceanographic
             </CardTitle>
-            <FileClock className="h-4 w-4 text-muted-foreground" />
+            <AreaChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{pendingSubmissions}</div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
+            <div className="text-2xl font-bold">{oceanographicCount}</div>
+            <p className="text-xs text-muted-foreground">{getStatChange('oceanographic')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
-            <FlaskConical className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Fisheries</CardTitle>
+            <Fish className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {Intl.NumberFormat("en-US", { notation: "compact" }).format(
-                totalRecords
-              )}
-            </div>
+            <div className="text-2xl font-bold">{fisheriesCount}</div>
             <p className="text-xs text-muted-foreground">
-              Across all approved datasets
+              {getStatChange('fisheries')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Recent Activity
+              Molecular
             </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <Dna className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-                {Intl.NumberFormat("en-US", { notation: "compact" }).format(
-                recentActivity
-              )}
-            </div>
+            <div className="text-2xl font-bold">{molecularCount}</div>
             <p className="text-xs text-muted-foreground">
-              Records added in the last month
+              {getStatChange('molecular')}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Active Projects
+            </CardTitle>
+            <FolderKanban className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeProjects}</div>
+            <p className="text-xs text-muted-foreground">
+              {getStatChange('active')}
             </p>
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader className="flex flex-row items-center">
-            <div className="grid gap-2">
-              <CardTitle>Recent Datasets</CardTitle>
-              <CardDescription>
-                Overview of the most recently approved datasets.
-              </CardDescription>
-            </div>
-            <Button asChild size="sm" className="ml-auto gap-1">
-              <Link href="#">
-                View All
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Dataset</TableHead>
-                  <TableHead className="hidden sm:table-cell">Type</TableHead>
-                   {role === 'CMLRE' && <TableHead className="hidden sm:table-cell">Status</TableHead>}
-                  <TableHead className="hidden md:table-cell">Date</TableHead>
-                  <TableHead className="text-right">Records</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {datasets.slice(0, 5).map((dataset) => (
-                  <TableRow key={dataset.id}>
-                    <TableCell>
-                      <div className="font-medium">{dataset.name}</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        {dataset.submittedBy}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {dataset.type}
-                    </TableCell>
-                     {role === 'CMLRE' && <TableCell className="hidden sm:table-cell">
-                      <Badge
-                        className="text-xs"
-                        variant={
-                          dataset.status === "Approved"
-                            ? "default"
-                            : dataset.status === "Pending"
-                            ? "secondary"
-                            : "destructive"
-                        }
-                      >
-                        {dataset.status}
-                      </Badge>
-                    </TableCell>}
-                    <TableCell className="hidden md:table-cell">
-                      {dataset.date}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {Intl.NumberFormat("en-US").format(dataset.records)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Species Distribution</CardTitle>
-            <CardDescription>
-              Breakdown of species in recent eDNA surveys.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SpeciesDistributionChart />
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
             <CardHeader>
                 <CardTitle>Data Collection Trends</CardTitle>
-                 <CardDescription>Recent dataset submissions by type.</CardDescription>
             </CardHeader>
             <CardContent>
                 <DataCollectionTrendsChart />
             </CardContent>
         </Card>
-         <Card>
+        <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Data Quality Distribution</CardTitle>
-                <CardDescription>Distribution of datasets by quality status.</CardDescription>
             </CardHeader>
             <CardContent>
                 <DataQualityDistributionChart />
             </CardContent>
         </Card>
-         <Card>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Geographic Distribution</CardTitle>
                 <CardDescription>Location of recent data collection points.</CardDescription>
             </CardHeader>
             <CardContent>
                 <GeographicDistributionMap />
+            </CardContent>
+        </Card>
+         <Card>
+            <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-start gap-4">
+                        <div className="bg-muted p-2 rounded-md">
+                            <Waves className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium">{activity.type} <span className="text-xs text-muted-foreground ml-2">{activity.timestamp}</span></p>
+                            <p className="text-sm text-muted-foreground">{activity.details}</p>
+                        </div>
+                    </div>
+                ))}
             </CardContent>
         </Card>
       </div>

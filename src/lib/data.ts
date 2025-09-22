@@ -1,3 +1,4 @@
+
 export type DatasetType =
   | "Physical Oceanography"
   | "Chemical Oceanography"
@@ -301,35 +302,35 @@ export const marineWeatherData = [
 ];
 
 export const dataCollectionTrends = [
-  { month: "Apr", "Physical Oceanography": 45, "Fisheries": 30, "Chemical Oceanography": 15 },
-  { month: "May", "Physical Oceanography": 50, "Fisheries": 35, "Chemical Oceanography": 20 },
-  { month: "Jun", "Physical Oceanography": 55, "Fisheries": 40, "Chemical Oceanography": 25 },
-  { month: "Jul", "Physical Oceanography": 61, "Fisheries": 42, "Chemical Oceanography": 27 },
-  { month: "Aug", "Physical Oceanography": 58, "Fisheries": 38, "Chemical Oceanography": 22 },
-  { month: "Sep", "Physical Oceanography": 52, "Fisheries": 34, "Chemical Oceanography": 18 },
+  { month: "Apr", oceanographic: 45, fisheries: 30, molecular: 15 },
+  { month: "May", oceanographic: 50, fisheries: 35, molecular: 20 },
+  { month: "Jun", oceanographic: 55, fisheries: 40, molecular: 25 },
+  { month: "Jul", oceanographic: 61, fisheries: 42, molecular: 27 },
+  { month: "Aug", oceanographic: 58, fisheries: 38, molecular: 22 },
+  { month: "Sep", oceanographic: 52, fisheries: 34, molecular: 18 },
 ];
 
 export const dataQualityDistribution = [
-  { name: "High Quality", value: 2, fill: "hsl(var(--chart-1))" },
-  { name: "Medium Quality", value: 0, fill: "hsl(var(--chart-2))" },
-  { name: "Low Quality", value: 0, fill: "hsl(var(--chart-3))" },
-  { name: "Preliminary", value: 0, fill: "hsl(var(--chart-4))" },
+  { name: "High Quality", value: 2, fill: "hsl(var(--chart-2))" },
+  { name: "Medium Quality", value: 0, fill: "hsl(var(--chart-3))" },
+  { name: "Low Quality", value: 0, fill: "hsl(var(--chart-4))" },
+  { name: "Preliminary", value: 0, fill: "hsl(var(--chart-5))" },
 ];
 
 export const recentActivity = [
     {
-        type: "Physical Oceanography",
+        type: "Oceanographic",
         timestamp: "Sep 16, 17:29",
         details: "Pacific Station Alpha - 12.5°C"
     },
     {
-        type: "Physical Oceanography",
+        type: "Oceanographic",
         timestamp: "Sep 16, 17:29",
         details: "Deep Pacific Station - 4.2°C"
     }
 ];
 
 export const geographicDistribution = [
-    { name: "Pacific Station Alpha", x: 200, y: 100 },
-    { name: "Deep Pacific Station", x: 400, y: 150 },
+    { name: "Pacific Station Alpha", x: 45, y: 40 },
+    { name: "Deep Pacific Station", x: 70, y: 60 },
 ]

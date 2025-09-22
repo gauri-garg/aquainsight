@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -7,21 +8,23 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
+  ChartLegend,
+  ChartLegendContent,
 } from "@/components/ui/chart";
 import { dataCollectionTrends } from "@/lib/data";
 
 const chartConfig = {
-  "Physical Oceanography": {
-    label: "Physical Oceanography",
-    color: "hsl(var(--chart-1))",
-  },
-  "Fisheries": {
-    label: "Fisheries",
+  oceanographic: {
+    label: "Oceanographic",
     color: "hsl(var(--chart-2))",
   },
-  "Chemical Oceanography": {
-    label: "Chemical Oceanography",
+  fisheries: {
+    label: "Fisheries",
     color: "hsl(var(--chart-3))",
+  },
+  molecular: {
+    label: "Molecular",
+    color: "hsl(var(--chart-5))",
   },
 } satisfies ChartConfig;
 
@@ -31,11 +34,13 @@ export default function DataCollectionTrendsChart() {
       <AreaChart
         data={dataCollectionTrends}
         margin={{
-          left: 12,
-          right: 12,
+          left: -20,
+          top: 10,
+          right: 10,
+          bottom: -10
         }}
       >
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
         <XAxis
           dataKey="month"
           tickLine={false}
@@ -52,43 +57,44 @@ export default function DataCollectionTrendsChart() {
           cursor={false}
           content={
             <ChartTooltipContent
-              formatter={(value, name) => (
-                <div className="flex items-center">
-                  <div
-                    className="w-2.5 h-2.5 mr-2 rounded-full"
-                    style={{ backgroundColor: chartConfig[name as keyof typeof chartConfig]?.color }}
-                  />
-                  <div className="flex justify-between w-full">
-                    <span>{chartConfig[name as keyof typeof chartConfig]?.label}</span>
-                    <span className="ml-4 font-bold">{value}</span>
-                  </div>
-                </div>
-              )}
+                formatter={(value, name) => (
+                    <div className="flex items-center">
+                      <div
+                        className="w-2.5 h-2.5 mr-2 rounded-full"
+                        style={{ backgroundColor: chartConfig[name as keyof typeof chartConfig]?.color }}
+                      />
+                      <div className="flex justify-between w-full">
+                        <span>{chartConfig[name as keyof typeof chartConfig]?.label}</span>
+                        <span className="ml-4 font-bold">{value}</span>
+                      </div>
+                    </div>
+                  )}
             />
           }
         />
+        <ChartLegend content={<ChartLegendContent />} />
         <Area
-          dataKey="Physical Oceanography"
+          dataKey="oceanographic"
           type="natural"
-          fill="var(--color-Physical Oceanography)"
+          fill="var(--color-oceanographic)"
           fillOpacity={0.4}
-          stroke="var(--color-Physical Oceanography)"
+          stroke="var(--color-oceanographic)"
           stackId="a"
         />
         <Area
-          dataKey="Fisheries"
+          dataKey="fisheries"
           type="natural"
-          fill="var(--color-Fisheries)"
+          fill="var(--color-fisheries)"
           fillOpacity={0.4}
-          stroke="var(--color-Fisheries)"
+          stroke="var(--color-fisheries)"
           stackId="a"
         />
         <Area
-          dataKey="Chemical Oceanography"
+          dataKey="molecular"
           type="natural"
-          fill="var(--color-Chemical Oceanography)"
+          fill="var(--color-molecular)"
           fillOpacity={0.4}
-          stroke="var(--color-Chemical Oceanography)"
+          stroke="var(--color-molecular)"
           stackId="a"
         />
       </AreaChart>

@@ -16,23 +16,24 @@ import { dataQualityDistribution } from "@/lib/data";
 const chartConfig = {
   "High Quality": {
     label: "High Quality",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--chart-2))",
   },
   "Medium Quality": {
     label: "Medium Quality",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(var(--chart-3))",
   },
   "Low Quality": {
     label: "Low Quality",
-    color: "hsl(var(--chart-3))",
+    color: "hsl(var(--chart-4))",
   },
   "Preliminary": {
     label: "Preliminary",
-    color: "hsl(var(--chart-4))",
+    color: "hsl(var(--chart-5))",
   },
 } satisfies ChartConfig;
 
 export default function DataQualityDistributionChart() {
+    const total = dataQualityDistribution.reduce((acc, curr) => acc + curr.value, 0);
   return (
     <ChartContainer config={chartConfig} className="h-[250px] w-full">
       <PieChart>
@@ -41,9 +42,9 @@ export default function DataQualityDistributionChart() {
           data={dataQualityDistribution}
           dataKey="value"
           nameKey="name"
-          innerRadius={60}
-          outerRadius={80}
-          strokeWidth={5}
+          innerRadius="60%"
+          outerRadius="80%"
+          strokeWidth={1}
         >
           {dataQualityDistribution.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -51,22 +52,27 @@ export default function DataQualityDistributionChart() {
         </Pie>
         <ChartLegend
             content={({ payload }) => (
-                <ul className="grid gap-2 text-sm">
-                    {payload?.map((item, index) => {
-                         const { name, value, payload } = item;
+                <ul className="grid gap-2 text-sm w-full">
+                    {payload?.map((item) => {
+                         const { name, payload } = item;
                          const dataEntry = dataQualityDistribution.find(d => d.name === name);
+                         const percentage = total > 0 ? ((dataEntry?.value || 0) / total * 100).toFixed(0) : 0;
                         return (
-                            <li key={`legend-item-${index}`} className="flex justify-between items-center">
+                            <li key={item.value} className="flex justify-between items-center">
                                 <div className="flex items-center">
                                     <span className="w-2.5 h-2.5 mr-2 rounded-full" style={{backgroundColor: payload.fill}}></span>
                                     <span>{name}</span>
                                 </div>
-                                <span>{dataEntry?.value} ({((dataEntry?.value || 0) / 2 * 100)}%)</span>
+                                <span>{dataEntry?.value} ({percentage}%)</span>
                             </li>
                         )
                     })}
                 </ul>
             )}
+            layout="vertical"
+            align="right"
+            verticalAlign="middle"
+            wrapperStyle={{width: '50%'}}
             />
       </PieChart>
     </ChartContainer>
