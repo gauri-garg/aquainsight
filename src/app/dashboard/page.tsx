@@ -12,7 +12,8 @@ import {
   Dna,
   FolderKanban,
   AreaChart,
-  LineChart as LineChartIcon
+  LineChart as LineChartIcon,
+  Waves
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
