@@ -55,13 +55,16 @@ export default function ChemicalOceanographyPage() {
         const data = snapshot.val();
         const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
         setChemicalOceanographyData(dataArray);
+        if (dataArray.length > 0 && !selectedData) {
+          setSelectedData(dataArray[0]);
+        }
       }
     });
 
     return () => {
       // Detach listener
     };
-  }, []);
+  }, [selectedData]);
 
   const filteredData = chemicalOceanographyData.filter((item) => {
     const itemDate = new Date(item.date);

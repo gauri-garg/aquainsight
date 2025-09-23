@@ -62,13 +62,16 @@ export default function MarineWeatherPage() {
         const data = snapshot.val();
         const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
         setMarineWeatherData(dataArray);
+        if (dataArray.length > 0 && !selectedData) {
+          setSelectedData(dataArray[0]);
+        }
       }
     });
 
     return () => {
       // Detach listener
     };
-  }, []);
+  }, [selectedData]);
 
   const filteredData = marineWeatherData.filter((item) => {
     const itemDate = new Date(item.date);

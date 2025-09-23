@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,14 +14,34 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Wind, Droplets, Waves, Thermometer, Gauge } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Wind,
+  Droplets,
+  Waves,
+  Thermometer,
+  Gauge,
+} from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
-import { physicalOceanographyData } from "@/lib/data";
 import WaveformChart from "@/components/waveform-chart";
 import { Calendar } from "@/components/ui/calendar";
+import { ref, onValue } from "firebase/database";
+import { database } from "@/lib/firebase";
 
-type DataPoint = typeof physicalOceanographyData[0];
+type DataPoint = {
+  date: string;
+  latitude: number;
+  longitude: number;
+  temperature: number;
+  salinity: number;
+  density: number;
+  ventSpeed: number;
+  waveHeight: number;
+  tide: number;
+  velAnomaly: number;
+  mixingIndex: number;
+};
 
 export default function PhysicalOceanographyPage() {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -30,6 +49,25 @@ export default function PhysicalOceanographyPage() {
     to: addDays(new Date(2025, 7, 1), 29),
   });
   const [selectedData, setSelectedData] = useState<DataPoint | null>(null);
+  const [physicalOceanographyData, setPhysicalOceanographyData] = useState<DataPoint[]>([]);
+
+  useEffect(() => {
+    const dataRef = ref(database, 'physical_oceanography_data');
+    const listener = onValue(dataRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        setPhysicalOceanographyData(dataArray);
+        if (dataArray.length > 0 && !selectedData) {
+          setSelectedData(dataArray[0]);
+        }
+      }
+    });
+
+    return () => {
+      // Detach listener
+    };
+  }, [selectedData]);
 
   const filteredData = physicalOceanographyData.filter((item) => {
     const itemDate = new Date(item.date);
@@ -109,8 +147,8 @@ export default function PhysicalOceanographyPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((item) => (
-                    <tr key={item.date} className="border-b cursor-pointer hover:bg-muted/50" onClick={() => handleRowClick(item)}>
+                  {filteredData.map((item, index) => (
+                    <tr key={index} className="border-b cursor-pointer hover:bg-muted/50" onClick={() => handleRowClick(item)}>
                       <td className="p-2">{item.date}</td>
                       <td className="p-2">{item.temperature.toFixed(2)}</td>
                       <td className="p-2">{item.salinity.toFixed(2)}</td>

@@ -49,13 +49,16 @@ export default function OceanAtmospherePage() {
         const data = snapshot.val();
         const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
         setOceanAtmosphereData(dataArray);
+        if (dataArray.length > 0 && !selectedData) {
+          setSelectedData(dataArray[0]);
+        }
       }
     });
 
     return () => {
       // Detach listener
     };
-  }, []);
+  }, [selectedData]);
 
   const filteredData = oceanAtmosphereData.filter((item) => {
     const itemDate = new Date(item.date);
