@@ -29,7 +29,7 @@ import {
   addDoc,
   serverTimestamp
 } from "firebase/firestore";
-import { Check, Download, X } from "lucide-react";
+import { Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -158,19 +158,19 @@ export default function ApprovalPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="h-8 w-8 text-green-600 hover:text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300"
+                      size="sm"
+                      className="text-green-600 hover:text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300"
                       onClick={() => handleReview(submission.id, "approved", submission)}
                     >
-                      <Check className="h-4 w-4" />
+                      Approve
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="h-8 w-8 text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
+                      size="sm"
+                      className="text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
                       onClick={() => handleReview(submission.id, "rejected", submission)}
                     >
-                      <X className="h-4 w-4" />
+                      Reject
                     </Button>
                   </div>
                 </TableCell>
