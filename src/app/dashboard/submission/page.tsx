@@ -47,16 +47,15 @@ const formSchema = z.object({
     "Marine Weather",
     "Ocean Atmosphere",
     "eDNA",
-    "Fisheries"
   ]),
   datasetDescription: z
     .string()
     .min(20, "Please provide a more detailed description."),
   file: z
-    .instanceof(File, { message: "Dataset file is required." })
-    .refine((file) => file.size > 0, "Dataset file is required.")
+    .any()
+    .refine((files) => files?.length == 1, "Dataset file is required.")
     .refine(
-      (file) => file.type === "text/csv",
+      (files) => files?.[0]?.type === "text/csv",
       "Only CSV files are allowed."
     ),
 });
@@ -76,6 +75,8 @@ export default function DataSubmissionPage() {
       datasetDescription: "",
     },
   });
+  
+  const fileRef = form.register("file");
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
@@ -89,11 +90,13 @@ export default function DataSubmissionPage() {
       setIsLoading(false);
       return;
     }
+    
+    const file = data.file[0];
 
     try {
       // 1. Upload CSV to Firebase Storage
-      const storageRef = ref(storage, `submissions/${user.uid}/${Date.now()}-${data.file.name}`);
-      const uploadResult = await uploadBytes(storageRef, data.file);
+      const storageRef = ref(storage, `submissions/${user.uid}/${Date.now()}-${file.name}`);
+      const uploadResult = await uploadBytes(storageRef, file);
       const fileUrl = await getDownloadURL(uploadResult.ref);
       
       // 2. Store metadata in Firestore
@@ -185,7 +188,6 @@ export default function DataSubmissionPage() {
                         Ocean Atmosphere
                       </SelectItem>
                       <SelectItem value="eDNA">eDNA</SelectItem>
-                       <SelectItem value="Fisheries">Fisheries</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -203,11 +205,7 @@ export default function DataSubmissionPage() {
                     <Input
                       type="file"
                       accept=".csv"
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.files ? e.target.files[0] : null
-                        )
-                      }
+                      {...fileRef}
                       disabled={isLoading}
                     />
                   </FormControl>
