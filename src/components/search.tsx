@@ -31,6 +31,7 @@ import { Search as SearchIcon } from "lucide-react"
 import { collection, getDocs, onSnapshot } from "firebase/firestore"
 import { firestore } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
+import { DialogDescription, DialogTitle } from "./ui/dialog"
 
 type Dataset = {
   id: string,
@@ -41,7 +42,7 @@ type Dataset = {
   submittedBy: string
 }
 
-const typeToIcon = {
+const typeToIcon: { [key: string]: React.ElementType } = {
   "Physical Oceanography": Wind,
   "Chemical Oceanography": Beaker,
   "Ocean Atmosphere": Thermometer,
@@ -49,7 +50,7 @@ const typeToIcon = {
   "eDNA": Dna
 }
 
-const typeToHref = {
+const typeToHref: { [key: string]: string } = {
     "Physical Oceanography": "/dashboard/physical-oceanography",
     "Chemical Oceanography": "/dashboard/chemical-oceanography",
     "Ocean Atmosphere": "/dashboard/ocean-atmosphere",
@@ -66,20 +67,24 @@ export function Search() {
   React.useEffect(() => {
     const fetchDatasets = async () => {
         const datasetTypes = [
-            "physical_oceanography",
-            "chemical_oceanography",
-            "ocean_atmosphere",
-            "marine_weather",
-            "edna"
+            { name: "Physical Oceanography", path: "physical_oceanography"},
+            { name: "Chemical Oceanography", path: "chemical_oceanography"},
+            { name: "Ocean Atmosphere", path: "ocean_atmosphere"},
+            { name: "Marine Weather", path: "marine_weather"},
+            { name: "eDNA", path: "edna"}
         ];
         
         let allDatasets: Dataset[] = [];
         
         for (const type of datasetTypes) {
-            const querySnapshot = await getDocs(collection(firestore, `datasets/${type}/items`));
-            querySnapshot.forEach((doc) => {
-                allDatasets.push({ id: doc.id, ...doc.data() } as Dataset);
-            });
+            try {
+              const querySnapshot = await getDocs(collection(firestore, `datasets/${type.path}/items`));
+              querySnapshot.forEach((doc) => {
+                  allDatasets.push({ id: doc.id, datasetType: type.name, ...doc.data() } as Dataset);
+              });
+            } catch (error) {
+              console.error(`Could not fetch datasets for ${type.name}:`, error);
+            }
         }
         setDatasets(allDatasets);
     }
@@ -117,13 +122,15 @@ export function Search() {
         </kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>
+        <DialogTitle className="sr-only">Search</DialogTitle>
+        <DialogDescription className="sr-only">Search for datasets and other content</DialogDescription>
         <CommandInput placeholder="Type a command or search..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Datasets">
             {datasets.map((dataset) => {
-                const Icon = typeToIcon[dataset.datasetType as keyof typeof typeToIcon] || File;
-                const href = typeToHref[dataset.datasetType as keyof typeof typeToHref] || '/dashboard';
+                const Icon = typeToIcon[dataset.datasetType] || File;
+                const href = typeToHref[dataset.datasetType] || '/dashboard';
                 return (
                     <CommandItem key={dataset.id} onSelect={() => handleSelect(href)} value={dataset.datasetName}>
                         <Icon className="mr-2 h-4 w-4" />
@@ -143,12 +150,10 @@ export function Search() {
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
               <CommandShortcut>⌘S</CommandShortcut>
-            </CommandItem>
+            </ICommandItem>
           </CommandGroup>
         </CommandList>
       </CommandDialog>
     </>
   )
 }
-
-    
