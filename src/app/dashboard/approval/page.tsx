@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,8 @@ export default function ApprovalPage() {
   }, [role, router]);
 
   useEffect(() => {
+    if (role !== "CMLRE") return;
+
     const q = query(
       collection(firestore, "submissions"),
       where("status", "==", "pending")
@@ -69,15 +72,22 @@ export default function ApprovalPage() {
         pendingSubmissions.push({ id: doc.id, ...doc.data() } as Submission);
       });
       setSubmissions(pendingSubmissions);
+    }, (error) => {
+        console.error("Error fetching submissions:", error);
+        toast({
+            title: "Error fetching data",
+            description: "Could not retrieve submissions from the database.",
+            variant: "destructive"
+        })
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [role, toast, router]);
 
   const handleReview = async (submissionId: string, newStatus: "approved" | "rejected", submission: Submission) => {
     const submissionRef = doc(firestore, "submissions", submissionId);
     try {
-      await updateDoc(submissionRef, { status: newStatus });
+      await updateDoc(submissionRef, { status: newStatus, reviewedAt: serverTimestamp() });
       
       if (newStatus === 'approved') {
         const datasetCollectionName = submission.datasetType.toLowerCase().replace(/ /g, '_');
@@ -87,7 +97,6 @@ export default function ApprovalPage() {
           approvedAt: serverTimestamp(),
           submittedBy: submission.studentName,
         });
-        // Here you would trigger the cloud function for notification
       }
       
       toast({
@@ -136,47 +145,48 @@ export default function ApprovalPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {submissions.map((submission) => (
-              <TableRow key={submission.id}>
-                <TableCell className="font-medium">
-                  {submission.datasetName}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{submission.datasetType}</Badge>
-                </TableCell>
-                <TableCell>{submission.studentName}</TableCell>
-                <TableCell>
-                  {new Date(submission.submittedAt.seconds * 1000).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer">
-                        <Download className="h-3 w-3 mr-2" />
-                        View Data
-                      </a>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-green-600 hover:text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300"
-                      onClick={() => handleReview(submission.id, "approved", submission)}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
-                      onClick={() => handleReview(submission.id, "rejected", submission)}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-             {submissions.length === 0 && (
+            {submissions.length > 0 ? (
+              submissions.map((submission) => (
+                <TableRow key={submission.id}>
+                  <TableCell className="font-medium">
+                    {submission.datasetName}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{submission.datasetType}</Badge>
+                  </TableCell>
+                  <TableCell>{submission.studentName}</TableCell>
+                  <TableCell>
+                    {new Date(submission.submittedAt.seconds * 1000).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3 w-3 mr-2" />
+                          View Data
+                        </a>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-green-600 hover:text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300"
+                        onClick={() => handleReview(submission.id, "approved", submission)}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
+                        onClick={() => handleReview(submission.id, "rejected", submission)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
                 <TableCell colSpan={5} className="text-center h-24">
                   No pending submissions.
