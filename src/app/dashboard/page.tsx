@@ -33,102 +33,75 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
-import { ref, onValue, off } from "firebase/database";
-import { database } from "@/lib/firebase";
-import type { Dataset, DatasetType } from "@/lib/data";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { firestore } from "@/lib/firebase";
 import OceanParameterChart from "@/components/ocean-parameter-chart";
 import DataCollectionTrendsChart from "@/components/data-collection-trends-chart";
 import DataQualityDistributionChart from "@/components/data-quality-distribution-chart";
 
-const datasetTypeToTableName = (type: DatasetType): string => {
-  return type.toLowerCase().replace(/ /g, '_');
+type Submission = {
+  id: string;
+  datasetName: string;
+  datasetType: string;
+  submittedAt: {
+    seconds: number;
+  };
+  status: "pending" | "approved" | "rejected";
+  studentName: string;
+  records?: number;
+};
+
+const statusVariant: { [key: string]: "default" | "secondary" | "destructive" } = {
+    approved: "default",
+    pending: "secondary",
+    rejected: "destructive",
 }
 
 export default function Dashboard() {
   const { user, role } = useAuth();
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
 
   useEffect(() => {
-    const allDatasetTypes: DatasetType[] = [
-      "Physical Oceanography",
-      "Chemical Oceanography",
-      "Marine Weather",
-      "Ocean Atmosphere",
-      "eDNA"
-    ];
+    if (!user) return;
+    
+    let q;
+    if (role === 'CMLRE') {
+        q = query(collection(firestore, "submissions"));
+    } else {
+        q = query(collection(firestore, "submissions"), where("studentId", "==", user.uid));
+    }
 
-    const listeners: { ref: any; listener: any }[] = [];
-
-    allDatasetTypes.forEach(type => {
-      const tableName = datasetTypeToTableName(type);
-      const datasetsRef = ref(database, tableName);
-      
-      const listener = onValue(datasetsRef, (snapshot) => {
-        const datasetsData = snapshot.val();
-        let datasetsArray: Dataset[] = [];
-        if (datasetsData) {
-          datasetsArray = Object.keys(datasetsData).map(
-            (key) => ({
-              id: key,
-              ...datasetsData[key],
-              type: type,
-            })
-          );
-        }
-        
-        setDatasets(currentDatasets => {
-          const otherDatasets = currentDatasets.filter(d => d.type !== type);
-          return [...otherDatasets, ...datasetsArray];
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const userSubmissions: Submission[] = [];
+        querySnapshot.forEach((doc) => {
+            userSubmissions.push({ id: doc.id, ...doc.data() } as Submission);
         });
-
-      });
-      listeners.push({ ref: datasetsRef, listener });
+        setSubmissions(userSubmissions);
     });
 
-    setLoading(false);
+    return () => unsubscribe();
+  }, [user, role]);
 
 
-    return () => {
-      listeners.forEach(({ ref, listener }) => {
-        off(ref, "value", listener);
-      });
-    };
-  }, []);
-
-  useEffect(() => {
-    let filteredDatasets;
-    if (role === "Student" || role === "Researcher") {
-      filteredDatasets = datasets.filter(
-        (d) =>
-          d.status === "Approved" ||
-          (d.submittedBy === user?.email && d.status !== 'Approved')
-      );
-    } else {
-      filteredDatasets = datasets;
-    }
-  }, [datasets, role, user]);
-
-
-  const totalDatasets = datasets.length;
-  const pendingSubmissions = datasets.filter(
-    (d) => d.status === "Pending" && d.submittedBy === user?.email
+  const totalDatasets = submissions.filter(s => s.status === 'approved').length;
+  const pendingSubmissionsCount = submissions.filter(
+    (d) => d.status === "pending"
   ).length;
 
-  const totalRecords = datasets.reduce(
+  const totalRecords = submissions.reduce(
     (acc, dataset) => acc + (dataset.records || 0),
     0
   );
 
-  const recentActivityCount = datasets.filter((d) => {
-    const submissionDate = new Date(d.date);
+  const recentActivityCount = submissions.filter((d) => {
+    const submissionDate = new Date(d.submittedAt.seconds * 1000);
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     return submissionDate > oneMonthAgo;
   }).length;
 
-  const recentDatasets = [...datasets]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const recentSubmissions = [...submissions]
+    .sort((a, b) => b.submittedAt.seconds - a.submittedAt.seconds)
     .slice(0, 5);
 
   return (
@@ -140,7 +113,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Datasets
+              Approved Datasets
             </CardTitle>
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -159,8 +132,8 @@ export default function Dashboard() {
             <FileClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{pendingSubmissions}</div>
-            <p className="text-xs text-muted-foreground">Awaiting approval</p>
+            <div className="text-2xl font-bold">+{pendingSubmissionsCount}</div>
+            <p className="text-xs text-muted-foreground">{role === 'CMLRE' ? 'Awaiting your review' : 'Awaiting approval'}</p>
           </CardContent>
         </Card>
         <Card>
@@ -185,7 +158,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">+{recentActivityCount}</div>
             <p className="text-xs text-muted-foreground">
-              Datasets added this month
+              Datasets submitted this month
             </p>
           </CardContent>
         </Card>
@@ -194,9 +167,9 @@ export default function Dashboard() {
         <Card className="xl:col-span-2">
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
-              <CardTitle>Recent Datasets</CardTitle>
+              <CardTitle>Recent Submissions</CardTitle>
               <CardDescription>
-                Recently approved and submitted datasets.
+                Your most recently submitted datasets.
               </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">
@@ -212,22 +185,26 @@ export default function Dashboard() {
                 <TableRow>
                   <TableHead>Dataset</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Date Added</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentDatasets.map((dataset) => (
-                  <TableRow key={dataset.id}>
+                {recentSubmissions.map((submission) => (
+                  <TableRow key={submission.id}>
                     <TableCell>
-                      <div className="font-medium">{dataset.name}</div>
+                      <div className="font-medium">{submission.datasetName}</div>
                       <div className="hidden text-sm text-muted-foreground md:inline">
-                        {dataset.records.toLocaleString()} records
+                        Submitted by {submission.studentName}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{dataset.type}</Badge>
+                      <Badge variant="outline">{submission.datasetType}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">{dataset.date}</TableCell>
+                    <TableCell>
+                       <Badge variant={statusVariant[submission.status] || 'secondary'} className="capitalize">{submission.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{new Date(submission.submittedAt.seconds * 1000).toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -259,3 +236,4 @@ export default function Dashboard() {
     </>
   );
 }
+
