@@ -1,7 +1,6 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-
+import { Pie, PieChart, Cell } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -10,65 +9,58 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import * as React from "react";
 
-const chartConfig = {
-  stockStatus: {
-    label: "Stock Status",
-  },
-  Good: {
-    label: "Good",
-    color: "hsl(var(--chart-2))",
-  },
-  Fair: {
-    label: "Fair",
-    color: "hsl(var(--chart-4))",
-  },
-} satisfies ChartConfig;
+const chartColors = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--chart-1))",
+];
 
 export default function FisheriesChart({ data }: { data: any[] }) {
+  const chartData = React.useMemo(() => {
+    return data.map((item, index) => ({
+      name: item.species_Common,
+      value: 1,
+      fill: chartColors[index % chartColors.length],
+    }));
+  }, [data]);
 
-  const chartData = data.map(item => ({
-    species: item.species,
-    status: item.stockStatus && item.stockStatus.includes("Good") ? "Good" : "Fair",
-    value: 1, // All bars have a value of 1, color indicates status
-  }));
-
+  const chartConfig = React.useMemo(() => {
+    const config: ChartConfig = {};
+    chartData.forEach((item) => {
+      config[item.name] = {
+        label: item.name,
+        color: item.fill,
+      };
+    });
+    return config;
+  }, [chartData]);
 
   return (
     <ChartContainer config={chartConfig} className="h-[400px] w-full">
-      <BarChart
-        data={chartData}
-        layout="vertical"
-        margin={{
-          left: 10,
-          right: 12,
-        }}
-      >
-        <CartesianGrid horizontal={false} />
-        <YAxis
-          dataKey="species"
-          type="category"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          width={120}
-        />
-        <XAxis type="number" hide />
-        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-        <ChartLegend content={<ChartLegendContent />} />
-        <Bar
+      <PieChart>
+        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+        <Pie
+          data={chartData}
           dataKey="value"
-          radius={5}
+          nameKey="name"
+          innerRadius="50%"
+          outerRadius="80%"
+          strokeWidth={1}
         >
-            {chartData.map((entry, index) => (
-                <Bar
-                    key={`bar-${index}`}
-                    dataKey="value"
-                    fill={entry.status === 'Good' ? 'var(--color-Good)' : 'var(--color-Fair)'}
-                />
-            ))}
-        </Bar>
-      </BarChart>
+          {chartData.map((entry) => (
+            <Cell key={entry.name} fill={entry.fill} />
+          ))}
+        </Pie>
+        <ChartLegend
+          content={<ChartLegendContent nameKey="name" />}
+          
+        />
+      </PieChart>
     </ChartContainer>
   );
 }

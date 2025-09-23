@@ -217,66 +217,12 @@ export const marineWeatherData = [
 ];
 
 export const fisheriesData = [
-  {
-    "species": "Yellowfin tuna",
-    "scientificName": "Thunnus albacares",
-    "habitat": "Pelagic, open ocean, near surface & seamounts",
-    "behavior": "Long-distance, follows prey and temperature fronts",
-    "seasonalPattern": "Year-round with peaks post-monsoon",
-    "threats": "Overfishing, bycatch, habitat degradation",
-    "stockStatus": "Fair (depends on baitfish availability and fishing pressure)",
-    "managementMeasures": "Highly dependent on EEZ-level availability, responsive to SST and currents"
-  },
-  {
-    "species": "Skipjack tuna",
-    "scientificName": "Katsuwonus pelamis",
-    "habitat": "Pelagic, epipelagic layer, around warm currents and thermal zones",
-    "behavior": "Migration follows prey, dislikes low thermal gradients",
-    "seasonalPattern": "More abundant in warm months, seasonally influenced by region",
-    "threats": "Fishing pressure, habitat change, prey reduction",
-    "stockStatus": "Fair to Good (if prey abundant)",
-    "managementMeasures": "Probes, vigilant watch & spotter planes, depth-range checks (seasonal)"
-  },
-  {
-    "species": "Indian oil sardine",
-    "scientificName": "Sardinella longiceps",
-    "habitat": "Coastal waters, forms large schools near surface, migrates between shores",
-    "behavior": "Filter-feeds on phytoplankton and zooplankton",
-    "seasonalPattern": "Peak season from August to March",
-    "threats": "Over-exploitation, pollution, changes in coastal zones",
-    "stockStatus": "Good (if strict regulations are followed)",
-    "managementMeasures": "Regulation of mesh sizes and overall catch, and juvenile protection"
-  },
-  {
-    "species": "Blue trevally (Kavala)",
-    "scientificName": "Carangoides plagiotaenia",
-    "habitat": "Reef slopes, lagoons, nearshore pelagic waters",
-    "behavior": "Local movements, some seasonal movements with schooling",
-    "seasonalPattern": "Seasonal peaks (region-dependent)",
-    "threats": "Overfishing, reef degradation",
-    "stockStatus": "Good (if reef habitat healths)",
-    "managementMeasures": "Mobile predators, benefits from reef connectivity and healthy prey fields."
-  },
-  {
-    "species": "Red snapper",
-    "scientificName": "Lutjanus campechanus",
-    "habitat": "Coral reefs, rocky outcrops, structured habitats",
-    "behavior": "Mostly strationary, some dispersal via currents",
-    "seasonalPattern": "Seasonal (often linked to spawning months)",
-    "threats": "Habitat loss (coral bleaching), fishing",
-    "stockStatus": "Fair (sensitive to coral health)",
-    "managementMeasures": "Benefits from no-entry/no-take zones, and reef vegetation reduces survival"
-  },
-  {
-    "species": "Threadfin butterflyfish",
-    "scientificName": "Chaetodon auriga",
-    "habitat": "Coral reef and lagoon habitats",
-    "behavior": "Mostly stationary, larval dispersal via currents",
-    "seasonalPattern": "Year-round and locally abundant",
-    "threats": "Coral bleaching, habitat loss, food disturbance",
-    "stockStatus": "Good to Fair (vegetation loss reduces population)",
-    "managementMeasures": "Indicator species for reef health, selective, and careful fishing"
-  }
+  { "species_Common": "Skipjack tuna", "species_Scientific": "Katsuwonus pelamis", "preferred_SST_C": "26 - 30" },
+  { "species_Common": "Yellowfin tuna", "species_Scientific": "Thunnus albacares", "preferred_SST_C": "25.5 - 30.5" },
+  { "species_Common": "Indian oil sardine", "species_Scientific": "Sardinella longiceps", "preferred_SST_C": "24 - 30" },
+  { "species_Common": "Blue trevally", "species_Scientific": "Caranx melampygus", "preferred_SST_C": "24 - 29" },
+  { "species_Common": "Red snapper", "species_Scientific": "Lutjanus sp.", "preferred_SST_C": "24 - 29" },
+  { "species_Common": "Threadfin butterflyfish", "species_Scientific": "Chaetodon auriga", "preferred_SST_C": "24 - 29" }
 ];
 
 
@@ -385,3 +331,4 @@ export const geographicDistribution = [
     { name: "Station C", x: 55, y: 30 },
     { name: "Station D", x: 75, y: 55 },
 ];
+

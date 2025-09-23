@@ -129,7 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          if (!snapshot.exists()) {
             const dataToSeed: { [key: string]: any } = {};
             table.data.forEach((item, index) => {
-              dataToSeed[`data_${index}`] = item;
+              const key = item.species_Common ? item.species_Common.replace(/ /g, '_') : `data_${index}`;
+              dataToSeed[key] = item;
             });
             await set(dataRef, dataToSeed);
          }

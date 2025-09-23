@@ -11,27 +11,17 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Fish,
-  Anchor,
-  Globe,
-  Wind,
-  Info,
-  AlertTriangle,
-  CheckCircle,
-  Shield,
+  Thermometer,
+  BookText
 } from "lucide-react";
 import { ref, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
 import FisheriesChart from "@/components/fisheries-chart";
 
 type DataPoint = {
-  species: string;
-  scientificName: string;
-  habitat: string;
-  behavior: string;
-  seasonalPattern: string;
-  threats: string;
-  stockStatus: string;
-  managementMeasures: string;
+  species_Common: string;
+  species_Scientific: string;
+  preferred_SST_C: string;
 };
 
 export default function FisheriesPage() {
@@ -67,8 +57,7 @@ export default function FisheriesPage() {
           <CardHeader>
             <CardTitle>Fisheries Data</CardTitle>
             <CardDescription>
-              Explore data on various fish species, their habitats, and
-              behaviors.
+              Explore data on various fish species and their preferred sea surface temperatures.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -87,9 +76,9 @@ export default function FisheriesPage() {
               <table className="w-full text-sm text-left">
                 <thead className="sticky top-0 bg-card">
                   <tr>
-                    <th className="p-2">Species</th>
+                    <th className="p-2">Common Name</th>
                     <th className="p-2">Scientific Name</th>
-                    <th className="p-2">Habitat</th>
+                    <th className="p-2">Preferred SST (°C)</th>
                     <th className="p-2 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -100,9 +89,9 @@ export default function FisheriesPage() {
                       className="border-b cursor-pointer hover:bg-muted/50"
                       onClick={() => handleRowClick(item)}
                     >
-                      <td className="p-2 font-medium">{item.species}</td>
-                      <td className="p-2 italic">{item.scientificName}</td>
-                      <td className="p-2">{item.habitat}</td>
+                      <td className="p-2 font-medium">{item.species_Common}</td>
+                      <td className="p-2 italic">{item.species_Scientific}</td>
+                      <td className="p-2">{item.preferred_SST_C}</td>
                       <td className="p-2 text-right">
                         <Button
                           variant="outline"
@@ -126,36 +115,21 @@ export default function FisheriesPage() {
             <CardTitle>Species Summary</CardTitle>
             <CardDescription>
               {selectedData
-                ? `Details for ${selectedData.species}`
+                ? `Details for ${selectedData.species_Common}`
                 : "Select a species from the table to see details."}
             </CardDescription>
           </CardHeader>
           {selectedData ? (
             <CardContent className="grid gap-4 text-sm">
               <div className="flex items-center gap-3">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Behavior</span>
-                <span className="ml-auto text-right">{selectedData.behavior}</span>
+                <BookText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Scientific Name</span>
+                <span className="ml-auto text-right italic">{selectedData.species_Scientific}</span>
               </div>
               <div className="flex items-center gap-3">
-                <Wind className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Seasonal Pattern</span>
-                <span className="ml-auto text-right">{selectedData.seasonalPattern}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Threats</span>
-                <span className="ml-auto text-right">{selectedData.threats}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Stock Status</span>
-                 <span className="ml-auto text-right">{selectedData.stockStatus}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Shield className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Management</span>
-                 <span className="ml-auto text-right">{selectedData.managementMeasures}</span>
+                <Thermometer className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Preferred SST</span>
+                <span className="ml-auto text-right">{selectedData.preferred_SST_C}°C</span>
               </div>
             </CardContent>
           ) : (
