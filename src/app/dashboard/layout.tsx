@@ -11,13 +11,11 @@ import {
   Upload,
   Dna,
   CheckCircle,
-  Search,
   Menu,
   Users,
   Wind,
   Beaker,
   Thermometer,
-  Settings,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +27,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +36,7 @@ import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Search } from "@/components/search";
 
 export default function DashboardLayout({
   children,
@@ -189,16 +187,7 @@ export default function DashboardLayout({
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-            <form>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search datasets..."
-                  className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                />
-              </div>
-            </form>
+             <Search />
           </div>
           <UserNav />
         </header>
@@ -209,3 +198,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+    
