@@ -44,7 +44,7 @@ export default function FisheriesPage() {
     return () => {
       // Detach listener
     };
-  }, [selectedData]);
+  }, []);
 
   const handleRowClick = (item: DataPoint) => {
     setSelectedData(item);
