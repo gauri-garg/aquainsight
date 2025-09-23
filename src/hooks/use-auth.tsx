@@ -50,10 +50,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const datasetTypeToTableName = (type: DatasetType): string => {
-  return type.toLowerCase().replace(/ /g, '_');
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
