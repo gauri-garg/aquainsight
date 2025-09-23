@@ -13,19 +13,29 @@ import { Button } from "@/components/ui/button";
 import {
   Fish,
   Thermometer,
-  BookText
+  BookText,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { ref, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
 import FisheriesChart from "@/components/fisheries-chart";
+import { DateRange } from "react-day-picker";
+import { addDays, format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 type DataPoint = {
   species_Common: string;
   species_Scientific: string;
   preferred_SST_C: string;
+  date: string;
 };
 
 export default function FisheriesPage() {
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(2024, 1, 1),
+    to: new Date(2024, 1, 10),
+  });
   const [selectedData, setSelectedData] = useState<DataPoint | null>(null);
   const [fisheriesData, setFisheriesData] = useState<DataPoint[]>([]);
 
@@ -47,6 +57,13 @@ export default function FisheriesPage() {
     };
   }, [selectedData]);
 
+  const filteredData = fisheriesData.filter((item) => {
+    const itemDate = new Date(item.date);
+    if (date?.from && itemDate < date.from) return false;
+    if (date?.to && itemDate > date.to) return false;
+    return true;
+  });
+
   const handleRowClick = (item: DataPoint) => {
     setSelectedData(item);
   };
@@ -55,14 +72,49 @@ export default function FisheriesPage() {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <div className="lg:col-span-2 grid gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Fisheries Data</CardTitle>
-            <CardDescription>
-              Explore data on various fish species and their preferred sea surface temperatures.
-            </CardDescription>
+          <CardHeader className="flex-row items-center justify-between">
+            <div>
+              <CardTitle>Fisheries Data</CardTitle>
+              <CardDescription>
+                Explore data on various fish species and their preferred sea surface temperatures.
+              </CardDescription>
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className="w-[300px] justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, "LLL dd, y")} -{" "}
+                        {format(date.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(date.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
           </CardHeader>
           <CardContent>
-            <FisheriesChart data={fisheriesData} />
+            <FisheriesChart data={filteredData} />
           </CardContent>
         </Card>
         <Card>
@@ -78,20 +130,20 @@ export default function FisheriesPage() {
                 <thead className="sticky top-0 bg-card">
                   <tr>
                     <th className="p-2">Common Name</th>
-                    <th className="p-2">Scientific Name</th>
+                    <th className="p-2">Date</th>
                     <th className="p-2">Preferred SST (°C)</th>
                     <th className="p-2 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {fisheriesData.map((item, index) => (
+                  {filteredData.map((item, index) => (
                     <tr
                       key={index}
                       className="border-b cursor-pointer hover:bg-muted/50"
                       onClick={() => handleRowClick(item)}
                     >
                       <td className="p-2 font-medium">{item.species_Common}</td>
-                      <td className="p-2 italic">{item.species_Scientific}</td>
+                      <td className="p-2">{item.date}</td>
                       <td className="p-2">{item.preferred_SST_C}</td>
                       <td className="p-2 text-right">
                         <Button

@@ -19,7 +19,6 @@ import {
 } from "firebase/auth";
 import { ref, set, get } from "firebase/database";
 import { 
-  datasets as initialDatasets, 
   DatasetType,
   physicalOceanographyData,
   chemicalOceanographyData,
@@ -88,31 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!cmlreSnapshot.exists()) {
         await set(cmlreApprovedIdsRef, approvedIds);
       }
-      
-      const allDatasetTypes: DatasetType[] = [
-        "Physical Oceanography",
-        "Chemical Oceanography",
-        "Marine Weather",
-        "Ocean Atmosphere",
-        "Fisheries",
-        "eDNA"
-      ];
-
-      for (const type of allDatasetTypes) {
-        const tableName = datasetTypeToTableName(type);
-        const datasetsRef = ref(database, tableName);
-        const datasetsSnapshot = await get(datasetsRef);
-        if (!datasetsSnapshot.exists()) {
-          const initialDataForType = initialDatasets.filter(d => d.type === type);
-          if (initialDataForType.length > 0) {
-            const dataToSeed: { [key: string]: any } = {};
-            initialDataForType.forEach(dataset => {
-              dataToSeed[dataset.id] = dataset;
-            });
-            await set(datasetsRef, dataToSeed);
-          }
-        }
-      }
 
       // Seed detailed data tables
       const detailedData = [
@@ -129,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          if (!snapshot.exists()) {
             const dataToSeed: { [key: string]: any } = {};
             table.data.forEach((item: any, index: number) => {
-              const key = item.species_Common ? item.species_Common.replace(/ /g, '_') : `data_${index}`;
+              const key = `data_${index}`;
               dataToSeed[key] = item;
             });
             await set(dataRef, dataToSeed);
