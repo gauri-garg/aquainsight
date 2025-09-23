@@ -24,12 +24,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { firestore, storage } from "@/lib/firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -40,7 +39,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatasetType } from "@/lib/data";
-import { Progress } from "@/components/ui/progress";
 
 const formSchema = z.object({
   datasetName: z.string().min(5, "Dataset name must be at least 5 characters."),
@@ -69,7 +67,6 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function DataSubmissionPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
   const { user, userDetails } = useAuth();
 
@@ -83,7 +80,6 @@ export default function DataSubmissionPage() {
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
-    setUploadProgress(0);
 
     if (!user) {
       toast({
@@ -98,37 +94,9 @@ export default function DataSubmissionPage() {
     try {
       // 1. Upload CSV to Firebase Storage
       const storageRef = ref(storage, `submissions/${user.uid}/${Date.now()}-${data.file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, data.file);
-
-      // Wrap upload task in a promise to handle async logic correctly
-      const fileUrl = await new Promise<string>((resolve, reject) => {
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress);
-          },
-          (error) => {
-            console.error("Upload failed:", error);
-            toast({
-              title: "Upload Failed",
-              description: "An error occurred during the file upload. Please try again.",
-              variant: "destructive",
-            });
-            setIsLoading(false);
-            reject(error);
-          },
-          async () => {
-            // Upload completed successfully, now get the download URL
-            try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            } catch (error) {
-              reject(error);
-            }
-          }
-        );
-      });
-
+      const uploadResult = await uploadBytes(storageRef, data.file);
+      const fileUrl = await getDownloadURL(uploadResult.ref);
+      
       // 2. Store metadata in Firestore
       await addDoc(collection(firestore, "submissions"), {
         studentId: user.uid,
@@ -157,7 +125,6 @@ export default function DataSubmissionPage() {
       console.error(e);
     } finally {
         setIsLoading(false);
-        setUploadProgress(0);
     }
   };
 
@@ -275,20 +242,13 @@ export default function DataSubmissionPage() {
                 </FormItem>
               )}
             />
-             {isLoading && (
-              <div className="space-y-2">
-                <Label>Upload Progress</Label>
-                <Progress value={uploadProgress} />
-                <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
-              </div>
-            )}
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button type="submit" disabled={isLoading} size="lg">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting ({Math.round(uploadProgress)}%)...
+                  Submitting...
                 </>
               ) : (
                 <>
