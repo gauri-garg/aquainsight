@@ -17,7 +17,6 @@ import {
   Wind,
   Beaker,
   Thermometer,
-  Fish,
   Settings,
 } from "lucide-react";
 
@@ -56,7 +55,6 @@ export default function DashboardLayout({
     { href: "/dashboard/chemical-oceanography", label: "Chemical Oceanography", icon: Beaker, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/ocean-atmosphere", label: "Ocean Atmosphere", icon: Thermometer, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/marine-weather", label: "Marine Weather", icon: Wind, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/fisheries", label: "Fisheries", icon: Fish, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/edna", label: "eDNA Matching", icon: Dna, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/analysis", label: "Analysis", icon: LineChart, roles: ["CMLRE", "Researcher", "Student"] },
     { href: "/dashboard/user", label: "User Management", icon: Users, roles: ["CMLRE"] },

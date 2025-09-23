@@ -50,7 +50,6 @@ const formSchema = z.object({
     "Chemical Oceanography",
     "Marine Weather",
     "Ocean Atmosphere",
-    "Fisheries",
     "eDNA"
   ]),
   datasetDescription: z
@@ -203,7 +202,6 @@ export default function DataSubmissionPage() {
                       <SelectItem value="Ocean Atmosphere">
                         Ocean Atmosphere
                       </SelectItem>
-                      <SelectItem value="Fisheries">Fisheries</SelectItem>
                       <SelectItem value="eDNA">eDNA</SelectItem>
                     </SelectContent>
                   </Select>

@@ -5,7 +5,6 @@ export type DatasetType =
   | "Chemical Oceanography"
   | "Marine Weather"
   | "Ocean Atmosphere"
-  | "Fisheries"
   | "eDNA";
 
 
@@ -215,16 +214,6 @@ export const marineWeatherData = [
   { date: "2025-09-19", latitude: 10.9, longitude: 72.21, sstSkin: 28.38, airTemp: 27.3, currentSpeed: 0.37, airPressure: 1010.53, humidity: 83.12, windSpeed: 14.62, windDirection: 292.29, waveHeight: 1.32, waveDirection: 209.83, wavePeriod: 9.32, currentDirection: 108.38 },
   { date: "2025-09-20", latitude: 10.9, longitude: 72.21, sstSkin: 28.42, airTemp: 27.77, currentSpeed: 0.5, airPressure: 1010.21, humidity: 78.75, windSpeed: 14.19, windDirection: 295.33, waveHeight: 1.27, waveDirection: 198.67, wavePeriod: 10.21, currentDirection: 88.79 }
 ];
-
-export const fisheriesData = [
-  { date: "2025-09-01", id: '1', species_Common: "Skipjack tuna", species_Scientific: "Katsuwonus pelamis", preferred_SST_C: "26 - 30", Preferred_Salinity_PSU: "34 - 35.5", Preferred_pH: "7.9 - 8.3", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Pelagic, open ocean, near surface & seamounts" },
-  { date: "2025-09-02", id: '2', species_Common: "Yellowfin tuna", species_Scientific: "Thunnus albacares", preferred_SST_C: "25.5 - 30.5", Preferred_Salinity_PSU: "34 - 36", Preferred_pH: "7.9 - 8.3", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Pelagic, epipelagic layer, around seamounts and frontal zones" },
-  { date: "2025-09-03", id: '3', species_Common: "Indian oil sardine", species_Scientific: "Sardinella longiceps", preferred_SST_C: "24 - 30", Preferred_Salinity_PSU: "32 - 35", Preferred_pH: "7.8 - 8.3", Preferred_DO_mgL: "3.5 - 6", Preferred_Habitat: "Coastal, lagoons, nearshore waters; juvenile nurseries" },
-  { date: "2025-09-04", id: '4', species_Common: "Blue trevally", species_Scientific: "Caranx melampygus", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.9 - 8.4", Preferred_DO_mgL: "4 - 7", Preferred_Habitat: "Reef slopes, lagoons, nearshore pelagic waters" },
-  { date: "2025-09-05", id: '5', species_Common: "Red snapper", species_Scientific: "Lutjanus sp.", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.9 - 8.4", Preferred_DO_mgL: "4 - 6.5", Preferred_Habitat: "Coral reefs, reef slopes, structured habitats" },
-  { date: "2025-09-06", id: '6', species_Common: "Threadfin butterflyfish", species_Scientific: "Chaetodon auriga", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.8 - 8.4", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Coral-rich reef zones, lagoons" }
-];
-
 
 export const dataCollectionTrends = [
   { month: 'Jan', oceanographic: 18, fisheries: 12, molecular: 8 },

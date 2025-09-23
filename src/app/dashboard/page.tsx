@@ -7,7 +7,6 @@ import {
   Database,
   FileClock,
   FlaskConical,
-  Fish,
   Dna,
   Users,
   CheckCircle,
@@ -38,7 +37,6 @@ import { ref, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
 import type { Dataset, DatasetType } from "@/lib/data";
 import OceanParameterChart from "@/components/ocean-parameter-chart";
-import SpeciesDistributionChart from "@/components/species-distribution-chart";
 import DataCollectionTrendsChart from "@/components/data-collection-trends-chart";
 import DataQualityDistributionChart from "@/components/data-quality-distribution-chart";
 
@@ -57,7 +55,6 @@ export default function Dashboard() {
       "Chemical Oceanography",
       "Marine Weather",
       "Ocean Atmosphere",
-      "Fisheries",
       "eDNA"
     ];
 
@@ -230,10 +227,10 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Species Distribution</CardTitle>
+            <CardTitle>Data Quality Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <SpeciesDistributionChart />
+            <DataQualityDistributionChart />
           </CardContent>
         </Card>
       </div>
