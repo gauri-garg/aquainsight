@@ -26,10 +26,11 @@ import {
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
 import MarineWeatherChart from "@/components/marine-weather-chart";
-import { ref, onValue } from "firebase/database";
-import { database } from "@/lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
+import { firestore } from "@/lib/firebase";
 
 type DataPoint = {
+    id: string;
     date: string;
     latitude: number;
     longitude: number;
@@ -56,20 +57,30 @@ export default function MarineWeatherPage() {
   const [marineWeatherData, setMarineWeatherData] = useState<DataPoint[]>([]);
 
   useEffect(() => {
-    const dataRef = ref(database, 'marine_weather_data');
-    const listener = onValue(dataRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-        setMarineWeatherData(dataArray);
-        if (dataArray.length > 0 && !selectedData) {
-          setSelectedData(dataArray[0]);
-        }
-      }
+    const datasetsRef = collection(firestore, "datasets/marine_weather/items");
+    const unsubscribe = onSnapshot(datasetsRef, (snapshot) => {
+        // This part needs to be implemented to read CSVs from fileUrl and parse them.
+        // For now, we will continue to use the static data to ensure the page works.
     });
 
+    const staticDataRef = collection(firestore, "marine_weather_data");
+    const staticUnsubscribe = onSnapshot(staticDataRef, (snapshot) => {
+        if (!snapshot.empty) {
+            const dataArray: DataPoint[] = [];
+            snapshot.forEach(doc => {
+                dataArray.push({ id: doc.id, ...doc.data() } as DataPoint);
+            });
+            setMarineWeatherData(dataArray);
+            if (dataArray.length > 0 && !selectedData) {
+              setSelectedData(dataArray[0]);
+            }
+        }
+    });
+
+
     return () => {
-      // Detach listener
+      unsubscribe();
+      staticUnsubscribe();
     };
   }, [selectedData]);
 

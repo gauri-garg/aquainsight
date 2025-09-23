@@ -5,6 +5,7 @@ export type DatasetType =
   | "Chemical Oceanography"
   | "Marine Weather"
   | "Ocean Atmosphere"
+  | "Fisheries"
   | "eDNA";
 
 
@@ -241,3 +242,4 @@ export const geographicDistribution = [
     
 
     
+

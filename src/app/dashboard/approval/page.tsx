@@ -18,77 +18,94 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
-import { Dataset, DatasetType } from "@/lib/data";
-import { database } from "@/lib/firebase";
+import { firestore } from "@/lib/firebase";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+  addDoc,
+  serverTimestamp
+} from "firebase/firestore";
 import { Check, Download, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ref, onValue, update } from "firebase/database";
+import { useToast } from "@/hooks/use-toast";
 
-const datasetTypeToTableName = (type: DatasetType): string => {
-  return type.toLowerCase().replace(/ /g, '_');
+interface Submission {
+  id: string;
+  studentName: string;
+  datasetName: string;
+  datasetType: string;
+  fileUrl: string;
+  submittedAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
 }
 
 export default function ApprovalPage() {
   const { role } = useAuth();
   const router = useRouter();
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (role !== "CMLRE") {
+    if (role && role !== "CMLRE") {
       router.push("/dashboard");
     }
   }, [role, router]);
 
   useEffect(() => {
-    const allDatasetTypes: DatasetType[] = [
-      "Physical Oceanography",
-      "Chemical Oceanography",
-      "Marine Weather",
-      "Ocean Atmosphere",
-      "Fisheries",
-      "eDNA"
-    ];
-
-    let allDatasets: Dataset[] = [];
-    let listeners: any[] = [];
-
-    allDatasetTypes.forEach(type => {
-      const tableName = datasetTypeToTableName(type);
-      const datasetsRef = ref(database, tableName);
-      
-      const listener = onValue(datasetsRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const datasetsData = snapshot.val();
-          const datasetsArray: Dataset[] = Object.keys(datasetsData).map(
-            (key) => ({
-              id: key,
-              ...datasetsData[key],
-            })
-          );
-          
-          allDatasets = allDatasets.filter(d => d.type !== type).concat(datasetsArray);
-          const pending = allDatasets.filter(d => d.status === "Pending");
-          setDatasets(pending);
-        }
+    const q = query(
+      collection(firestore, "submissions"),
+      where("status", "==", "pending")
+    );
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const pendingSubmissions: Submission[] = [];
+      querySnapshot.forEach((doc) => {
+        pendingSubmissions.push({ id: doc.id, ...doc.data() } as Submission);
       });
-      listeners.push({ref: datasetsRef, listener});
+      setSubmissions(pendingSubmissions);
     });
 
-    return () => {
-      // Detach listeners
-    };
+    return () => unsubscribe();
   }, []);
 
-  const handleApproval = (dataset: Dataset, newStatus: "Approved" | "Rejected") => {
-    const tableName = datasetTypeToTableName(dataset.type);
-    const datasetRef = ref(database, `${tableName}/${dataset.id}`);
-    update(datasetRef, { status: newStatus });
+  const handleReview = async (submissionId: string, newStatus: "approved" | "rejected", submission: Submission) => {
+    const submissionRef = doc(firestore, "submissions", submissionId);
+    try {
+      await updateDoc(submissionRef, { status: newStatus });
+      
+      if (newStatus === 'approved') {
+        const datasetCollectionName = submission.datasetType.toLowerCase().replace(/ /g, '_');
+        await addDoc(collection(firestore, `datasets/${datasetCollectionName}/items`), {
+          datasetName: submission.datasetName,
+          fileUrl: submission.fileUrl,
+          approvedAt: serverTimestamp(),
+          submittedBy: submission.studentName,
+        });
+        // Here you would trigger the cloud function for notification
+      }
+      
+      toast({
+        title: `Submission ${newStatus}`,
+        description: `The dataset "${submission.datasetName}" has been ${newStatus}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
-  
+
   if (role !== "CMLRE") {
     return (
-        <Card className="flex flex-col items-center justify-center text-center p-8 min-h-[400px]">
+      <Card className="flex flex-col items-center justify-center text-center p-8 min-h-[400px]">
         <CardHeader>
           <CardTitle>Access Denied</CardTitle>
           <CardDescription>
@@ -96,7 +113,7 @@ export default function ApprovalPage() {
           </CardDescription>
         </CardHeader>
       </Card>
-    )
+    );
   }
 
   return (
@@ -104,7 +121,7 @@ export default function ApprovalPage() {
       <CardHeader>
         <CardTitle>Data Submissions Review</CardTitle>
         <CardDescription>
-          Review, approve, or reject datasets submitted by researchers.
+          Review, approve, or reject datasets submitted by researchers and students.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -119,42 +136,53 @@ export default function ApprovalPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {datasets.map((dataset) => (
-              <TableRow key={dataset.id}>
-                <TableCell className="font-medium">{dataset.name}</TableCell>
-                <TableCell><Badge variant="secondary">{dataset.type}</Badge></TableCell>
-                <TableCell>{dataset.submittedBy}</TableCell>
-                <TableCell>{dataset.date}</TableCell>
+            {submissions.map((submission) => (
+              <TableRow key={submission.id}>
+                <TableCell className="font-medium">
+                  {submission.datasetName}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{submission.datasetType}</Badge>
+                </TableCell>
+                <TableCell>{submission.studentName}</TableCell>
+                <TableCell>
+                  {new Date(submission.submittedAt.seconds * 1000).toLocaleDateString()}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="outline" size="sm">
-                      <Download className="h-3 w-3 mr-2" />
-                      View Data
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="h-3 w-3 mr-2" />
+                        View Data
+                      </a>
                     </Button>
-                    {dataset.status === "Pending" && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 text-green-600 hover:text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300"
-                          onClick={() => handleApproval(dataset, "Approved")}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
-                           onClick={() => handleApproval(dataset, "Rejected")}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-green-600 hover:text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300"
+                      onClick={() => handleReview(submission.id, "approved", submission)}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
+                      onClick={() => handleReview(submission.id, "rejected", submission)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
+             {submissions.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center h-24">
+                  No pending submissions.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

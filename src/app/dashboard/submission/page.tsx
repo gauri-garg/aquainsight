@@ -25,14 +25,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Upload, Bot } from "lucide-react";
-import {
-  generateDatasetSummary,
-  GenerateDatasetSummaryOutput,
-} from "@/ai/flows/generate-dataset-summary";
+import { Loader2, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { database } from "@/lib/firebase";
-import { ref, push, set } from "firebase/database";
+import { firestore, storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Select,
@@ -50,7 +47,8 @@ const formSchema = z.object({
     "Chemical Oceanography",
     "Marine Weather",
     "Ocean Atmosphere",
-    "eDNA"
+    "eDNA",
+    "Fisheries"
   ]),
   datasetDescription: z
     .string()
@@ -66,17 +64,11 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-const datasetTypeToTableName = (type: DatasetType): string => {
-  return type.toLowerCase().replace(/ /g, '_');
-}
 
 export default function DataSubmissionPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [summary, setSummary] = useState<GenerateDatasetSummaryOutput | null>(
-    null
-  );
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userDetails } = useAuth();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -88,7 +80,6 @@ export default function DataSubmissionPage() {
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
-    setSummary(null);
 
     if (!user) {
       toast({
@@ -101,32 +92,23 @@ export default function DataSubmissionPage() {
     }
 
     try {
-      const fileContent = await data.file.text();
-      const rows = fileContent.split("\n");
-      const recordCount = rows.length > 1 ? rows.length - 1 : 0;
-      const sample = rows.slice(0, 10).join("\n");
+      // 1. Upload CSV to Firebase Storage
+      const storageRef = ref(storage, `submissions/${user.uid}/${Date.now()}-${data.file.name}`);
+      const uploadResult = await uploadBytes(storageRef, data.file);
+      const fileUrl = await getDownloadURL(uploadResult.ref);
 
-      const aiSummary = await generateDatasetSummary({
-        datasetDescription: data.datasetDescription,
-        datasetSample: sample,
-      });
-      setSummary(aiSummary);
-
-      const tableName = datasetTypeToTableName(data.datasetType);
-      const datasetsRef = ref(database, tableName);
-      const newDatasetRef = push(datasetsRef);
-
-      await set(newDatasetRef, {
-        id: newDatasetRef.key,
-        name: data.datasetName,
-        type: data.datasetType,
-        submittedBy: user.email,
-        status: "Pending",
-        date: new Date().toISOString().split("T")[0],
-        records: recordCount,
+      // 2. Store metadata in Firestore
+      await addDoc(collection(firestore, "submissions"), {
+        studentId: user.uid,
+        studentName: userDetails?.fullName || user.email,
+        datasetName: data.datasetName,
+        datasetType: data.datasetType,
         description: data.datasetDescription,
-        summary: aiSummary.summary,
+        status: "pending",
+        fileUrl: fileUrl,
+        submittedAt: serverTimestamp(),
       });
+
 
       toast({
         title: "Submission Successful",
@@ -151,8 +133,7 @@ export default function DataSubmissionPage() {
       <CardHeader>
         <CardTitle>Submit New Dataset</CardTitle>
         <CardDescription>
-          Upload your dataset in CSV format. An AI-powered summary will be
-          generated for review.
+          Upload your dataset in CSV format for review by CMLRE staff.
         </CardDescription>
       </CardHeader>
       <Form {...form}>
@@ -203,6 +184,7 @@ export default function DataSubmissionPage() {
                         Ocean Atmosphere
                       </SelectItem>
                       <SelectItem value="eDNA">eDNA</SelectItem>
+                       <SelectItem value="Fisheries">Fisheries</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -250,35 +232,19 @@ export default function DataSubmissionPage() {
                     />
                   </FormControl>
                   <FormDescription>
-                    This description will help reviewers and the AI understand
-                    your data.
+                    This description will help reviewers understand your data.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {summary && (
-              <div className="p-4 bg-muted/50 rounded-lg space-y-2 border">
-                <h3 className="font-semibold flex items-center">
-                  <Bot className="mr-2 h-5 w-5 text-primary" /> AI-Generated
-                  Summary
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {summary.summary}
-                </p>
-                <p className="text-xs text-muted-foreground pt-2">
-                  Progress: {summary.progress}
-                </p>
-              </div>
-            )}
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button type="submit" disabled={isLoading} size="lg">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting & Analyzing...
+                  Submitting...
                 </>
               ) : (
                 <>
