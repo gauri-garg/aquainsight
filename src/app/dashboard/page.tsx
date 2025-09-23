@@ -33,7 +33,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, off } from "firebase/database";
 import { database } from "@/lib/firebase";
 import type { Dataset, DatasetType } from "@/lib/data";
 import OceanParameterChart from "@/components/ocean-parameter-chart";
@@ -59,45 +59,49 @@ export default function Dashboard() {
     ];
 
     let allDatasets: Dataset[] = [];
-    let listeners: any[] = [];
+    const listeners: { ref: any; listener: any }[] = [];
 
     allDatasetTypes.forEach(type => {
       const tableName = datasetTypeToTableName(type);
       const datasetsRef = ref(database, tableName);
       
       const listener = onValue(datasetsRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const datasetsData = snapshot.val();
-          const datasetsArray: Dataset[] = Object.keys(datasetsData).map(
+        const datasetsData = snapshot.val();
+        let datasetsArray: Dataset[] = [];
+        if (datasetsData) {
+          datasetsArray = Object.keys(datasetsData).map(
             (key) => ({
               id: key,
               ...datasetsData[key],
+              type: type,
             })
           );
-          
-          // Remove old data of the same type and add new data
-          allDatasets = allDatasets.filter(d => d.type !== type).concat(datasetsArray);
-
-          let filteredDatasets;
-          if (role === "Student" || role === "Researcher") {
-            filteredDatasets = allDatasets.filter(
-              (d) =>
-                d.status === "Approved" ||
-                (d.submittedBy === user?.email && d.status !== 'Approved')
-            );
-          } else {
-            filteredDatasets = allDatasets;
-          }
-          setDatasets(filteredDatasets);
         }
+        
+        // Filter out old data of the same type and concat new data
+        allDatasets = allDatasets.filter(d => d.type !== type).concat(datasetsArray);
+
+        let filteredDatasets;
+        if (role === "Student" || role === "Researcher") {
+          filteredDatasets = allDatasets.filter(
+            (d) =>
+              d.status === "Approved" ||
+              (d.submittedBy === user?.email && d.status !== 'Approved')
+          );
+        } else {
+          filteredDatasets = allDatasets;
+        }
+        setDatasets(filteredDatasets);
         setLoading(false);
       });
-      listeners.push({ref: datasetsRef, listener});
+      listeners.push({ ref: datasetsRef, listener });
     });
 
 
     return () => {
-      // Detach listeners
+      listeners.forEach(({ ref, listener }) => {
+        off(ref, "value", listener);
+      });
     };
   }, [role, user]);
 
