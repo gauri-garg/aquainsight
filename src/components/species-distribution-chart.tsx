@@ -36,7 +36,7 @@ export default function SpeciesDistributionChart() {
 
   React.useEffect(() => {
     const fisheriesRef = ref(database, 'fisheries_data');
-    onValue(fisheriesRef, (snapshot) => {
+    const listener = onValue(fisheriesRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         const dataArray = Object.keys(data).map(key => data[key]);
@@ -63,6 +63,10 @@ export default function SpeciesDistributionChart() {
         setChartConfig(newChartConfig);
       }
     });
+
+    return () => {
+      // Detach listener
+    }
   }, []);
 
   return (
@@ -96,4 +100,5 @@ export default function SpeciesDistributionChart() {
     </div>
   );
 }
+
 
