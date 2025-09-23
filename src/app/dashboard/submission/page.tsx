@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { firestore, storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatasetType } from "@/lib/data";
+import { Progress } from "@/components/ui/progress";
 
 const formSchema = z.object({
   datasetName: z.string().min(5, "Dataset name must be at least 5 characters."),
@@ -67,6 +68,7 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function DataSubmissionPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
   const { user, userDetails } = useAuth();
 
@@ -80,6 +82,7 @@ export default function DataSubmissionPage() {
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
+    setUploadProgress(0);
 
     if (!user) {
       toast({
@@ -94,27 +97,48 @@ export default function DataSubmissionPage() {
     try {
       // 1. Upload CSV to Firebase Storage
       const storageRef = ref(storage, `submissions/${user.uid}/${Date.now()}-${data.file.name}`);
-      const uploadResult = await uploadBytes(storageRef, data.file);
-      const fileUrl = await getDownloadURL(uploadResult.ref);
+      const uploadTask = uploadBytesResumable(storageRef, data.file);
 
-      // 2. Store metadata in Firestore
-      await addDoc(collection(firestore, "submissions"), {
-        studentId: user.uid,
-        studentName: userDetails?.fullName || user.email,
-        datasetName: data.datasetName,
-        datasetType: data.datasetType,
-        description: data.datasetDescription,
-        status: "pending",
-        fileUrl: fileUrl,
-        submittedAt: serverTimestamp(),
-      });
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+           console.error("Upload failed:", error);
+           toast({
+            title: "Upload Failed",
+            description: "An error occurred during the file upload. Please try again.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+        },
+        async () => {
+          // Upload completed successfully, now get the download URL
+          const fileUrl = await getDownloadURL(uploadTask.snapshot.ref);
 
+          // 2. Store metadata in Firestore
+          await addDoc(collection(firestore, "submissions"), {
+            studentId: user.uid,
+            studentName: userDetails?.fullName || user.email,
+            datasetName: data.datasetName,
+            datasetType: data.datasetType,
+            description: data.datasetDescription,
+            status: "pending",
+            fileUrl: fileUrl,
+            submittedAt: serverTimestamp(),
+          });
 
-      toast({
-        title: "Submission Successful",
-        description: "Your dataset has been submitted for review.",
-      });
-      form.reset();
+          toast({
+            title: "Submission Successful",
+            description: "Your dataset has been submitted for review.",
+          });
+          form.reset();
+          setIsLoading(false);
+          setUploadProgress(0);
+        }
+      );
+
     } catch (e: any) {
       toast({
         title: "Submission Failed",
@@ -123,7 +147,6 @@ export default function DataSubmissionPage() {
         variant: "destructive",
       });
       console.error(e);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -149,6 +172,7 @@ export default function DataSubmissionPage() {
                     <Input
                       placeholder="e.g., Antarctic Krill Survey 2024"
                       {...field}
+                      disabled={isLoading}
                     />
                   </FormControl>
                   <FormMessage />
@@ -164,6 +188,7 @@ export default function DataSubmissionPage() {
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isLoading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -207,6 +232,7 @@ export default function DataSubmissionPage() {
                           e.target.files ? e.target.files[0] : null
                         )
                       }
+                      disabled={isLoading}
                     />
                   </FormControl>
                   <FormDescription>
@@ -229,6 +255,7 @@ export default function DataSubmissionPage() {
                       placeholder="Describe the dataset, including collection methods, parameters, and potential significance..."
                       className="min-h-[150px]"
                       {...field}
+                      disabled={isLoading}
                     />
                   </FormControl>
                   <FormDescription>
@@ -238,13 +265,20 @@ export default function DataSubmissionPage() {
                 </FormItem>
               )}
             />
+             {isLoading && (
+              <div className="space-y-2">
+                <Label>Upload Progress</Label>
+                <Progress value={uploadProgress} />
+                <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button type="submit" disabled={isLoading} size="lg">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
+                  Submitting ({Math.round(uploadProgress)}%)...
                 </>
               ) : (
                 <>
