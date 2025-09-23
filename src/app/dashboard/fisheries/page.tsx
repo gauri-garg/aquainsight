@@ -15,6 +15,10 @@ import {
   Thermometer,
   BookText,
   Calendar as CalendarIcon,
+  Droplets,
+  Waves,
+  Wind,
+  Home,
 } from "lucide-react";
 import { ref, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
@@ -25,10 +29,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 
 type DataPoint = {
+  date: string;
   species_Common: string;
   species_Scientific: string;
   preferred_SST_C: string;
-  date: string;
+  Preferred_Salinity_PSU: string;
+  Preferred_pH: string;
+  Preferred_DO_mgL: string;
+  Preferred_Habitat: string;
 };
 
 export default function FisheriesPage() {
@@ -76,7 +84,7 @@ export default function FisheriesPage() {
             <div>
               <CardTitle>Fisheries Data</CardTitle>
               <CardDescription>
-                Explore data on various fish species and their preferred sea surface temperatures.
+                Explore data on various fish species and their preferred environmental conditions.
               </CardDescription>
             </div>
             <Popover>
@@ -183,6 +191,26 @@ export default function FisheriesPage() {
                 <Thermometer className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Preferred SST</span>
                 <span className="ml-auto text-right">{selectedData.preferred_SST_C}°C</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Droplets className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Preferred Salinity</span>
+                <span className="ml-auto text-right">{selectedData.Preferred_Salinity_PSU} PSU</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Waves className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Preferred pH</span>
+                <span className="ml-auto text-right">{selectedData.Preferred_pH}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Wind className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Preferred DO</span>
+                <span className="ml-auto text-right">{selectedData.Preferred_DO_mgL} mg/L</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <Home className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <span className="text-muted-foreground">Preferred Habitat</span>
+                <span className="ml-auto text-right">{selectedData.Preferred_Habitat}</span>
               </div>
             </CardContent>
           ) : (

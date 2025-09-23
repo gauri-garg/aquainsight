@@ -216,83 +216,14 @@ export const marineWeatherData = [
 ];
 
 export const fisheriesData = [
-  { date: "2024-02-01", species_Common: "Skipjack tuna", species_Scientific: "Katsuwonus pelamis", preferred_SST_C: "26 - 30" },
-  { date: "2024-02-02", species_Common: "Yellowfin tuna", species_Scientific: "Thunnus albacares", preferred_SST_C: "25.5 - 30.5" },
-  { date: "2024-02-03", species_Common: "Indian oil sardine", species_Scientific: "Sardinella longiceps", preferred_SST_C: "24 - 30" },
-  { date: "2024-02-04", species_Common: "Blue trevally", species_Scientific: "Caranx melampygus", preferred_SST_C: "24 - 29" },
-  { date: "2024-02-05", species_Common: "Red snapper", species_Scientific: "Lutjanus sp.", preferred_SST_C: "24 - 29" },
-  { date: "2024-02-06", species_Common: "Threadfin butterflyfish", species_Scientific: "Chaetodon auriga", preferred_SST_C: "24 - 29" }
+  { date: "2024-02-01", species_Common: "Skipjack tuna", species_Scientific: "Katsuwonus pelamis", preferred_SST_C: "26 - 30", Preferred_Salinity_PSU: "34 - 35.5", Preferred_pH: "7.9 - 8.3", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Pelagic, open ocean, near surface & seamounts" },
+  { date: "2024-02-02", species_Common: "Yellowfin tuna", species_Scientific: "Thunnus albacares", preferred_SST_C: "25.5 - 30.5", Preferred_Salinity_PSU: "34 - 36", Preferred_pH: "7.9 - 8.3", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Pelagic, epipelagic layer, around seamounts and frontal zones" },
+  { date: "2024-02-03", species_Common: "Indian oil sardine", species_Scientific: "Sardinella longiceps", preferred_SST_C: "24 - 30", Preferred_Salinity_PSU: "32 - 35", Preferred_pH: "7.8 - 8.3", Preferred_DO_mgL: "3.5 - 6", Preferred_Habitat: "Coastal, lagoons, nearshore waters; juvenile nurseries" },
+  { date: "2024-02-04", species_Common: "Blue trevally", species_Scientific: "Caranx melampygus", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.9 - 8.4", Preferred_DO_mgL: "4 - 7", Preferred_Habitat: "Reef slopes, lagoons, nearshore pelagic waters" },
+  { date: "2024-02-05", species_Common: "Red snapper", species_Scientific: "Lutjanus sp.", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.9 - 8.4", Preferred_DO_mgL: "4 - 6.5", Preferred_Habitat: "Coral reefs, reef slopes, structured habitats" },
+  { date: "2024-02-06", species_Common: "Threadfin butterflyfish", species_Scientific: "Chaetodon auriga", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.8 - 8.4", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Coral-rich reef zones, lagoons" }
 ];
 
-
-export const datasets: Dataset[] = [
-    {
-      id: "DS001",
-      name: "Core Oceanographic Data",
-      type: "Physical Oceanography",
-      submittedBy: "AquaInsight System",
-      status: "Approved",
-      date: "2023-10-01",
-      records: physicalOceanographyData.length,
-      description: "A comprehensive dataset of physical oceanography parameters, including temperature, salinity, density, and wave height.",
-      summary: "This dataset contains time-series data on key physical oceanographic variables, useful for analyzing ocean dynamics and climate patterns."
-    },
-    {
-      id: "DS002",
-      name: "Seawater Chemistry Analysis",
-      type: "Chemical Oceanography",
-      submittedBy: "AquaInsight System",
-      status: "Approved",
-      date: "2023-10-01",
-      records: chemicalOceanographyData.length,
-      description: "A dataset focusing on the chemical composition of seawater, including pH, nitrate, phosphate, and silicate levels.",
-      summary: "This dataset provides insights into ocean chemistry, essential for studies on marine life, nutrient cycles, and ocean acidification."
-    },
-    {
-      id: "DS003",
-      name: "Offshore Weather Patterns",
-      type: "Marine Weather",
-      submittedBy: "AquaInsight System",
-      status: "Approved",
-      date: "2023-10-01",
-      records: marineWeatherData.length,
-      description: "Contains data on marine weather, including air temperature, wind speed and direction, wave height, and atmospheric pressure.",
-      summary: "A valuable resource for understanding the interactions between the ocean and atmosphere, crucial for weather forecasting and maritime operations."
-    },
-    {
-      id: "DS004",
-      name: "Air-Sea Interface Data",
-      type: "Ocean Atmosphere",
-      submittedBy: "AquaInsight System",
-      status: "Approved",
-      date: "2023-10-01",
-      records: oceanAtmosphereData.length,
-      description: "This dataset includes parameters that are key to understanding the exchange of energy and matter between the ocean and atmosphere.",
-      summary: "Focuses on the ocean-atmosphere interface, with data on skin temperature, air temperature at various heights, and ventilation speed."
-    },
-    {
-      id: "DS005",
-      name: "Indian Ocean Fish Species",
-      type: "Fisheries",
-      submittedBy: "AquaInsight System",
-      status: "Approved",
-      date: "2024-02-10",
-      records: fisheriesData.length,
-      description: "A collection of fisheries data, including species caught, catch volume (kg), gear type, and vessel information from various locations.",
-      summary: "Provides critical data for fisheries management, stock assessment, and understanding marine biodiversity and ecosystem health."
-    },
-    {
-      id: "DS006",
-      name: "eDNA Sequence Library",
-      type: "eDNA",
-      submittedBy: "AquaInsight System",
-      status: "Approved",
-      date: "2023-10-01",
-      records: 0,
-      description: "A placeholder for eDNA sequence data. This dataset will be populated with sequences for biodiversity monitoring.",
-      summary: "This dataset is intended for storing and analyzing environmental DNA to identify species present in a given marine environment."
-    },
-];
 
 export const dataCollectionTrends = [
   { month: 'Jan', oceanographic: 18, fisheries: 12, molecular: 8 },
