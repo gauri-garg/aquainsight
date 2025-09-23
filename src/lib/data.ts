@@ -1,4 +1,5 @@
 
+
 export type DatasetType =
   | "Physical Oceanography"
   | "Chemical Oceanography"
@@ -216,23 +217,73 @@ export const marineWeatherData = [
 ];
 
 export const fisheriesData = [
-    { date: "2025-01-15", latitude: -75.5, longitude: -100.0, species: "Antarctic Krill", catch_kg: 5000, gear_type: "Pelagic trawl", vessel: "FV Ocean Explorer" },
-    { date: "2025-01-16", latitude: -75.6, longitude: -101.2, species: "Antarctic Krill", catch_kg: 7500, gear_type: "Pelagic trawl", vessel: "FV Ocean Explorer" },
-    { date: "2025-02-01", latitude: -78.2, longitude: 165.5, species: "Antarctic Toothfish", catch_kg: 1200, gear_type: "Longline", vessel: "FV Southern Star" },
-    { date: "2025-02-02", latitude: -78.4, longitude: 166.0, species: "Antarctic Toothfish", catch_kg: 1500, gear_type: "Longline", vessel: "FV Southern Star" },
-    { date: "2025-02-20", latitude: -65.0, longitude: -62.8, species: "Mackerel Icefish", catch_kg: 800, gear_type: "Bottom trawl", vessel: "FV Ice Hunter" },
-    { date: "2025-03-01", latitude: 10.0, longitude: 75.0, species: "Skipjack tuna", catch_kg: 3200, gear_type: "Pelagic trawl", vessel: "FV Indian Star" },
-    { date: "2025-03-02", latitude: 9.5, longitude: 75.2, species: "Yellowfin tuna", catch_kg: 2100, gear_type: "Pelagic trawl", vessel: "FV Indian Star" },
-    { date: "2025-03-03", latitude: 12.1, longitude: 74.8, species: "Indian oil sardine", catch_kg: 10000, gear_type: "Purse seine", vessel: "FV Coastal Fisher" },
-    { date: "2025-03-04", latitude: 8.9, longitude: 76.5, species: "Blue trevally", catch_kg: 500, gear_type: "Handline", vessel: "FV Coral Queen" },
-    { date: "2025-03-05", latitude: 9.2, longitude: 77.0, species: "Red snapper", catch_kg: 750, gear_type: "Bottom longline", vessel: "FV Coral Queen" },
-    { date: "2025-03-06", latitude: 8.8, longitude: 76.8, species: "Threadfin butterflyfish", catch_kg: 150, gear_type: "Handline", vessel: "FV Coral Queen" }
+  {
+    "species": "Yellowfin tuna",
+    "scientificName": "Thunnus albacares",
+    "habitat": "Pelagic, open ocean, near surface & seamounts",
+    "behavior": "Long-distance, follows prey and temperature fronts",
+    "seasonalPattern": "Year-round with peaks post-monsoon",
+    "threats": "Overfishing, bycatch, habitat degradation",
+    "stockStatus": "Fair (depends on baitfish availability and fishing pressure)",
+    "managementMeasures": "Highly dependent on EEZ-level availability, responsive to SST and currents"
+  },
+  {
+    "species": "Skipjack tuna",
+    "scientificName": "Katsuwonus pelamis",
+    "habitat": "Pelagic, epipelagic layer, around warm currents and thermal zones",
+    "behavior": "Migration follows prey, dislikes low thermal gradients",
+    "seasonalPattern": "More abundant in warm months, seasonally influenced by region",
+    "threats": "Fishing pressure, habitat change, prey reduction",
+    "stockStatus": "Fair to Good (if prey abundant)",
+    "managementMeasures": "Probes, vigilant watch & spotter planes, depth-range checks (seasonal)"
+  },
+  {
+    "species": "Indian oil sardine",
+    "scientificName": "Sardinella longiceps",
+    "habitat": "Coastal waters, forms large schools near surface, migrates between shores",
+    "behavior": "Filter-feeds on phytoplankton and zooplankton",
+    "seasonalPattern": "Peak season from August to March",
+    "threats": "Over-exploitation, pollution, changes in coastal zones",
+    "stockStatus": "Good (if strict regulations are followed)",
+    "managementMeasures": "Regulation of mesh sizes and overall catch, and juvenile protection"
+  },
+  {
+    "species": "Blue trevally (Kavala)",
+    "scientificName": "Carangoides plagiotaenia",
+    "habitat": "Reef slopes, lagoons, nearshore pelagic waters",
+    "behavior": "Local movements, some seasonal movements with schooling",
+    "seasonalPattern": "Seasonal peaks (region-dependent)",
+    "threats": "Overfishing, reef degradation",
+    "stockStatus": "Good (if reef habitat healths)",
+    "managementMeasures": "Mobile predators, benefits from reef connectivity and healthy prey fields."
+  },
+  {
+    "species": "Red snapper",
+    "scientificName": "Lutjanus campechanus",
+    "habitat": "Coral reefs, rocky outcrops, structured habitats",
+    "behavior": "Mostly strationary, some dispersal via currents",
+    "seasonalPattern": "Seasonal (often linked to spawning months)",
+    "threats": "Habitat loss (coral bleaching), fishing",
+    "stockStatus": "Fair (sensitive to coral health)",
+    "managementMeasures": "Benefits from no-entry/no-take zones, and reef vegetation reduces survival"
+  },
+  {
+    "species": "Threadfin butterflyfish",
+    "scientificName": "Chaetodon auriga",
+    "habitat": "Coral reef and lagoon habitats",
+    "behavior": "Mostly stationary, larval dispersal via currents",
+    "seasonalPattern": "Year-round and locally abundant",
+    "threats": "Coral bleaching, habitat loss, food disturbance",
+    "stockStatus": "Good to Fair (vegetation loss reduces population)",
+    "managementMeasures": "Indicator species for reef health, selective, and careful fishing"
+  }
 ];
+
 
 export const datasets: Dataset[] = [
   {
     id: "DS001",
-    name: "Southern Ocean Physical Data",
+    name: "Core Oceanographic Data",
     type: "Physical Oceanography",
     submittedBy: "AquaInsight System",
     status: "Approved",
@@ -243,7 +294,7 @@ export const datasets: Dataset[] = [
   },
   {
     id: "DS002",
-    name: "Ocean Chemical Parameters",
+    name: "Seawater Chemistry Analysis",
     type: "Chemical Oceanography",
     submittedBy: "AquaInsight System",
     status: "Approved",
@@ -254,7 +305,7 @@ export const datasets: Dataset[] = [
   },
   {
     id: "DS003",
-    name: "Marine Weather Conditions",
+    name: "Offshore Weather Patterns",
     type: "Marine Weather",
     submittedBy: "AquaInsight System",
     status: "Approved",
@@ -265,7 +316,7 @@ export const datasets: Dataset[] = [
   },
   {
     id: "DS004",
-    name: "Ocean-Atmosphere Interaction Data",
+    name: "Air-Sea Interface Data",
     type: "Ocean Atmosphere",
     submittedBy: "AquaInsight System",
     status: "Approved",
@@ -276,11 +327,11 @@ export const datasets: Dataset[] = [
   },
   {
     id: "DS005",
-    name: "Antarctic & Indian Ocean Fisheries",
+    name: "Indian Ocean Fish Species",
     type: "Fisheries",
     submittedBy: "AquaInsight System",
     status: "Approved",
-    date: "2023-10-01",
+    date: "2024-02-10",
     records: fisheriesData.length,
     description: "A collection of fisheries data, including species caught, catch volume (kg), gear type, and vessel information from various locations.",
     summary: "Provides critical data for fisheries management, stock assessment, and understanding marine biodiversity and ecosystem health."

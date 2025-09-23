@@ -12,55 +12,62 @@ import {
 } from "@/components/ui/chart";
 
 const chartConfig = {
-  catch_kg: {
-    label: "Catch (kg)",
-    color: "hsl(var(--chart-1))",
-  }
+  stockStatus: {
+    label: "Stock Status",
+  },
+  Good: {
+    label: "Good",
+    color: "hsl(var(--chart-2))",
+  },
+  Fair: {
+    label: "Fair",
+    color: "hsl(var(--chart-4))",
+  },
 } satisfies ChartConfig;
 
 export default function FisheriesChart({ data }: { data: any[] }) {
-  const aggregatedData: {[key: string]: number} = data.reduce((acc, item) => {
-    if (!acc[item.species]) {
-      acc[item.species] = 0;
-    }
-    acc[item.species] += item.catch_kg;
-    return acc;
-  }, {});
 
-  const chartData = Object.keys(aggregatedData).map(species => ({
-    species,
-    catch_kg: aggregatedData[species],
+  const chartData = data.map(item => ({
+    species: item.species,
+    status: item.stockStatus.includes("Good") ? "Good" : "Fair",
+    value: 1, // All bars have a value of 1, color indicates status
   }));
+
 
   return (
     <ChartContainer config={chartConfig} className="h-[400px] w-full">
       <BarChart
         data={chartData}
+        layout="vertical"
         margin={{
-          left: 12,
+          left: 10,
           right: 12,
         }}
       >
-        <CartesianGrid vertical={false} />
-        <XAxis
+        <CartesianGrid horizontal={false} />
+        <YAxis
           dataKey="species"
+          type="category"
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          width={120}
         />
-        <YAxis
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            tickFormatter={(value) => `${value} kg`}
-        />
+        <XAxis type="number" hide />
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
         <ChartLegend content={<ChartLegendContent />} />
         <Bar
-          dataKey="catch_kg"
-          fill="var(--color-catch_kg)"
-          radius={4}
-        />
+          dataKey="value"
+          radius={5}
+        >
+            {chartData.map((entry, index) => (
+                <Bar
+                    key={`bar-${index}`}
+                    dataKey="value"
+                    fill={entry.status === 'Good' ? 'var(--color-Good)' : 'var(--color-Fair)'}
+                />
+            ))}
+        </Bar>
       </BarChart>
     </ChartContainer>
   );
