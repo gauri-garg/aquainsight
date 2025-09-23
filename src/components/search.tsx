@@ -3,11 +3,7 @@
 
 import * as React from "react"
 import {
-  Calculator,
-  Calendar,
-  CreditCard,
   Settings,
-  Smile,
   User,
   File,
   Thermometer,
@@ -28,7 +24,7 @@ import {
 } from "@/components/ui/command"
 import { Button } from "./ui/button"
 import { Search as SearchIcon } from "lucide-react"
-import { collection, getDocs, onSnapshot } from "firebase/firestore"
+import { collection, getDocs } from "firebase/firestore"
 import { firestore } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { DialogDescription, DialogTitle } from "./ui/dialog"
@@ -150,7 +146,7 @@ export function Search() {
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
               <CommandShortcut>⌘S</CommandShortcut>
-            </ICommandItem>
+            </CommandItem>
           </CommandGroup>
         </CommandList>
       </CommandDialog>
