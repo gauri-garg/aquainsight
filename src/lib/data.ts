@@ -216,12 +216,12 @@ export const marineWeatherData = [
 ];
 
 export const fisheriesData = [
-  { date: "2024-02-01", species_Common: "Skipjack tuna", species_Scientific: "Katsuwonus pelamis", preferred_SST_C: "26 - 30", Preferred_Salinity_PSU: "34 - 35.5", Preferred_pH: "7.9 - 8.3", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Pelagic, open ocean, near surface & seamounts" },
-  { date: "2024-02-02", species_Common: "Yellowfin tuna", species_Scientific: "Thunnus albacares", preferred_SST_C: "25.5 - 30.5", Preferred_Salinity_PSU: "34 - 36", Preferred_pH: "7.9 - 8.3", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Pelagic, epipelagic layer, around seamounts and frontal zones" },
-  { date: "2024-02-03", species_Common: "Indian oil sardine", species_Scientific: "Sardinella longiceps", preferred_SST_C: "24 - 30", Preferred_Salinity_PSU: "32 - 35", Preferred_pH: "7.8 - 8.3", Preferred_DO_mgL: "3.5 - 6", Preferred_Habitat: "Coastal, lagoons, nearshore waters; juvenile nurseries" },
-  { date: "2024-02-04", species_Common: "Blue trevally", species_Scientific: "Caranx melampygus", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.9 - 8.4", Preferred_DO_mgL: "4 - 7", Preferred_Habitat: "Reef slopes, lagoons, nearshore pelagic waters" },
-  { date: "2024-02-05", species_Common: "Red snapper", species_Scientific: "Lutjanus sp.", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.9 - 8.4", Preferred_DO_mgL: "4 - 6.5", Preferred_Habitat: "Coral reefs, reef slopes, structured habitats" },
-  { date: "2024-02-06", species_Common: "Threadfin butterflyfish", species_Scientific: "Chaetodon auriga", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.8 - 8.4", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Coral-rich reef zones, lagoons" }
+  { species_Common: "Skipjack tuna", species_Scientific: "Katsuwonus pelamis", preferred_SST_C: "26 - 30", Preferred_Salinity_PSU: "34 - 35.5", Preferred_pH: "7.9 - 8.3", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Pelagic, open ocean, near surface & seamounts" },
+  { species_Common: "Yellowfin tuna", species_Scientific: "Thunnus albacares", preferred_SST_C: "25.5 - 30.5", Preferred_Salinity_PSU: "34 - 36", Preferred_pH: "7.9 - 8.3", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Pelagic, epipelagic layer, around seamounts and frontal zones" },
+  { species_Common: "Indian oil sardine", species_Scientific: "Sardinella longiceps", preferred_SST_C: "24 - 30", Preferred_Salinity_PSU: "32 - 35", Preferred_pH: "7.8 - 8.3", Preferred_DO_mgL: "3.5 - 6", Preferred_Habitat: "Coastal, lagoons, nearshore waters; juvenile nurseries" },
+  { species_Common: "Blue trevally", species_Scientific: "Caranx melampygus", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.9 - 8.4", Preferred_DO_mgL: "4 - 7", Preferred_Habitat: "Reef slopes, lagoons, nearshore pelagic waters" },
+  { species_Common: "Red snapper", species_Scientific: "Lutjanus sp.", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.9 - 8.4", Preferred_DO_mgL: "4 - 6.5", Preferred_Habitat: "Coral reefs, reef slopes, structured habitats" },
+  { species_Common: "Threadfin butterflyfish", species_Scientific: "Chaetodon auriga", preferred_SST_C: "24 - 29", Preferred_Salinity_PSU: "33 - 36", Preferred_pH: "7.8 - 8.4", Preferred_DO_mgL: "4 - 6", Preferred_Habitat: "Coral-rich reef zones, lagoons" }
 ];
 
 
