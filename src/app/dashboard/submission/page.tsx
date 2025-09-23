@@ -37,7 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatasetType } from "@/lib/data";
+import { Label } from "@/components/ui/label";
+
 
 const formSchema = z.object({
   datasetName: z.string().min(5, "Dataset name must be at least 5 characters."),
@@ -51,13 +52,6 @@ const formSchema = z.object({
   datasetDescription: z
     .string()
     .min(20, "Please provide a more detailed description."),
-  file: z
-    .any()
-    .refine((files) => files?.length == 1, "Dataset file is required.")
-    .refine(
-      (files) => files?.[0]?.type === "text/csv",
-      "Only CSV files are allowed."
-    ),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -65,6 +59,8 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function DataSubmissionPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user, userDetails } = useAuth();
 
@@ -75,10 +71,26 @@ export default function DataSubmissionPage() {
       datasetDescription: "",
     },
   });
-  
-  const fileRef = form.register("file");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+        if (selectedFile.type !== "text/csv") {
+            setFileError("Only CSV files are allowed.");
+            setFile(null);
+        } else {
+            setFile(selectedFile);
+            setFileError(null);
+        }
+    }
+  }
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
+    if (!file) {
+      setFileError("Dataset file is required.");
+      return;
+    }
+
     setIsLoading(true);
 
     if (!user) {
@@ -91,8 +103,6 @@ export default function DataSubmissionPage() {
       return;
     }
     
-    const file = data.file[0];
-
     try {
       // 1. Upload CSV to Firebase Storage
       const storageRef = ref(storage, `submissions/${user.uid}/${Date.now()}-${file.name}`);
@@ -116,6 +126,7 @@ export default function DataSubmissionPage() {
         description: "Your dataset has been submitted for review.",
       });
       form.reset();
+      setFile(null);
       
     } catch (e: any) {
       toast({
@@ -195,28 +206,22 @@ export default function DataSubmissionPage() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="file"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dataset File (CSV)</FormLabel>
-                  <FormControl>
+            <FormItem>
+                <FormLabel>Dataset File (CSV)</FormLabel>
+                <FormControl>
                     <Input
-                      type="file"
-                      accept=".csv"
-                      {...fileRef}
-                      disabled={isLoading}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    disabled={isLoading}
                     />
-                  </FormControl>
-                  <FormDescription>
+                </FormControl>
+                <FormDescription>
                     Please upload your data in a comma-separated value format.
                     The first row should be the header.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                </FormDescription>
+                {fileError && <p className="text-sm font-medium text-destructive">{fileError}</p>}
+            </FormItem>
 
             <FormField
               control={form.control}
