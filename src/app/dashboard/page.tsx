@@ -58,7 +58,6 @@ export default function Dashboard() {
       "eDNA"
     ];
 
-    let allDatasets: Dataset[] = [];
     const listeners: { ref: any; listener: any }[] = [];
 
     allDatasetTypes.forEach(type => {
@@ -78,24 +77,16 @@ export default function Dashboard() {
           );
         }
         
-        // Filter out old data of the same type and concat new data
-        allDatasets = allDatasets.filter(d => d.type !== type).concat(datasetsArray);
+        setDatasets(currentDatasets => {
+          const otherDatasets = currentDatasets.filter(d => d.type !== type);
+          return [...otherDatasets, ...datasetsArray];
+        });
 
-        let filteredDatasets;
-        if (role === "Student" || role === "Researcher") {
-          filteredDatasets = allDatasets.filter(
-            (d) =>
-              d.status === "Approved" ||
-              (d.submittedBy === user?.email && d.status !== 'Approved')
-          );
-        } else {
-          filteredDatasets = allDatasets;
-        }
-        setDatasets(filteredDatasets);
-        setLoading(false);
       });
       listeners.push({ ref: datasetsRef, listener });
     });
+
+    setLoading(false);
 
 
     return () => {
@@ -103,7 +94,21 @@ export default function Dashboard() {
         off(ref, "value", listener);
       });
     };
-  }, [role, user]);
+  }, []);
+
+  useEffect(() => {
+    let filteredDatasets;
+    if (role === "Student" || role === "Researcher") {
+      filteredDatasets = datasets.filter(
+        (d) =>
+          d.status === "Approved" ||
+          (d.submittedBy === user?.email && d.status !== 'Approved')
+      );
+    } else {
+      filteredDatasets = datasets;
+    }
+  }, [datasets, role, user]);
+
 
   const totalDatasets = datasets.length;
   const pendingSubmissions = datasets.filter(
