@@ -100,46 +100,53 @@ export default function DataSubmissionPage() {
       const storageRef = ref(storage, `submissions/${user.uid}/${Date.now()}-${data.file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, data.file);
 
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => {
-           console.error("Upload failed:", error);
-           toast({
-            title: "Upload Failed",
-            description: "An error occurred during the file upload. Please try again.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-        },
-        async () => {
-          // Upload completed successfully, now get the download URL
-          const fileUrl = await getDownloadURL(uploadTask.snapshot.ref);
+      // Wrap upload task in a promise to handle async logic correctly
+      const fileUrl = await new Promise<string>((resolve, reject) => {
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(progress);
+          },
+          (error) => {
+            console.error("Upload failed:", error);
+            toast({
+              title: "Upload Failed",
+              description: "An error occurred during the file upload. Please try again.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            reject(error);
+          },
+          async () => {
+            // Upload completed successfully, now get the download URL
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(downloadURL);
+            } catch (error) {
+              reject(error);
+            }
+          }
+        );
+      });
 
-          // 2. Store metadata in Firestore
-          await addDoc(collection(firestore, "submissions"), {
-            studentId: user.uid,
-            studentName: userDetails?.fullName || user.email,
-            datasetName: data.datasetName,
-            datasetType: data.datasetType,
-            description: data.datasetDescription,
-            status: "pending",
-            fileUrl: fileUrl,
-            submittedAt: serverTimestamp(),
-          });
+      // 2. Store metadata in Firestore
+      await addDoc(collection(firestore, "submissions"), {
+        studentId: user.uid,
+        studentName: userDetails?.fullName || user.email,
+        datasetName: data.datasetName,
+        datasetType: data.datasetType,
+        description: data.datasetDescription,
+        status: "pending",
+        fileUrl: fileUrl,
+        submittedAt: serverTimestamp(),
+      });
 
-          toast({
-            title: "Submission Successful",
-            description: "Your dataset has been submitted for review.",
-          });
-          form.reset();
-          setIsLoading(false);
-          setUploadProgress(0);
-        }
-      );
-
+      toast({
+        title: "Submission Successful",
+        description: "Your dataset has been submitted for review.",
+      });
+      form.reset();
+      
     } catch (e: any) {
       toast({
         title: "Submission Failed",
@@ -148,7 +155,9 @@ export default function DataSubmissionPage() {
         variant: "destructive",
       });
       console.error(e);
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
+        setUploadProgress(0);
     }
   };
 
