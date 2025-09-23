@@ -211,7 +211,7 @@ export default function Dashboard() {
               </TableHeader>
               <TableBody>
                 {recentDatasets.map((dataset) => (
-                  <TableRow key={dataset.id}>
+                  <TableRow key={`${dataset.type}-${dataset.id}`}>
                     <TableCell>
                       <div className="font-medium">{dataset.name}</div>
                       <div className="hidden text-sm text-muted-foreground md:inline">
