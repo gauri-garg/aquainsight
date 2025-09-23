@@ -22,6 +22,7 @@ const chartColors = [
 
 export default function FisheriesChart({ data }: { data: any[] }) {
   const chartData = React.useMemo(() => {
+    if (!data) return [];
     return data.map((item, index) => ({
       name: item.species_Common,
       value: 1,
@@ -31,6 +32,7 @@ export default function FisheriesChart({ data }: { data: any[] }) {
 
   const chartConfig = React.useMemo(() => {
     const config: ChartConfig = {};
+    if (!chartData) return config;
     chartData.forEach((item) => {
       config[item.name] = {
         label: item.name,
@@ -39,6 +41,10 @@ export default function FisheriesChart({ data }: { data: any[] }) {
     });
     return config;
   }, [chartData]);
+
+  if (!data || data.length === 0) {
+    return <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground">No data to display</div>
+  }
 
   return (
     <ChartContainer config={chartConfig} className="h-[400px] w-full">
@@ -52,8 +58,8 @@ export default function FisheriesChart({ data }: { data: any[] }) {
           outerRadius="80%"
           strokeWidth={1}
         >
-          {chartData.map((entry) => (
-            <Cell key={entry.name} fill={entry.fill} />
+          {chartData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
         <ChartLegend
