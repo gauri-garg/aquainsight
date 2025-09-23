@@ -29,7 +29,7 @@ export default function FisheriesChart({ data }: { data: any[] }) {
 
   const chartData = data.map(item => ({
     species: item.species,
-    status: item.stockStatus.includes("Good") ? "Good" : "Fair",
+    status: item.stockStatus && item.stockStatus.includes("Good") ? "Good" : "Fair",
     value: 1, // All bars have a value of 1, color indicates status
   }));
 
