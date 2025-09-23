@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -33,7 +34,7 @@ export default function FisheriesPage() {
     const listener = onValue(dataRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
-        const dataArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        const dataArray: DataPoint[] = Object.keys(data).map(key => ({ id: key, ...data[key] }));
         setFisheriesData(dataArray);
         if (dataArray.length > 0 && !selectedData) {
           setSelectedData(dataArray[0]);
@@ -44,7 +45,7 @@ export default function FisheriesPage() {
     return () => {
       // Detach listener
     };
-  }, []);
+  }, [selectedData]);
 
   const handleRowClick = (item: DataPoint) => {
     setSelectedData(item);
