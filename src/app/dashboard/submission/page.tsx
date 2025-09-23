@@ -67,8 +67,9 @@ export default function DataSubmissionPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      datasetName: "",
-      datasetDescription: "",
+      datasetName: "Combined Oceanography",
+      datasetDescription: "This is a test description for the combined oceanography dataset.",
+      datasetType: "Chemical Oceanography",
     },
   });
 
@@ -125,8 +126,15 @@ export default function DataSubmissionPage() {
         title: "Submission Successful",
         description: "Your dataset has been submitted for review.",
       });
-      form.reset();
+      form.reset({
+        datasetName: "",
+        datasetDescription: "",
+      });
       setFile(null);
+      const fileInput = document.getElementById('file-input') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
       
     } catch (e: any) {
       toast({
@@ -210,6 +218,7 @@ export default function DataSubmissionPage() {
                 <FormLabel>Dataset File (CSV)</FormLabel>
                 <FormControl>
                     <Input
+                    id="file-input"
                     type="file"
                     accept=".csv"
                     onChange={handleFileChange}
