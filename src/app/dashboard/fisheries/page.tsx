@@ -45,7 +45,7 @@ export default function FisheriesPage() {
         const data = snapshot.val();
         const dataArray: DataPoint[] = Object.keys(data).map(key => ({ id: key, ...data[key] }));
         setFisheriesData(dataArray);
-        if (dataArray.length > 0 && !selectedData) {
+        if (dataArray.length > 0) {
           setSelectedData(dataArray[0]);
         }
       }
@@ -54,7 +54,7 @@ export default function FisheriesPage() {
     return () => {
       // Detach listener
     };
-  }, [selectedData]);
+  }, []);
 
 
   const handleRowClick = (item: DataPoint) => {
