@@ -111,7 +111,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-lg font-semibold md:text-2xl">Settings</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your account settings and set e-mail preferences.
+          Manage your account settings.
         </p>
       </div>
       <Separator />
