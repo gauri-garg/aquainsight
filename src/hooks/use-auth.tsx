@@ -21,8 +21,9 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
+  deleteUser,
 } from "firebase/auth";
-import { ref, set, get, child, update } from "firebase/database";
+import { ref, set, get, child, update, remove } from "firebase/database";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
@@ -45,6 +46,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUserProfile: (details: Partial<UserDetails>) => Promise<void>;
   changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
+  deleteUserAccount: (email: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -188,8 +190,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await updatePassword(user, newPass);
   }
 
+  const deleteUserAccount = async (email: string, password: string) => {
+    if (!user) throw new Error("Not authenticated");
+
+    const cred = EmailAuthProvider.credential(email, password);
+    await reauthenticateWithCredential(user, cred);
+    
+    // Delete data from Realtime Database first
+    await remove(ref(database, 'users/' + user.uid));
+    
+    // Finally, delete the user from Authentication
+    await deleteUser(user);
+  };
+
+
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount }}>
       {!loading && children}
     </AuthContext.Provider>
   );
