@@ -16,12 +16,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, userDetails, loading } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
 
   const displayName = userDetails?.fullName || user?.email || "User";
   const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
@@ -102,24 +99,13 @@ export default function ProfilePage() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={user?.email || ""} readOnly />
           </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-               <Input id="password" type={showPassword ? "text" : "password"} value="password" readOnly />
-               <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOff /> : <Eye />}
-                    <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
-               </Button>
-            </div>
-             <div className="flex items-center gap-2">
-               <p className="text-sm text-muted-foreground">Want to change your password?</p>
+          
+           <div className="flex items-center gap-2 pt-4">
+               <p className="text-sm text-muted-foreground">Want to update your profile or change your password?</p>
                <Button asChild variant="outline" size="sm">
-                    <Link href="/dashboard/settings">Change Password</Link>
+                    <Link href="/dashboard/settings">Go to Settings</Link>
                </Button>
             </div>
-          </div>
-
         </CardContent>
       </Card>
     </div>
