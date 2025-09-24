@@ -18,7 +18,7 @@ import {
   User,
   updateProfile,
 } from "firebase/auth";
-import { ref, set, get } from "firebase/database";
+import { ref, set, get, child } from "firebase/database";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
@@ -43,6 +43,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const seedCmlreApprovedIds = async () => {
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, 'cmlreApprovedIds'));
+    if (!snapshot.exists()) {
+        const defaultIds = {
+            'CMLRE-A-001': true,
+            'CMLRE-B-002': true,
+            'CMLRE-C-003': true,
+        };
+        await set(ref(database, 'cmlreApprovedIds'), defaultIds);
+        console.log('Seeded cmlreApprovedIds');
+    }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
@@ -50,22 +64,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userRole = await getUserRole(user.uid);
-        const details = await getUserDetails(user.uid);
-        setRole(userRole);
-        setUserDetails(details);
-        setUser(user);
-      } else {
-        setUser(null);
-        setRole(null);
-        setUserDetails(null);
-      }
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      await seedCmlreApprovedIds(); // Seed the DB first
 
-    return () => unsubscribe();
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const userRole = await getUserRole(user.uid);
+          const details = await getUserDetails(user.uid);
+          setRole(userRole);
+          setUserDetails(details);
+          setUser(user);
+        } else {
+          setUser(null);
+          setRole(null);
+          setUserDetails(null);
+        }
+        setLoading(false);
+      });
+      return unsubscribe;
+    };
+
+    const unsubscribePromise = initializeAuth();
+
+    return () => {
+        unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
+    };
   }, []);
 
   const getUserRole = async (uid: string): Promise<UserRole | null> => {
@@ -98,6 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: UserRole,
     details: UserDetails
   ) => {
+
+    if (role === 'CMLRE') {
+      if (!details.approvedId) {
+        throw new Error('CMLRE Staff must provide an Approved ID.');
+      }
+      const dbRef = ref(database);
+      const snapshot = await get(child(dbRef, `cmlreApprovedIds/${details.approvedId}`));
+      if (!snapshot.exists()) {
+        throw new Error('The provided Approved ID is not valid.');
+      }
+    }
+    
     const { user: newUser } = await createUserWithEmailAndPassword(
       auth,
       email,
