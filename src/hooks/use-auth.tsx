@@ -9,7 +9,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { auth, database, storage } from "@/lib/firebase";
+import { auth, database } from "@/lib/firebase";
 import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -23,18 +23,13 @@ import {
   deleteUser,
 } from "firebase/auth";
 import { ref, set, get, child, update, remove } from "firebase/database";
-import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
+
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
 interface UserDetails {
   fullName?: string;
   approvedId?: string;
-  photoURL?: string;
 }
 interface AuthContextType {
   user: User | null;
@@ -52,7 +47,6 @@ interface AuthContextType {
   updateUserProfile: (details: Partial<UserDetails>) => Promise<void>;
   changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
   deleteUserAccount: (email: string, password: string) => Promise<void>;
-  updateUserProfilePicture: (file: File) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -215,30 +209,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await deleteUser(user);
   };
 
-  const updateUserProfilePicture = async (file: File) => {
-    if (!user) throw new Error("Not authenticated");
-
-    const fileRef = storageRef(storage, `profile-pictures/${user.uid}`);
-    await uploadBytes(fileRef, file);
-    const photoURL = await getDownloadURL(fileRef);
-
-    // Update Firebase Auth profile
-    await updateProfile(user, { photoURL });
-    
-    // Update Realtime Database
-    await update(ref(database, 'users/' + user.uid), { photoURL });
-
-    // Update local state to trigger re-render
-    setUserDetails(prev => ({...prev, photoURL }));
-    if (auth.currentUser) {
-      // Create a new object to ensure React sees a state change
-      setUser({ ...auth.currentUser });
-    }
-  };
-
-
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, updateUserProfilePicture }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount }}>
       {!loading && children}
     </AuthContext.Provider>
   );

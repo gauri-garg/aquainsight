@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -78,7 +78,6 @@ export function UserNav() {
   const displayName = userDetails?.fullName || user?.email || "User";
   const roleDescription = role === "CMLRE" ? "Staff" : role === "Researcher" ? "Researcher" : "Student";
   const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
-  const photoURL = user?.photoURL || userDetails?.photoURL;
 
 
   return (
@@ -92,10 +91,6 @@ export function UserNav() {
           <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-3 cursor-pointer">
                    <Avatar className="h-9 w-9">
-                      <AvatarImage
-                      src={photoURL || undefined}
-                      alt={displayName}
-                      />
                       <AvatarFallback>{fallback}</AvatarFallback>
                   </Avatar>
                   <div className="hidden md:flex flex-col items-start">
