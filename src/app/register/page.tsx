@@ -37,34 +37,12 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [cmlreApprovedIds, setCmlreApprovedIds] = useState<string[]>([]);
-
-  const { toast } = useToast();
   
-  useEffect(() => {
-    const fetchApprovedIds = async () => {
-      const snapshot = await get(ref(database, 'cmlreApprovedIds'));
-      if (snapshot.exists()) {
-        setCmlreApprovedIds(snapshot.val());
-      }
-    };
-    fetchApprovedIds();
-  }, []);
+  const { toast } = useToast();
 
   const handleRegister = async () => {
     setIsLoading(true);
-    if (selectedRole === "CMLRE") {
-      if (!cmlreApprovedIds.includes(approvedId)) {
-        toast({
-          title: "Registration Failed",
-          description: "The provided Approved ID is not valid.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-    }
-
+    
     try {
       await signUp(email, password, selectedRole, { fullName, approvedId });
       toast({

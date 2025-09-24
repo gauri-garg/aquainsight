@@ -64,21 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     });
-    
-    const seedDatabase = async () => {
-      const approvedIds = [
-        "CMLRE-XYZ-123",
-        "CMLRE-ABC-789",
-        "CMLRE-QWE-456",
-      ];
-      const cmlreApprovedIdsRef = ref(database, 'cmlreApprovedIds');
-      const cmlreSnapshot = await get(cmlreApprovedIdsRef);
-      if (!cmlreSnapshot.exists()) {
-        await set(cmlreApprovedIdsRef, approvedIds);
-      }
-    }
-    
-    seedDatabase();
 
     return () => unsubscribe();
   }, []);
