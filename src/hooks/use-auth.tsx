@@ -30,6 +30,7 @@ export type UserRole = "CMLRE" | "Researcher" | "Student";
 interface UserDetails {
   fullName?: string;
   approvedId?: string;
+  photoURL?: string;
 }
 interface AuthContextType {
   user: User | null;
@@ -86,7 +87,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const snapshot = await get(ref(database, `users/${uid}`));
       if (snapshot.exists()) {
-        return snapshot.val() as UserDetails;
+        const details = snapshot.val();
+        // Combine with auth user data
+        const authUser = auth.currentUser;
+        if(authUser) {
+          return {
+            fullName: details.fullName || authUser.displayName,
+            photoURL: authUser.photoURL,
+            ...details,
+          }
+        }
+        return details;
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -102,10 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user) {
           const userRole = await getUserRole(user.uid);
           const details = await getUserDetails(user.uid);
+          setUser(user);
           setRole(userRole);
           setUserDetails(details);
-          // Create a new user object to force re-render
-          setUser({...user});
         } else {
           setUser(null);
           setRole(null);
@@ -184,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Update local state and force re-render
     setUserDetails(prev => ({...prev, ...details}));
     if (auth.currentUser) {
+      // Create a new user object to force re-render in consumers
       setUser({ ...auth.currentUser });
     }
   };
