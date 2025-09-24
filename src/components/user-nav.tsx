@@ -93,9 +93,8 @@ export function UserNav() {
               <div className="flex items-center gap-3 cursor-pointer">
                    <Avatar className="h-9 w-9">
                       <AvatarImage
-                      src={photoURL || "https://picsum.photos/seed/user-avatar/100/100"}
+                      src={photoURL || undefined}
                       alt={displayName}
-                      data-ai-hint="person face"
                       />
                       <AvatarFallback>{fallback}</AvatarFallback>
                   </Avatar>

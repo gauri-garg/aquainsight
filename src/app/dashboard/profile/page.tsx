@@ -112,9 +112,8 @@ export default function ProfilePage() {
             <div className="relative">
               <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
                 <AvatarImage
-                  src={photoURL || "https://picsum.photos/seed/user-avatar/100/100"}
+                  src={photoURL || undefined}
                   alt={displayName}
-                  data-ai-hint="person face"
                 />
                 <AvatarFallback>{fallback}</AvatarFallback>
               </Avatar>
