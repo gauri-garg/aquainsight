@@ -89,7 +89,7 @@ export default function ProfilePage() {
   
   const displayName = userDetails?.fullName || user?.email || "User";
   const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
-  const photoURL = userDetails?.photoURL || user?.photoURL;
+  const photoURL = user?.photoURL || userDetails?.photoURL;
 
   return (
     <div className="space-y-6">

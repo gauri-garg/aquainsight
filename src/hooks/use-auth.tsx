@@ -186,8 +186,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await update(ref(database, 'users/' + user.uid), details);
+    
+    // Update local state and force re-render
     setUserDetails(prev => ({...prev, ...details}));
-    // Force a re-render of user object to update consumers
     if (auth.currentUser) {
       setUser({ ...auth.currentUser });
     }
@@ -227,9 +228,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Update Realtime Database
     await update(ref(database, 'users/' + user.uid), { photoURL });
 
-    // Update local state
+    // Update local state to trigger re-render
     setUserDetails(prev => ({...prev, photoURL }));
     if (auth.currentUser) {
+      // Create a new object to ensure React sees a state change
       setUser({ ...auth.currentUser });
     }
   };

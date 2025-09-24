@@ -78,7 +78,7 @@ export function UserNav() {
   const displayName = userDetails?.fullName || user?.email || "User";
   const roleDescription = role === "CMLRE" ? "Staff" : role === "Researcher" ? "Researcher" : "Student";
   const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
-  const photoURL = userDetails?.photoURL || user?.photoURL;
+  const photoURL = user?.photoURL || userDetails?.photoURL;
 
 
   return (
