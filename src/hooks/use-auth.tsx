@@ -10,7 +10,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { auth, database } from "@/lib/firebase";
+import { auth, database, storage } from "@/lib/firebase";
 import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -24,6 +24,11 @@ import {
   deleteUser,
 } from "firebase/auth";
 import { ref, set, get, child, update, remove } from "firebase/database";
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
@@ -47,6 +52,7 @@ interface AuthContextType {
   updateUserProfile: (details: Partial<UserDetails>) => Promise<void>;
   changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
   deleteUserAccount: (email: string, password: string) => Promise<void>;
+  updateUserProfilePicture: (file: File) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -104,7 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const details = await getUserDetails(user.uid);
           setRole(userRole);
           setUserDetails(details);
-          setUser(user);
+          // Create a new user object to force re-render
+          setUser({...user});
         } else {
           setUser(null);
           setRole(null);
@@ -180,6 +187,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     await update(ref(database, 'users/' + user.uid), details);
     setUserDetails(prev => ({...prev, ...details}));
+    // Force a re-render of user object to update consumers
+    setUser({...user});
   };
 
   const changeUserPassword = async (email: string, oldPass: string, newPass: string) => {
@@ -203,9 +212,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await deleteUser(user);
   };
 
+  const updateUserProfilePicture = async (file: File) => {
+    if (!user) throw new Error("Not authenticated");
+
+    const fileRef = storageRef(storage, `profile-pictures/${user.uid}`);
+    await uploadBytes(fileRef, file);
+    const photoURL = await getDownloadURL(fileRef);
+
+    await updateProfile(user, { photoURL });
+     // Force a re-render of user object to update consumers
+    setUser({...user});
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, updateUserProfilePicture }}>
       {!loading && children}
     </AuthContext.Provider>
   );
