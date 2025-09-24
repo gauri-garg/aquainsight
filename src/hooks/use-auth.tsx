@@ -8,6 +8,7 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
 } from "react";
 import { auth, database } from "@/lib/firebase";
 import {
@@ -17,8 +18,11 @@ import {
   signOut,
   User,
   updateProfile,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
 } from "firebase/auth";
-import { ref, set, get, child } from "firebase/database";
+import { ref, set, get, child, update } from "firebase/database";
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
 
@@ -39,6 +43,8 @@ interface AuthContextType {
   ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserProfile: (details: Partial<UserDetails>) => Promise<void>;
+  changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,7 +59,6 @@ const seedCmlreApprovedIds = async () => {
             'CMLRE-C-003': true,
         };
         await set(ref(database, 'cmlreApprovedIds'), defaultIds);
-        console.log('Seeded cmlreApprovedIds');
     }
 };
 
@@ -62,6 +67,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const getUserRole = useCallback(async (uid: string): Promise<UserRole | null> => {
+    try {
+      const snapshot = await get(ref(database, `users/${uid}/role`));
+      if (snapshot.exists()) {
+        return snapshot.val() as UserRole;
+      }
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+    }
+    return null;
+  }, []);
+
+  const getUserDetails = useCallback(async (uid: string): Promise<UserDetails | null> => {
+    try {
+      const snapshot = await get(ref(database, `users/${uid}`));
+      if (snapshot.exists()) {
+        return snapshot.val() as UserDetails;
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+    return null;
+  }, []);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -89,31 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
         unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
     };
-  }, []);
+  }, [getUserDetails, getUserRole]);
 
-  const getUserRole = async (uid: string): Promise<UserRole | null> => {
-    try {
-      const snapshot = await get(ref(database, `users/${uid}/role`));
-      if (snapshot.exists()) {
-        return snapshot.val() as UserRole;
-      }
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-    }
-    return null;
-  };
-
-  const getUserDetails = async (uid: string): Promise<UserDetails | null> => {
-    try {
-      const snapshot = await get(ref(database, `users/${uid}`));
-      if (snapshot.exists()) {
-        return snapshot.val() as UserDetails;
-      }
-    } catch (error) {
-      console.error("Error fetching user details:", error);
-    }
-    return null;
-  }
   
   const signUp = async (
     email: string,
@@ -157,9 +163,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await signOut(auth);
   };
+  
+  const updateUserProfile = async (details: Partial<UserDetails>) => {
+    if (!user) throw new Error("Not authenticated");
+    
+    const updates: any = {};
+    if (details.fullName) {
+        updates.displayName = details.fullName;
+    }
+
+    if (Object.keys(updates).length > 0) {
+        await updateProfile(user, updates);
+    }
+
+    await update(ref(database, 'users/' + user.uid), details);
+    setUserDetails(prev => ({...prev, ...details}));
+  };
+
+  const changeUserPassword = async (email: string, oldPass: string, newPass: string) => {
+    if (!user) throw new Error("Not authenticated");
+
+    const cred = EmailAuthProvider.credential(email, oldPass);
+    await reauthenticateWithCredential(user, cred);
+    await updatePassword(user, newPass);
+  }
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword }}>
       {!loading && children}
     </AuthContext.Provider>
   );
