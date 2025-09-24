@@ -1,32 +1,9 @@
 
-
 "use client";
 
 import Link from "next/link";
-import {
-  Bell,
-  FlaskConical,
-  Home,
-  LineChart,
-  Upload,
-  Dna,
-  CheckCircle,
-  Menu,
-  Users,
-  Wind,
-  Beaker,
-  Thermometer,
-} from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
+import { Home, Menu, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
@@ -34,9 +11,6 @@ import {
 } from "@/components/ui/sheet";
 import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Search } from "@/components/search";
 
 export default function DashboardLayout({
   children,
@@ -44,51 +18,18 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { role } = useAuth();
-  const pathname = usePathname();
-  
-  const navLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: Home, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/submission", label: "Data Submission", icon: Upload, roles: ["Researcher", "Student"] },
-    { href: "/dashboard/physical-oceanography", label: "Physical Oceanography", icon: Wind, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/chemical-oceanography", label: "Chemical Oceanography", icon: Beaker, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/ocean-atmosphere", label: "Ocean Atmosphere", icon: Thermometer, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/marine-weather", label: "Marine Weather", icon: Wind, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/edna", label: "eDNA Matching", icon: Dna, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/analysis", label: "Analysis", icon: LineChart, roles: ["CMLRE", "Researcher", "Student"] },
-    { href: "/dashboard/user", label: "User Management", icon: Users, roles: ["CMLRE"] },
-    {
-      href: "/dashboard/approval",
-      label: "Approval Queue",
-      icon: CheckCircle,
-      badge: 2,
-      roles: ["CMLRE"]
-    },
-  ];
-  
-  const visibleNavLinks = navLinks.filter(link => role && link.roles.includes(role));
 
-  const SidebarContentNav = () => (
+  const SidebarNav = () => (
     <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-    {visibleNavLinks.map((link) => (
       <Link
-        key={link.href}
-        href={link.href}
-        className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", {
-          "bg-muted text-primary": pathname === link.href,
-        })}
+        href="/dashboard"
+        className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
       >
-        <link.icon className="h-4 w-4" />
-        {link.label}
-        {link.badge && (
-          <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-            {link.badge}
-          </Badge>
-        )}
+        <Home className="h-4 w-4" />
+        Dashboard
       </Link>
-    ))}
-  </nav>
-  )
-
+    </nav>
+  );
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -102,29 +43,9 @@ export default function DashboardLayout({
               <FlaskConical className="h-6 w-6 text-primary" />
               <span>AquaInsight</span>
             </Link>
-            <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
           </div>
           <div className="flex-1">
-            <SidebarContentNav />
-          </div>
-          <div className="mt-auto p-4">
-            <Card x-chunk="dashboard-02-chunk-0">
-              <CardHeader className="p-2 pt-0 md:p-4">
-                <CardTitle>Upgrade to Pro</CardTitle>
-                <CardDescription>
-                  Unlock all features and get unlimited access to our support
-                  team.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-                <Button size="sm" className="w-full">
-                  Upgrade
-                </Button>
-              </CardContent>
-            </Card>
+            <SidebarNav />
           </div>
         </div>
       </div>
@@ -145,49 +66,23 @@ export default function DashboardLayout({
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
                   href="#"
-                  className="flex items-center gap-2 text-lg font-semibold"
+                  className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <FlaskConical className="h-6 w-6 text-primary" />
-                  <span className="sr-only">AquaInsight</span>
+                  <span >AquaInsight</span>
                 </Link>
-                {visibleNavLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn("mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground", {
-                      "bg-muted text-foreground": pathname === link.href,
-                    })}
-                  >
-                    <link.icon className="h-5 w-5" />
-                    {link.label}
-                    {link.badge && (
-                      <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                        {link.badge}
-                      </Badge>
-                    )}
-                  </Link>
-                ))}
+                <Link
+                  href="/dashboard"
+                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
+                >
+                  <Home className="h-5 w-5" />
+                  Dashboard
+                </Link>
               </nav>
-              <div className="mt-auto">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Upgrade to Pro</CardTitle>
-                    <CardDescription>
-                      Unlock all features and get unlimited access to our
-                      support team.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button size="sm" className="w-full">
-                      Upgrade
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-             <Search />
+             {/* Search can be added back later */}
           </div>
           <UserNav />
         </header>
@@ -198,5 +93,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-
-    
