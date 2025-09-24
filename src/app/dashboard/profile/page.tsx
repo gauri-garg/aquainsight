@@ -26,9 +26,6 @@ export default function ProfilePage() {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const displayName = userDetails?.fullName || user?.email || "User";
-  const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
-
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
@@ -90,6 +87,10 @@ export default function ProfilePage() {
     );
   }
   
+  const displayName = userDetails?.fullName || user?.email || "User";
+  const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
+  const photoURL = userDetails?.photoURL || user?.photoURL;
+
   return (
     <div className="space-y-6">
       <div>
@@ -111,7 +112,7 @@ export default function ProfilePage() {
             <div className="relative">
               <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
                 <AvatarImage
-                  src={user?.photoURL || "https://picsum.photos/seed/user-avatar/100/100"}
+                  src={photoURL || "https://picsum.photos/seed/user-avatar/100/100"}
                   alt={displayName}
                   data-ai-hint="person face"
                 />

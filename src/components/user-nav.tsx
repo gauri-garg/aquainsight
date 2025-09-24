@@ -78,6 +78,7 @@ export function UserNav() {
   const displayName = userDetails?.fullName || user?.email || "User";
   const roleDescription = role === "CMLRE" ? "Staff" : role === "Researcher" ? "Researcher" : "Student";
   const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
+  const photoURL = userDetails?.photoURL || user?.photoURL;
 
 
   return (
@@ -92,7 +93,7 @@ export function UserNav() {
               <div className="flex items-center gap-3 cursor-pointer">
                    <Avatar className="h-9 w-9">
                       <AvatarImage
-                      src={user?.photoURL || "https://picsum.photos/seed/user-avatar/100/100"}
+                      src={photoURL || "https://picsum.photos/seed/user-avatar/100/100"}
                       alt={displayName}
                       data-ai-hint="person face"
                       />

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, {
@@ -35,6 +34,7 @@ export type UserRole = "CMLRE" | "Researcher" | "Student";
 interface UserDetails {
   fullName?: string;
   approvedId?: string;
+  photoURL?: string;
 }
 interface AuthContextType {
   user: User | null;
@@ -219,9 +219,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await uploadBytes(fileRef, file);
     const photoURL = await getDownloadURL(fileRef);
 
+    // Update Firebase Auth profile
     await updateProfile(user, { photoURL });
-     // Force a re-render of user object to update consumers
-    setUser({...user});
+    
+    // Update Realtime Database
+    await update(ref(database, 'users/' + user.uid), { photoURL });
+
+    // Update local state
+    setUserDetails(prev => ({...prev, photoURL }));
+    setUser({...user, photoURL });
   };
 
 
