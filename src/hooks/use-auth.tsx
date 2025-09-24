@@ -227,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Update local state
     setUserDetails(prev => ({...prev, photoURL }));
-    setUser({...user, photoURL });
+    setUser(auth.currentUser);
   };
 
 
