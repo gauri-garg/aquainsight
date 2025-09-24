@@ -188,7 +188,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await update(ref(database, 'users/' + user.uid), details);
     setUserDetails(prev => ({...prev, ...details}));
     // Force a re-render of user object to update consumers
-    setUser({...user});
+    if (auth.currentUser) {
+      setUser({ ...auth.currentUser });
+    }
   };
 
   const changeUserPassword = async (email: string, oldPass: string, newPass: string) => {
@@ -227,7 +229,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Update local state
     setUserDetails(prev => ({...prev, photoURL }));
-    setUser(auth.currentUser);
+    if (auth.currentUser) {
+      setUser({ ...auth.currentUser });
+    }
   };
 
 
