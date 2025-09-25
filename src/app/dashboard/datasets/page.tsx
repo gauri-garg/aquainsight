@@ -175,9 +175,7 @@ export default function DatasetsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem>View</DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/datasets/edit/${dataset.id}`}>Edit</Link>
-                          </DropdownMenuItem>
+                          <DropdownMenuItem>Edit</DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-500 focus:text-red-500 focus:bg-red-50"
                             onSelect={() => confirmDelete(dataset)}

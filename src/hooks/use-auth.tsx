@@ -22,7 +22,7 @@ import {
   updatePassword,
   deleteUser,
 } from "firebase/auth";
-import { ref, set, get, child, update, remove, push, serverTimestamp, onValue } from "firebase/database";
+import { ref, set, get, child, update, remove, push, onValue } from "firebase/database";
 
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
@@ -40,7 +40,6 @@ export interface Dataset {
 interface UserDetails {
   fullName?: string;
   approvedId?: string;
-  photoURL?: string;
 }
 interface AuthContextType {
   user: User | null;
@@ -58,7 +57,6 @@ interface AuthContextType {
   updateUserProfile: (details: Partial<UserDetails>) => Promise<void>;
   changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
   deleteUserAccount: (email: string, password: string) => Promise<void>;
-  // Dataset functions
   createDataset: (dataset: Omit<Dataset, "id">) => Promise<void>;
   getAllDatasets: () => Promise<Dataset[]>;
   getDatasetById: (id: string) => Promise<Dataset | null>;
@@ -108,7 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if(authUser) {
           return {
             fullName: details.fullName || authUser.displayName,
-            photoURL: details.photoURL || authUser.photoURL,
             ...details,
           }
         }
@@ -200,10 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (details.fullName) {
         updates.displayName = details.fullName;
     }
-    if (details.photoURL) {
-      updates.photoURL = details.photoURL;
-    }
-
+   
     if (Object.keys(updates).length > 0) {
         await updateProfile(user, updates);
     }
@@ -212,6 +206,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const latestUserDetails = await getUserDetails(user.uid);
     setUserDetails(latestUserDetails);
+    
+    // Force a re-render by creating a new user object
     if (auth.currentUser) {
       setUser({ ...auth.currentUser });
     }
@@ -236,7 +232,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await deleteUser(user);
   };
 
-  // Dataset Functions
   const createDataset = async (dataset: Omit<Dataset, "id">) => {
     if (role !== "CMLRE") throw new Error("Permission denied.");
     const datasetsRef = ref(database, "datasets");
