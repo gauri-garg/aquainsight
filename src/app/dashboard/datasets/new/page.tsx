@@ -23,6 +23,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
+import * as XLSX from "xlsx";
 
 const datasetFormSchema = z.object({
   name: z.string().min(3, {
@@ -31,12 +32,17 @@ const datasetFormSchema = z.object({
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
   }),
-  csvFile: z
+  dataFile: z
     .any()
-    .refine((files) => files?.length == 1, "CSV file is required.")
+    .refine((files) => files?.length == 1, "File is required.")
     .refine(
-      (files) => files?.[0]?.type === "text/csv",
-      "Only .csv files are accepted."
+      (files) =>
+        [
+          "text/csv",
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ].includes(files?.[0]?.type),
+      "Only .csv, .xls, or .xlsx files are accepted."
     ),
 });
 
@@ -53,7 +59,7 @@ export default function NewDatasetPage() {
     mode: "onChange",
   });
   
-  const fileRef = form.register("csvFile");
+  const fileRef = form.register("dataFile");
 
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -61,6 +67,15 @@ export default function NewDatasetPage() {
       reader.onload = (event) => resolve(event.target?.result as string);
       reader.onerror = (error) => reject(error);
       reader.readAsText(file);
+    });
+  };
+
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => resolve(event.target?.result as ArrayBuffer);
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
     });
   };
 
@@ -72,8 +87,18 @@ export default function NewDatasetPage() {
 
     setIsSubmitting(true);
     try {
-      const file = data.csvFile[0];
-      const csvData = await readFileAsText(file);
+      const file = data.dataFile[0];
+      let csvData: string;
+
+      if (file.type === "text/csv") {
+        csvData = await readFileAsText(file);
+      } else {
+        const arrayBuffer = await readFileAsArrayBuffer(file);
+        const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        csvData = XLSX.utils.sheet_to_csv(worksheet);
+      }
       
       const newDataset = {
         name: data.name,
@@ -94,7 +119,7 @@ export default function NewDatasetPage() {
     } catch (error: any) {
       toast({
         title: "Creation Failed",
-        description: error.message,
+        description: error.message || "Could not process the file.",
         variant: "destructive",
       });
     } finally {
@@ -157,15 +182,15 @@ export default function NewDatasetPage() {
               />
                <FormField
                 control={form.control}
-                name="csvFile"
+                name="dataFile"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Dataset File</FormLabel>
                     <FormControl>
-                       <Input type="file" accept=".csv" {...fileRef} />
+                       <Input type="file" accept=".csv,.xls,.xlsx" {...fileRef} />
                     </FormControl>
                     <FormDescription>
-                      Upload the dataset in CSV format.
+                      Upload the dataset in CSV or Excel format (.xls, .xlsx).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
