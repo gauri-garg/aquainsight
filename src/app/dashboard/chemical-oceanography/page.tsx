@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/table"
 import {
   ChartContainer,
-  ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
@@ -43,7 +42,6 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
 } from "recharts"
 import { useAuth, Dataset } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
@@ -144,19 +142,23 @@ export default function ChemicalOceanographyPage() {
   React.useEffect(() => {
     if (oceanData.length > 0) {
       const filtered = oceanData.filter(d => {
-        const dataDate = parseISO(d.Date);
-        const from = date?.from ? new Date(date.from.setHours(0,0,0,0)) : null;
-        const to = date?.to ? new Date(date.to.setHours(23,59,59,999)) : null;
-        if (from && to) {
-          return dataDate >= from && dataDate <= to;
+        try {
+            const dataDate = parseISO(d.Date);
+            const from = date?.from ? new Date(date.from.setHours(0,0,0,0)) : null;
+            const to = date?.to ? new Date(date.to.setHours(23,59,59,999)) : null;
+            if (from && to) {
+            return dataDate >= from && dataDate <= to;
+            }
+            if (from) {
+            return dataDate >= from;
+            }
+            if (to) {
+            return dataDate <= to;
+            }
+            return true;
+        } catch(e) {
+            return false;
         }
-        if (from) {
-          return dataDate >= from;
-        }
-        if (to) {
-          return dataDate <= to;
-        }
-        return true;
       });
       setFilteredData(filtered);
       setActiveEntry(filtered[filtered.length - 1] || filtered[0] || null);
@@ -244,7 +246,13 @@ export default function ChemicalOceanographyPage() {
                         <CartesianGrid vertical={false} />
                         <XAxis
                         dataKey="Date"
-                        tickFormatter={(value) => format(parseISO(value), "MMM d")}
+                        tickFormatter={(value) => {
+                            try {
+                                return format(parseISO(value), "MMM d")
+                            } catch (e) {
+                                return ""
+                            }
+                        }}
                         padding={{ left: 20, right: 20 }}
                         />
                         <YAxis yAxisId="ph" domain={['dataMin - 0.1', 'dataMax + 0.1']} hide />
@@ -339,7 +347,7 @@ export default function ChemicalOceanographyPage() {
                 filteredData.map((entry, index) => (
                   <TableRow key={index} className={cn(entry === activeEntry && "bg-muted/50")}>
                     <TableCell>{entry.Date}</TableCell>
-                    <TableCell>{entry.pH}</TableCell>
+                    <TableCell>{entry.pH.toFixed(2)}</TableCell>
                     <TableCell>{entry["Salinity (PSU)"]} PSU</TableCell>
                     <TableCell>{entry["Nitrate (umol/L)"]} µmol/L</TableCell>
                     <TableCell>{entry["Phosphate (umol/L)"]} µmol/L</TableCell>
@@ -363,5 +371,3 @@ export default function ChemicalOceanographyPage() {
     </div>
   )
 }
-
-    
