@@ -8,7 +8,7 @@ import { useAuth, Dataset } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Download, Beaker, Droplet, Waves } from "lucide-react";
+import { Loader2, ArrowLeft, Download, Beaker, Droplet, Waves, Wind, Thermometer, Gauge } from "lucide-react";
 import * as XLSX from "xlsx";
 import { addDays, format, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -20,12 +20,21 @@ import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/compone
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { cn } from "@/lib/utils";
 
-const chartConfig = {
+
+const oceanographyChartConfig = {
   pH: { label: "pH", color: "hsl(var(--chart-1))" },
   Salinity_PSU: { label: "Salinity (PSU)", color: "hsl(var(--chart-5))" },
   Nitrate_µmolL: { label: "Nitrate (µmol/L)", color: "hsl(var(--chart-2))" },
   Phosphate_µmolL: { label: "Phosphate (µmol/L)", color: "hsl(var(--chart-3))" },
   Silicate_µmolL: { label: "Silicate (µmol/L)", color: "hsl(var(--chart-4))" },
+} satisfies ChartConfig;
+
+const weatherChartConfig = {
+    'SST_Skin_°C': { label: "SST (°C)", color: "hsl(var(--chart-1))" },
+    'Air_Temperature_°C': { label: "Air Temp (°C)", color: "hsl(var(--chart-2))" },
+    'Wind_Speed_m/s': { label: "Wind Speed (m/s)", color: "hsl(var(--chart-3))" },
+    'Wave_Height_m': { label: "Wave Height (m)", color: "hsl(var(--chart-4))" },
+    'Current_Speed_m/s': { label: "Current Speed (m/s)", color: "hsl(var(--chart-5))" },
 } satisfies ChartConfig;
 
 const parseCSV = (csvData: string): any[] => {
@@ -38,11 +47,17 @@ const parseCSV = (csvData: string): any[] => {
     const entry: any = {};
     headers.forEach((header, index) => {
         const value = values[index] ? values[index].trim() : '';
-        entry[header] = isNaN(Number(value)) || value === '' ? value : Number(value);
+        if (value === '' || value.toLowerCase().includes('not available')) {
+          entry[header] = null;
+        } else {
+          entry[header] = isNaN(Number(value)) ? value : Number(value);
+        }
     });
     return entry;
   });
 };
+
+type ChartType = 'oceanography' | 'weather' | 'none';
 
 export default function DatasetViewPage() {
   const { id } = useParams();
@@ -51,10 +66,11 @@ export default function DatasetViewPage() {
   const { toast } = useToast();
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isChartable, setIsChartable] = useState(false);
+  
+  const [chartType, setChartType] = useState<ChartType>('none');
+  const [chartConfig, setChartConfig] = useState<ChartConfig | null>(null);
   const [availableChartKeys, setAvailableChartKeys] = useState<string[]>([]);
   
-  // Chart-specific state
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [activeEntry, setActiveEntry] = useState<any | null>(null);
@@ -62,8 +78,6 @@ export default function DatasetViewPage() {
     from: addDays(new Date(), -28),
     to: new Date(),
   });
-
-  const chartableHeaders = useMemo(() => Object.keys(chartConfig), []);
 
   useEffect(() => {
     if (id && typeof id === "string") {
@@ -76,13 +90,30 @@ export default function DatasetViewPage() {
             if (fetchedDataset.csvData) {
               const data = parseCSV(fetchedDataset.csvData);
               const headers = data.length > 0 ? Object.keys(data[0]) : [];
-              
               const hasDate = headers.includes('Date');
-              const availableKeys = chartableHeaders.filter(h => headers.includes(h));
 
-              if (hasDate && availableKeys.length > 0) {
-                setIsChartable(true);
-                setAvailableChartKeys(availableKeys);
+              const oceanographyKeys = Object.keys(oceanographyChartConfig).filter(h => headers.includes(h));
+              const weatherKeys = Object.keys(weatherChartConfig).filter(h => headers.includes(h));
+              
+              let detectedChartType: ChartType = 'none';
+              let detectedConfig: ChartConfig | null = null;
+              let detectedKeys: string[] = [];
+
+              if (hasDate && oceanographyKeys.length > 0) {
+                detectedChartType = 'oceanography';
+                detectedConfig = oceanographyChartConfig;
+                detectedKeys = oceanographyKeys;
+              } else if (hasDate && weatherKeys.length > 0) {
+                detectedChartType = 'weather';
+                detectedConfig = weatherChartConfig;
+                detectedKeys = weatherKeys;
+              }
+
+              if (detectedChartType !== 'none' && detectedConfig) {
+                setChartType(detectedChartType);
+                setChartConfig(detectedConfig);
+                setAvailableChartKeys(detectedKeys);
+
                 const processedData = data.map(d => ({
                   ...d,
                   Date: d.Date ? format(parseISO(d.Date), 'yyyy-MM-dd') : null
@@ -102,7 +133,7 @@ export default function DatasetViewPage() {
         } catch (error: any) {
           toast({
             title: "Error",
-            description: "Failed to fetch dataset.",
+            description: "Failed to fetch or process dataset.",
             variant: "destructive",
           });
         } finally {
@@ -111,10 +142,10 @@ export default function DatasetViewPage() {
       };
       fetchDataset();
     }
-  }, [id, getDatasetById, router, toast, chartableHeaders]);
+  }, [id, getDatasetById, router, toast]);
 
   useEffect(() => {
-    if (parsedData.length > 0 && isChartable) {
+    if (parsedData.length > 0 && chartType !== 'none') {
       const filtered = parsedData.filter(d => {
         try {
           const dataDate = parseISO(d.Date);
@@ -131,7 +162,7 @@ export default function DatasetViewPage() {
       setFilteredData(filtered);
       setActiveEntry(filtered[filtered.length - 1] || filtered[0] || null);
     }
-  }, [date, parsedData, isChartable]);
+  }, [date, parsedData, chartType]);
 
 
   const handleDownloadXlsx = () => {
@@ -237,13 +268,33 @@ export default function DatasetViewPage() {
     </Card>
   )
 
+  const OceanographySummary = () => (
+    <>
+      {availableChartKeys.includes('Salinity_PSU') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Droplet className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Salinity</span></div><span>{activeEntry && activeEntry.Salinity_PSU != null ? `${activeEntry.Salinity_PSU} PSU` : 'N/A'}</span></div>}
+      {availableChartKeys.includes('pH') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Waves className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">pH</span></div><span>{activeEntry && activeEntry.pH != null ? activeEntry.pH.toFixed(2) : "N/A"}</span></div>}
+      {availableChartKeys.includes('Nitrate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Nitrate</span></div><span>{activeEntry && activeEntry.Nitrate_µmolL != null ? `${activeEntry.Nitrate_µmolL} µmol/L` : 'N/A'}</span></div>}
+      {availableChartKeys.includes('Phosphate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Phosphate</span></div><span>{activeEntry && activeEntry.Phosphate_µmolL != null ? `${activeEntry.Phosphate_µmolL} µmol/L` : 'N/A'}</span></div>}
+      {availableChartKeys.includes('Silicate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Silicate</span></div><span>{activeEntry && activeEntry.Silicate_µmolL != null ? `${activeEntry.Silicate_µmolL} µmol/L` : 'N/A'}</span></div>}
+    </>
+  )
+
+  const WeatherSummary = () => (
+    <>
+      {availableChartKeys.includes('SST_Skin_°C') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Thermometer className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">SST</span></div><span>{activeEntry && activeEntry['SST_Skin_°C'] != null ? `${activeEntry['SST_Skin_°C']} °C` : 'N/A'}</span></div>}
+      {availableChartKeys.includes('Air_Temperature_°C') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Thermometer className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Air Temp</span></div><span>{activeEntry && activeEntry['Air_Temperature_°C'] != null ? `${activeEntry['Air_Temperature_°C']} °C` : 'N/A'}</span></div>}
+      {availableChartKeys.includes('Wind_Speed_m/s') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Wind className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Wind Speed</span></div><span>{activeEntry && activeEntry['Wind_Speed_m/s'] != null ? `${activeEntry['Wind_Speed_m/s']} m/s` : 'N/A'}</span></div>}
+      {availableChartKeys.includes('Wave_Height_m') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Waves className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Wave Height</span></div><span>{activeEntry && activeEntry['Wave_Height_m'] != null ? `${activeEntry['Wave_Height_m']} m` : 'N/A'}</span></div>}
+      {availableChartKeys.includes('Current_Speed_m/s') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Gauge className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Current Speed</span></div><span>{activeEntry && activeEntry['Current_Speed_m/s'] != null ? `${activeEntry['Current_Speed_m/s']} m/s` : 'N/A'}</span></div>}
+    </>
+  )
+
   return (
     <div className="space-y-6">
       <PageHeader />
 
-      {!isChartable && <MetadataCard />}
+      {chartType === 'none' && <MetadataCard />}
 
-      {isChartable && (
+      {chartType !== 'none' && chartConfig && (
         <>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
@@ -251,7 +302,7 @@ export default function DatasetViewPage() {
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <div>
                                 <CardTitle>{dataset.name}</CardTitle>
-                                <CardDescription>Visualize chemical parameters of the ocean.</CardDescription>
+                                <CardDescription>Visualize parameters for your dataset.</CardDescription>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Popover>
@@ -288,13 +339,13 @@ export default function DatasetViewPage() {
                                 </defs>
                                 <CartesianGrid vertical={false} />
                                 <XAxis dataKey="Date" tickFormatter={(value) => { try { return format(parseISO(value), "MMM d") } catch (e) { return "" } }} padding={{ left: 20, right: 20 }} />
-                                <YAxis yAxisId="ph" domain={['dataMin - 0.1', 'dataMax + 0.1']} hide />
-                                <YAxis yAxisId="salinity" orientation="right" domain={['dataMin - 1', 'dataMax + 1']} hide/>
-                                <YAxis yAxisId="nutrients" orientation="right" hide />
+                                <YAxis yAxisId="left" orientation="left" domain={['dataMin - 1', 'dataMax + 1']} hide />
+                                <YAxis yAxisId="right" orientation="right" domain={['dataMin - 1', 'dataMax + 1']} hide/>
+                                
                                 <Tooltip content={<ChartTooltipContent />} />
                                 <Legend />
-                                {availableChartKeys.map(key => {
-                                    const yAxisId = key === 'pH' ? 'ph' : key === 'Salinity_PSU' ? 'salinity' : 'nutrients';
+                                {availableChartKeys.map((key, index) => {
+                                    const yAxisId = index % 2 === 0 ? 'left' : 'right';
                                     return <Area key={key} yAxisId={yAxisId} type="natural" dataKey={key} stroke={(chartConfig as any)[key].color} fillOpacity={1} fill={`url(#color${key})`} name={(chartConfig as any)[key].label} dot={false} />
                                 })}
                             </AreaChart>
@@ -308,13 +359,11 @@ export default function DatasetViewPage() {
                         <CardDescription>Details for {activeEntry ? format(parseISO(activeEntry.Date), "yyyy-MM-dd") : "N/A"}</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4">
-                        <div className="flex items-center justify-between"><span className="text-muted-foreground">Latitude</span><span>{activeEntry?.Latitude?.toFixed(4) || "N/A"}</span></div>
-                        <div className="flex items-center justify-between"><span className="text-muted-foreground">Longitude</span><span>{activeEntry?.Longitude?.toFixed(4) || "N/A"}</span></div>
-                        {availableChartKeys.includes('Salinity_PSU') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Droplet className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Salinity</span></div><span>{activeEntry ? `${activeEntry.Salinity_PSU} PSU` : 'N/A'}</span></div>}
-                        {availableChartKeys.includes('pH') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Waves className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">pH</span></div><span>{activeEntry?.pH?.toFixed(2) || "N/A"}</span></div>}
-                        {availableChartKeys.includes('Nitrate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Nitrate</span></div><span>{activeEntry ? `${activeEntry.Nitrate_µmolL} µmol/L` : 'N/A'}</span></div>}
-                        {availableChartKeys.includes('Phosphate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Phosphate</span></div><span>{activeEntry ? `${activeEntry.Phosphate_µmolL} µmol/L` : 'N/A'}</span></div>}
-                        {availableChartKeys.includes('Silicate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Silicate</span></div><span>{activeEntry ? `${activeEntry.Silicate_µmolL} µmol/L` : 'N/A'}</span></div>}
+                        <div className="flex items-center justify-between"><span className="text-muted-foreground">Latitude</span><span>{activeEntry?.Latitude != null ? activeEntry?.Latitude.toFixed(4) : "N/A"}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-muted-foreground">Longitude</span><span>{activeEntry?.Longitude != null ? activeEntry?.Longitude.toFixed(4) : "N/A"}</span></div>
+                        
+                        {chartType === 'oceanography' && <OceanographySummary />}
+                        {chartType === 'weather' && <WeatherSummary />}
                     </CardContent>
                 </Card>
             </div>
@@ -334,7 +383,7 @@ export default function DatasetViewPage() {
                         filteredData.map((entry, index) => (
                         <TableRow key={index} className={cn(entry === activeEntry && "bg-muted/50")}>
                             <TableCell>{entry.Date}</TableCell>
-                            {availableChartKeys.map(key => <TableCell key={key}>{entry[key] !== undefined ? entry[key] : 'N/A'}</TableCell>)}
+                            {availableChartKeys.map(key => <TableCell key={key}>{entry[key] != null ? entry[key] : 'N/A'}</TableCell>)}
                             <TableCell className="text-right"><Button variant="outline" size="sm" onClick={() => handleViewSummary(entry)}>View Summary</Button></TableCell>
                         </TableRow>
                         ))
