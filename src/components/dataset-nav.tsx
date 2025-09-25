@@ -74,9 +74,7 @@ export function DatasetNav({ isMobile = false }: DatasetNavProps) {
                     </div>
                  ) : datasets.length > 0 ? (
                     datasets.map((dataset) => {
-                      const href = dataset.name === "Chemical Oceanography"
-                        ? "/dashboard/chemical-oceanography"
-                        : `/dashboard/datasets/${dataset.id}`;
+                      const href = `/dashboard/datasets/${dataset.id}`;
 
                       return (
                         <Link
@@ -104,3 +102,5 @@ export function DatasetNav({ isMobile = false }: DatasetNavProps) {
     </Popover>
   );
 }
+
+    
