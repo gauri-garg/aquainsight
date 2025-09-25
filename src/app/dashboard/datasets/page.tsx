@@ -179,7 +179,11 @@ export default function DatasetsPage() {
                           >
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => router.push(`/dashboard/datasets/${dataset.id}/edit`)}
+                          >
+                            Edit
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-500 focus:text-red-500 focus:bg-red-50"
                             onSelect={() => confirmDelete(dataset)}
