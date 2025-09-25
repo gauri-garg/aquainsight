@@ -29,7 +29,6 @@ export default function DashboardLayout({
         <Home className="h-4 w-4" />
         Dashboard
       </Link>
-      <DatasetNav />
       {role === 'CMLRE' && (
          <Link
           href="/dashboard/datasets"
@@ -39,6 +38,7 @@ export default function DashboardLayout({
           Manage Datasets
         </Link>
       )}
+      <DatasetNav />
     </nav>
   );
 
@@ -89,7 +89,6 @@ export default function DashboardLayout({
                   <Home className="h-5 w-5" />
                   Dashboard
                 </Link>
-                <DatasetNav isMobile={true} />
                  {role === 'CMLRE' && (
                   <Link
                     href="/dashboard/datasets"
@@ -99,6 +98,7 @@ export default function DashboardLayout({
                     Manage Datasets
                   </Link>
                 )}
+                <DatasetNav isMobile={true} />
               </nav>
             </SheetContent>
           </Sheet>
