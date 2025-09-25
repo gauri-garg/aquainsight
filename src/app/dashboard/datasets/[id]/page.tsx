@@ -79,7 +79,12 @@ export default function DatasetViewPage() {
               
               if (hasRequiredHeaders) {
                 setIsChartable(true);
-                setParsedData(data);
+                const processedData = data.map(d => ({
+                  ...d,
+                  Date: d.Date ? format(parseISO(d.Date), 'yyyy-MM-dd') : null
+                })).filter(d => d.Date);
+
+                setParsedData(processedData);
               }
             }
           } else {
@@ -264,8 +269,8 @@ export default function DatasetViewPage() {
                                 <defs>
                                     {Object.keys(chartConfig).map(key => (
                                         <linearGradient key={key} id={`color${key}`} x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={`var(--color-${key})`} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={`var(--color-${key})`} stopOpacity={0.1}/>
+                                            <stop offset="5%" stopColor={chartConfig[key as keyof typeof chartConfig].color} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={chartConfig[key as keyof typeof chartConfig].color} stopOpacity={0.1}/>
                                         </linearGradient>
                                     ))}
                                 </defs>
@@ -278,7 +283,7 @@ export default function DatasetViewPage() {
                                 <Legend />
                                 {Object.keys(chartConfig).map(key => {
                                     const yAxisId = key === 'pH' ? 'ph' : key === 'Salinity_PSU' ? 'salinity' : 'nutrients';
-                                    return <Area key={key} yAxisId={yAxisId} type="natural" dataKey={key} stroke={`var(--color-${key})`} fillOpacity={1} fill={`url(#color${key})`} name={chartConfig[key as keyof typeof chartConfig].label} dot={false} />
+                                    return <Area key={key} yAxisId={yAxisId} type="natural" dataKey={key} stroke={chartConfig[key as keyof typeof chartConfig].color} fillOpacity={1} fill={`url(#color${key})`} name={chartConfig[key as keyof typeof chartConfig].label} dot={false} />
                                 })}
                             </AreaChart>
                             </ChartContainer>
