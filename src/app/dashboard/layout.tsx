@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
+import { DatasetNav } from "@/components/dataset-nav";
 
 export default function DashboardLayout({
   children,
@@ -28,6 +29,7 @@ export default function DashboardLayout({
         <Home className="h-4 w-4" />
         Dashboard
       </Link>
+      <DatasetNav />
       {role === 'CMLRE' && (
          <Link
           href="/dashboard/datasets"
@@ -87,6 +89,7 @@ export default function DashboardLayout({
                   <Home className="h-5 w-5" />
                   Dashboard
                 </Link>
+                <DatasetNav isMobile={true} />
                  {role === 'CMLRE' && (
                   <Link
                     href="/dashboard/datasets"
