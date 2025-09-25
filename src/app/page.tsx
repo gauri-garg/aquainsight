@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -71,6 +72,7 @@ export default function LoginPage() {
                   placeholder="m@example.com"
                   required
                   value={email}
+                  defaultValue={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
                 />
@@ -90,6 +92,7 @@ export default function LoginPage() {
                   type="password"
                   required
                   value={password}
+                  defaultValue={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
                 />
