@@ -49,7 +49,7 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
       const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
       let value = values[index] ? values[index].trim() : '';
       
-      if (header === dateHeaderKey) {
+      if (header === dateHeaderKey && value) {
         try {
           const cleanedDate = value.split(' ')[0];
           entry[sanitizedHeader] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
@@ -57,7 +57,7 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
           entry[sanitizedHeader] = value; 
         }
       } else if (value === '' || isNaN(Number(value)) || !isFinite(Number(value))) {
-         entry[sanitizedHeader] = value;
+         entry[sanitizedHeader] = value === '' ? null : value;
       }
       else {
         entry[sanitizedHeader] = Number(value);
@@ -121,10 +121,10 @@ export default function DatasetViewPage() {
                       setChartConfig(config);
 
                       // Set initial date range
-                      const dates = data.map(d => parseISO(d[detectedDateHeader])).filter(d => !isNaN(d.getTime()));
+                      const dates = data.map(d => d[detectedDateHeader] ? parseISO(d[detectedDateHeader]) : null).filter(d => d && !isNaN(d.getTime()));
                       if (dates.length > 0) {
-                        const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-                        const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+                        const minDate = new Date(Math.min(...dates.map(d => d!.getTime())));
+                        const maxDate = new Date(Math.max(...dates.map(d => d!.getTime())));
                         setDate({ from: minDate, to: maxDate });
                       } else {
                          setDate({ from: addDays(new Date(), -28), to: new Date() });
@@ -272,7 +272,6 @@ export default function DatasetViewPage() {
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         <div><span className="font-semibold">Submitted by: </span><span>{dataset.submittedBy}</span></div>
-        <div><span className="font-semibold">Date Submitted: </span><span>{new Date(dataset.date).toLocaleDateString()}</span></div>
       </CardContent>
     </Card>
   )
