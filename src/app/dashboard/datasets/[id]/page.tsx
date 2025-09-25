@@ -54,7 +54,7 @@ export default function DatasetViewPage() {
     }
   }, [id, getDatasetById, router, toast, role]);
 
-  const handleDownload = () => {
+  const handleDownloadXlsx = () => {
     if (!dataset?.csvData) {
         toast({
             title: "No Data",
@@ -65,16 +65,13 @@ export default function DatasetViewPage() {
     }
 
     try {
-        // Parse the CSV data string
         const lines = dataset.csvData.trim().split('\n');
         const data = lines.map(line => line.split(','));
 
-        // Create a new workbook and a worksheet
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Dataset");
 
-        // Generate XLSX file and trigger download
         XLSX.writeFile(wb, `${dataset.name}.xlsx`);
 
     } catch (error) {
@@ -83,6 +80,35 @@ export default function DatasetViewPage() {
             description: "Failed to create the XLSX file.",
             variant: "destructive"
         });
+    }
+  };
+
+  const handleDownloadCsv = () => {
+    if (!dataset?.csvData) {
+      toast({
+        title: 'No Data',
+        description: 'There is no data to download.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const blob = new Blob([dataset.csvData], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${dataset.name}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      toast({
+        title: 'Download Error',
+        description: 'Failed to create the CSV file.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -135,10 +161,14 @@ export default function DatasetViewPage() {
                     <Badge variant="outline">Active</Badge>
                 </div>
             </div>
-            <div className="border-t pt-4">
-                 <Button onClick={handleDownload}>
+            <div className="border-t pt-4 flex items-center gap-2">
+                 <Button onClick={handleDownloadXlsx}>
                     <Download className="mr-2 h-4 w-4" />
                     Download as XLSX
+                </Button>
+                 <Button onClick={handleDownloadCsv} variant="secondary">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download as CSV
                 </Button>
             </div>
         </CardContent>
@@ -154,7 +184,7 @@ export default function DatasetViewPage() {
         </CardHeader>
         <CardContent>
             <p className="text-sm text-muted-foreground">
-                Click the download button above to get the full dataset in Excel format. This allows for offline analysis, sharing, and integration with other tools.
+                Click one of the download buttons above to get the full dataset in your preferred format. This allows for offline analysis, sharing, and integration with other tools.
             </p>
         </CardContent>
       </Card>
