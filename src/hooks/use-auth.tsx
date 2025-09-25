@@ -22,10 +22,20 @@ import {
   updatePassword,
   deleteUser,
 } from "firebase/auth";
-import { ref, set, get, child, update, remove } from "firebase/database";
+import { ref, set, get, child, update, remove, push, serverTimestamp, onValue } from "firebase/database";
 
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
+
+export interface Dataset {
+  id?: string;
+  name: string;
+  description: string;
+  csvData: string;
+  submittedBy: string;
+  date: string;
+  userId: string;
+}
 
 interface UserDetails {
   fullName?: string;
@@ -48,6 +58,12 @@ interface AuthContextType {
   updateUserProfile: (details: Partial<UserDetails>) => Promise<void>;
   changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
   deleteUserAccount: (email: string, password: string) => Promise<void>;
+  // Dataset functions
+  createDataset: (dataset: Omit<Dataset, "id">) => Promise<void>;
+  getAllDatasets: () => Promise<Dataset[]>;
+  getDatasetById: (id: string) => Promise<Dataset | null>;
+  updateDataset: (id: string, updates: Partial<Dataset>) => Promise<void>;
+  deleteDataset: (id: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,12 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const snapshot = await get(ref(database, `users/${uid}`));
       if (snapshot.exists()) {
         const details = snapshot.val();
-        // Combine with auth user data
         const authUser = auth.currentUser;
         if(authUser) {
           return {
             fullName: details.fullName || authUser.displayName,
-            photoURL: authUser.photoURL,
+            photoURL: details.photoURL || authUser.photoURL,
             ...details,
           }
         }
@@ -107,9 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      await seedCmlreApprovedIds(); // Seed the DB first
+      await seedCmlreApprovedIds(); 
 
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setLoading(true);
         if (user) {
           const userRole = await getUserRole(user.uid);
           const details = await getUserDetails(user.uid);
@@ -184,6 +200,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (details.fullName) {
         updates.displayName = details.fullName;
     }
+    if (details.photoURL) {
+      updates.photoURL = details.photoURL;
+    }
 
     if (Object.keys(updates).length > 0) {
         await updateProfile(user, updates);
@@ -191,10 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     await update(ref(database, 'users/' + user.uid), details);
     
-    // Update local state and force re-render
-    setUserDetails(prev => ({...prev, ...details}));
+    const latestUserDetails = await getUserDetails(user.uid);
+    setUserDetails(latestUserDetails);
     if (auth.currentUser) {
-      // Create a new user object to force re-render in consumers
       setUser({ ...auth.currentUser });
     }
   };
@@ -213,16 +231,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cred = EmailAuthProvider.credential(email, password);
     await reauthenticateWithCredential(user, cred);
     
-    // Delete data from Realtime Database first
     await remove(ref(database, 'users/' + user.uid));
     
-    // Finally, delete the user from Authentication
     await deleteUser(user);
   };
 
+  // Dataset Functions
+  const createDataset = async (dataset: Omit<Dataset, "id">) => {
+    if (role !== "CMLRE") throw new Error("Permission denied.");
+    const datasetsRef = ref(database, "datasets");
+    const newDatasetRef = push(datasetsRef);
+    await set(newDatasetRef, dataset);
+  };
+
+  const getAllDatasets = async (): Promise<Dataset[]> => {
+    return new Promise((resolve, reject) => {
+      const datasetsRef = ref(database, 'datasets');
+      onValue(datasetsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (snapshot.exists()) {
+          const datasetsArray = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+          }));
+          resolve(datasetsArray);
+        } else {
+          resolve([]);
+        }
+      }, (error) => {
+        reject(error);
+      });
+    });
+  };
+
+  const getDatasetById = async (id: string): Promise<Dataset | null> => {
+    const snapshot = await get(child(ref(database), `datasets/${id}`));
+    if (snapshot.exists()) {
+      return { id, ...snapshot.val() };
+    }
+    return null;
+  };
+
+  const updateDataset = async (id: string, updates: Partial<Dataset>) => {
+    if (role !== "CMLRE") throw new Error("Permission denied.");
+    await update(ref(database, `datasets/${id}`), updates);
+  };
+
+  const deleteDataset = async (id: string) => {
+    if (role !== "CMLRE") throw new Error("Permission denied.");
+    await remove(ref(database, `datasets/${id}`));
+  };
+
+
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, getAllDatasets, getDatasetById, updateDataset, deleteDataset }}>
+      {children}
     </AuthContext.Provider>
   );
 }

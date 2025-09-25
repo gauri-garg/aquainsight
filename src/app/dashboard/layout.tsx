@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Menu, FlaskConical } from "lucide-react";
+import { Home, Menu, FlaskConical, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -23,11 +23,20 @@ export default function DashboardLayout({
     <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
       <Link
         href="/dashboard"
-        className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
       >
         <Home className="h-4 w-4" />
         Dashboard
       </Link>
+      {role === 'CMLRE' && (
+         <Link
+          href="/dashboard/datasets"
+          className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
+        >
+          <Database className="h-4 w-4" />
+          Manage Datasets
+        </Link>
+      )}
     </nav>
   );
 
@@ -73,11 +82,20 @@ export default function DashboardLayout({
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
+                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
                 >
                   <Home className="h-5 w-5" />
                   Dashboard
                 </Link>
+                 {role === 'CMLRE' && (
+                  <Link
+                    href="/dashboard/datasets"
+                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
+                  >
+                    <Database className="h-5 w-5" />
+                    Manage Datasets
+                  </Link>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
