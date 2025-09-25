@@ -73,10 +73,15 @@ export function DatasetNav({ isMobile = false }: DatasetNavProps) {
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                  ) : datasets.length > 0 ? (
-                    datasets.map((dataset) => (
+                    datasets.map((dataset) => {
+                      const href = dataset.name === "Chemical Oceanography"
+                        ? "/dashboard/chemical-oceanography"
+                        : `/dashboard/datasets/${dataset.id}`;
+
+                      return (
                         <Link
                             key={dataset.id}
-                            href={`/dashboard/datasets/${dataset.id}`}
+                            href={href}
                             className="flex items-start gap-3 p-2 rounded-lg hover:bg-accent transition-colors"
                             onClick={() => setPopoverOpen(false)}
                         >
@@ -88,7 +93,8 @@ export function DatasetNav({ isMobile = false }: DatasetNavProps) {
                                 </span>
                             </div>
                         </Link>
-                    ))
+                      )
+                    })
                  ) : (
                     <p className="text-sm text-muted-foreground text-center">No datasets found.</p>
                  )}
