@@ -17,14 +17,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { cn } from "@/lib/utils";
 
 const generateChartConfig = (keys: string[]): ChartConfig => {
   const config: ChartConfig = {};
   keys.forEach((key, index) => {
     config[key] = {
-      label: key.replace(/_/g, " "),
+      label: key.replace(/_/g, " ").replace(/ C/g, "°C").replace(/ m s/g, " m/s"),
       color: `hsl(var(--chart-${(index % 5) + 1}))`,
     };
   });
@@ -37,29 +37,33 @@ const parseCSV = (csvData: string): any[] => {
   if (lines.length < 2) return [];
 
   const headers = lines[0].split(",").map(h => h.trim());
-  const dateHeaderIndex = headers.findIndex(h => h.toLowerCase() === 'date');
+  const dateHeaderIndex = headers.findIndex(h => h.toLowerCase().includes('date'));
   if (dateHeaderIndex === -1) return []; // No date column found
 
   return lines.slice(1).map((line) => {
     const values = line.split(",");
     const entry: any = {};
     headers.forEach((header, index) => {
-      const value = values[index] ? values[index].trim() : '';
-      if (value === '' || isNaN(Number(value)) && header.toLowerCase() !== 'date') {
-        entry[header] = value; // Keep strings as they are if not numeric
-      } else if (header.toLowerCase() === 'date') {
+      let value = values[index] ? values[index].trim() : '';
+      
+      if (header.toLowerCase().includes('date')) {
         try {
-          entry[header] = format(parseISO(value), 'yyyy-MM-dd');
+          // Handle potential extra characters or formatting issues
+          const cleanedDate = value.split(' ')[0];
+          entry[header] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
         } catch (e) {
           entry[header] = null;
         }
+      } else if (value === '' || isNaN(Number(value)) || !isFinite(Number(value))) {
+        // Keeps non-numeric strings or handles empty values
+         entry[header] = value;
       }
       else {
         entry[header] = Number(value);
       }
     });
     return entry;
-  }).filter(d => d.Date); // Filter out rows with invalid dates
+  }).filter(d => d[headers[dateHeaderIndex]]); // Filter out rows with invalid dates
 };
 
 
@@ -74,6 +78,7 @@ export default function DatasetViewPage() {
   const [isChartable, setIsChartable] = useState<boolean>(false);
   const [chartConfig, setChartConfig] = useState<ChartConfig | null>(null);
   const [chartableKeys, setChartableKeys] = useState<string[]>([]);
+  const [nonChartableKeys, setNonChartableKeys] = useState<string[]>([]);
   const [dateHeader, setDateHeader] = useState<string>('Date');
   
   const [parsedData, setParsedData] = useState<any[]>([]);
@@ -96,18 +101,23 @@ export default function DatasetViewPage() {
               const data = parseCSV(fetchedDataset.csvData);
               if (data.length > 0) {
                   const headers = Object.keys(data[0]);
-                  const detectedDateHeader = headers.find(h => h.toLowerCase() === 'date') || 'Date';
+                  const detectedDateHeader = headers.find(h => h.toLowerCase().includes('date')) || headers[0];
                   setDateHeader(detectedDateHeader);
 
                   const numericKeys = headers.filter(
-                    key => key.toLowerCase() !== 'date' && data.some(d => typeof d[key] === 'number')
+                    key => key !== detectedDateHeader && data.some(d => typeof d[key] === 'number')
+                  );
+                  
+                  const stringKeys = headers.filter(
+                    key => key !== detectedDateHeader && !numericKeys.includes(key)
                   );
 
                   if (numericKeys.length > 0) {
                     setIsChartable(true);
+                    setChartableKeys(numericKeys);
+                    setNonChartableKeys(stringKeys);
                     const config = generateChartConfig(numericKeys);
                     setChartConfig(config);
-                    setChartableKeys(numericKeys);
                     setParsedData(data);
                   } else {
                     setIsChartable(false);
@@ -124,9 +134,10 @@ export default function DatasetViewPage() {
             router.push("/dashboard/datasets");
           }
         } catch (error: any) {
+          console.error("Error processing dataset:", error)
           toast({
             title: "Error",
-            description: "Failed to fetch or process dataset.",
+            description: `Failed to fetch or process dataset: ${error.message}`,
             variant: "destructive",
           });
         } finally {
@@ -138,26 +149,22 @@ export default function DatasetViewPage() {
   }, [id, getDatasetById, router, toast]);
 
   useEffect(() => {
-    if (parsedData.length > 0 && isChartable) {
+    if (parsedData.length > 0) {
       const filtered = parsedData.filter(d => {
+        if (!date?.from || !d[dateHeader]) return true; // Show all if no date filter
         try {
           const dataDate = parseISO(d[dateHeader]);
-          const from = date?.from ? new Date(date.from.setHours(0,0,0,0)) : null;
-          const to = date?.to ? new Date(date.to.setHours(23,59,59,999)) : null;
-          if (from && to) return dataDate >= from && dataDate <= to;
-          if (from) return dataDate >= from;
-          if (to) return dataDate <= to;
-          return true;
+          const from = new Date(date.from.setHours(0,0,0,0));
+          const to = date?.to ? new Date(date.to.setHours(23,59,59,999)) : new Date(from.setHours(23,59,59,999));
+          return dataDate >= from && dataDate <= to;
         } catch(e) {
           return false;
         }
       });
       setFilteredData(filtered);
       setActiveEntry(filtered[filtered.length - 1] || filtered[0] || null);
-    } else {
-        setFilteredData(parsedData); // For non-chartable data, show all
     }
-  }, [date, parsedData, isChartable, dateHeader]);
+  }, [date, parsedData, dateHeader]);
 
 
   const handleDownloadXlsx = () => {
@@ -267,8 +274,7 @@ export default function DatasetViewPage() {
 
   const DynamicSummary = () => {
     if (!activeEntry) return null;
-    const nonChartableEntries = Object.entries(activeEntry).filter(([key]) => !chartableKeys.includes(key) && key !== dateHeader);
-
+    
     return (
       <>
         {chartableKeys.map(key => (
@@ -277,10 +283,10 @@ export default function DatasetViewPage() {
                 <span>{activeEntry[key] != null ? activeEntry[key] : 'N/A'}</span>
              </div>
         ))}
-         {nonChartableEntries.map(([key, value]) => (
+         {nonChartableKeys.map((key) => (
             <div key={key} className="flex items-center justify-between">
               <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-              <span>{String(value) != null ? String(value) : 'N/A'}</span>
+              <span>{String(activeEntry[key]) != null ? String(activeEntry[key]) : 'N/A'}</span>
             </div>
         ))}
       </>
@@ -323,19 +329,11 @@ export default function DatasetViewPage() {
                         </CardHeader>
                         <CardContent>
                         <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                            <AreaChart
+                            <LineChart
                                 data={filteredData}
                                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                                 onMouseMove={(state) => { if (state.isTooltipActive && state.activePayload?.[0]?.payload) { setActiveEntry(state.activePayload[0].payload) } }}
                             >
-                                <defs>
-                                    {chartableKeys.map(key => (
-                                        <linearGradient key={key} id={`color${key}`} x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={(chartConfig as any)[key].color} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={(chartConfig as any)[key].color} stopOpacity={0.1}/>
-                                        </linearGradient>
-                                    ))}
-                                </defs>
                                 <CartesianGrid vertical={false} />
                                 <XAxis dataKey={dateHeader} tickFormatter={(value) => { try { return format(parseISO(value), "MMM d") } catch (e) { return "" } }} padding={{ left: 20, right: 20 }} />
                                 <YAxis yAxisId="left" orientation="left" domain={['dataMin - 1', 'dataMax + 1']} hide />
@@ -345,9 +343,9 @@ export default function DatasetViewPage() {
                                 <Legend />
                                 {chartableKeys.map((key, index) => {
                                     const yAxisId = index % 2 === 0 ? 'left' : 'right';
-                                    return <Area key={key} yAxisId={yAxisId} type="natural" dataKey={key} stroke={(chartConfig as any)[key].color} fillOpacity={1} fill={`url(#color${key})`} name={(chartConfig as any)[key].label} dot={false} />
+                                    return <Line key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[key].color} name={(chartConfig as any)[key].label} dot={false} activeDot={{ r: 8 }} />
                                 })}
-                            </AreaChart>
+                            </LineChart>
                             </ChartContainer>
                         </CardContent>
                     </Card>
@@ -355,7 +353,7 @@ export default function DatasetViewPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Daily Summary</CardTitle>
-                        <CardDescription>Details for {activeEntry ? activeEntry[dateHeader] : "N/A"}</CardDescription>
+                        <CardDescription>Details for {activeEntry && activeEntry[dateHeader] ? format(parseISO(activeEntry[dateHeader]), "PPP") : "N/A"}</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4">
                         <DynamicSummary />
@@ -393,4 +391,4 @@ export default function DatasetViewPage() {
   );
 }
 
-    
+  
