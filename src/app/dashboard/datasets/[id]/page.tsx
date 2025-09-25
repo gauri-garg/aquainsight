@@ -32,40 +32,41 @@ const generateChartConfig = (keys: string[]): ChartConfig => {
   return config;
 };
 
-const parseCSV = (csvData: string): any[] => {
-  if (!csvData) return [];
+const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
+  if (!csvData) return { data: [], headers: [] };
   const lines = csvData.trim().split("\n");
-  if (lines.length < 2) return [];
+  if (lines.length < 1) return { data: [], headers: [] };
 
-  const headers = lines[0].split(",").map(h => h.trim());
-  const dateHeaderIndex = headers.findIndex(h => h.toLowerCase().includes('date'));
-  if (dateHeaderIndex === -1) return []; // No date column found
+  const originalHeaders = lines[0].split(",").map(h => h.trim());
+  if (lines.length < 2) return { data: [], headers: originalHeaders };
 
-  return lines.slice(1).map((line) => {
+  const dateHeaderKey = originalHeaders.find(h => h.toLowerCase().includes('date'));
+
+  const data = lines.slice(1).map((line) => {
     const values = line.split(",");
     const entry: any = {};
-    headers.forEach((header, index) => {
+    originalHeaders.forEach((header, index) => {
       const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
       let value = values[index] ? values[index].trim() : '';
       
-      if (header.toLowerCase().includes('date')) {
+      if (header === dateHeaderKey) {
         try {
-          // Handle potential extra characters or formatting issues
           const cleanedDate = value.split(' ')[0];
           entry[sanitizedHeader] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
         } catch (e) {
-          entry[sanitizedHeader] = null;
+          entry[sanitizedHeader] = value; 
         }
       } else if (value === '' || isNaN(Number(value)) || !isFinite(Number(value))) {
-        // Handles non-numeric strings or empty values as null for charting
-         entry[sanitizedHeader] = null;
+         entry[sanitizedHeader] = value;
       }
       else {
         entry[sanitizedHeader] = Number(value);
       }
     });
     return entry;
-  }).filter(d => d[headers[dateHeaderIndex].replace(/[^a-zA-Z0-9]/g, '_')]); // Filter out rows with invalid dates
+  });
+
+  return { data, headers: originalHeaders };
 };
 
 
@@ -81,15 +82,12 @@ export default function DatasetViewPage() {
   const [chartConfig, setChartConfig] = useState<ChartConfig | null>(null);
   const [chartableKeys, setChartableKeys] = useState<string[]>([]);
   const [originalHeaders, setOriginalHeaders] = useState<string[]>([]);
-  const [dateHeader, setDateHeader] = useState<string>('Date');
+  const [dateHeader, setDateHeader] = useState<string | null>(null);
   
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [activeEntry, setActiveEntry] = useState<any | null>(null);
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -28),
-    to: new Date(),
-  });
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
 
   useEffect(() => {
     if (id && typeof id === "string") {
@@ -100,43 +98,43 @@ export default function DatasetViewPage() {
           if (fetchedDataset) {
             setDataset(fetchedDataset);
             if (fetchedDataset.csvData) {
-              const data = parseCSV(fetchedDataset.csvData);
+              const { data, headers } = parseCSV(fetchedDataset.csvData);
+              setOriginalHeaders(headers);
+              setParsedData(data);
+
               if (data.length > 0) {
-                  const headers = Object.keys(data[0]);
-                  const detectedDateHeader = headers.find(h => h.toLowerCase().includes('date')) || headers[0];
-                  setDateHeader(detectedDateHeader);
-
-                  const numericKeys = headers.filter(
-                    key => key !== detectedDateHeader && data.some(d => typeof d[key] === 'number')
-                  );
+                  const sanitizedHeaders = headers.map(h => h.replace(/[^a-zA-Z0-9]/g, '_'));
+                  const detectedDateHeader = sanitizedHeaders.find(h => h.toLowerCase().includes('date'));
                   
-                  const stringKeys = headers.filter(
-                    key => key !== detectedDateHeader && !numericKeys.includes(key)
-                  );
-                  
-                  const originalCsvHeaders = fetchedDataset.csvData.split('\n')[0].split(',').map(h => h.trim());
-                  setOriginalHeaders(originalCsvHeaders);
+                  if (detectedDateHeader) {
+                    setDateHeader(detectedDateHeader);
 
-                  if (numericKeys.length > 0) {
-                    setIsChartable(true);
-                    setChartableKeys(numericKeys);
-                    const originalNumericHeaders = originalCsvHeaders.filter(h => numericKeys.includes(h.replace(/[^a-zA-Z0-9]/g, '_')));
+                    const numericKeys = sanitizedHeaders.filter(
+                      key => key !== detectedDateHeader && data.some(d => typeof d[key] === 'number')
+                    );
                     
-                    const config = generateChartConfig(originalNumericHeaders);
-                    setChartConfig(config);
-                    setParsedData(data);
+                    if (numericKeys.length > 0) {
+                      setIsChartable(true);
+                      setChartableKeys(numericKeys);
+
+                      const config = generateChartConfig(numericKeys);
+                      setChartConfig(config);
+
+                      // Set initial date range
+                      const dates = data.map(d => parseISO(d[detectedDateHeader])).filter(d => !isNaN(d.getTime()));
+                      if (dates.length > 0) {
+                        const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+                        const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+                        setDate({ from: minDate, to: maxDate });
+                      } else {
+                         setDate({ from: addDays(new Date(), -28), to: new Date() });
+                      }
+
+                    } else {
+                      setIsChartable(false);
+                    }
                   } else {
-                    setIsChartable(false);
-                     const rawData = fetchedDataset.csvData.trim().split('\n').slice(1).map(line => {
-                        const values = line.split(',');
-                        const entry: any = {};
-                        originalCsvHeaders.forEach((header, index) => {
-                           entry[header] = values[index];
-                        });
-                        return entry;
-                     });
-                     setParsedData(rawData);
-                     setFilteredData(rawData);
+                      setIsChartable(false);
                   }
               }
             }
@@ -164,9 +162,9 @@ export default function DatasetViewPage() {
   }, [id, getDatasetById, router, toast]);
 
   useEffect(() => {
-    if (parsedData.length > 0 && isChartable) {
+    if (parsedData.length > 0 && isChartable && dateHeader) {
       const filtered = parsedData.filter(d => {
-        if (!date?.from || !d[dateHeader]) return true; // Show all if no date filter
+        if (!date?.from || !d[dateHeader]) return true;
         try {
           const dataDate = parseISO(d[dateHeader]);
           const from = new Date(date.from.setHours(0,0,0,0));
@@ -233,8 +231,6 @@ export default function DatasetViewPage() {
     return null;
   }
   
-  const allTableHeaders = isChartable ? originalHeaders : (parsedData.length > 0 ? Object.keys(parsedData[0]) : []);
-
   const handleViewSummary = (entry: any) => {
     setActiveEntry(entry);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -277,14 +273,6 @@ export default function DatasetViewPage() {
       <CardContent className="space-y-2 text-sm">
         <div><span className="font-semibold">Submitted by: </span><span>{dataset.submittedBy}</span></div>
         <div><span className="font-semibold">Date Submitted: </span><span>{new Date(dataset.date).toLocaleDateString()}</span></div>
-        <div className="pt-4">
-            <h3 className="font-semibold mb-2">Raw Data Preview</h3>
-            <div className="overflow-x-auto p-2 border rounded-md bg-muted/50 max-h-80">
-                <pre className="text-xs">
-                    {dataset.csvData}
-                </pre>
-            </div>
-        </div>
       </CardContent>
     </Card>
   )
@@ -313,17 +301,17 @@ export default function DatasetViewPage() {
     <div className="space-y-6">
       <PageHeader />
 
-      {!isChartable && <MetadataCard />}
+      <MetadataCard />
 
-      {isChartable && chartConfig && (
+      {isChartable && chartConfig && dateHeader && (
         <>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <div>
-                                <CardTitle>{dataset.name}</CardTitle>
-                                <CardDescription>Visualize parameters for your dataset.</CardDescription>
+                                <CardTitle>Dataset Visualization</CardTitle>
+                                <CardDescription>Key metrics over time.</CardDescription>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Popover>
@@ -352,12 +340,11 @@ export default function DatasetViewPage() {
                             >
                                 <defs>
                                   {chartableKeys.map((key) => {
-                                    const sanitizedKey = key.replace(/[^a-zA-Z0-9]/g, '_');
-                                    const color = (chartConfig as any)[sanitizedKey]?.color;
+                                    const color = (chartConfig as any)[key]?.color;
                                     return (
                                       <linearGradient
-                                        key={sanitizedKey}
-                                        id={`fill-${sanitizedKey}`}
+                                        key={key}
+                                        id={`fill-${key}`}
                                         x1="0"
                                         y1="0"
                                         x2="0"
@@ -385,9 +372,8 @@ export default function DatasetViewPage() {
                                 <Tooltip content={<ChartTooltipContent />} />
                                 <Legend />
                                 {chartableKeys.map((key, index) => {
-                                    const sanitizedKey = key.replace(/[^a-zA-Z0-9]/g, '_');
                                     const yAxisId = index % 2 === 0 ? 'left' : 'right';
-                                    return <Area key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[sanitizedKey].color} fillOpacity={0.4} fill={`url(#fill-${sanitizedKey})`} name={(chartConfig as any)[sanitizedKey].label} dot={false} activeDot={{ r: 8 }} />
+                                    return <Area key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[key].color} fillOpacity={0.4} fill={`url(#fill-${key})`} name={(chartConfig as any)[key].label} dot={false} activeDot={{ r: 8 }} />
                                 })}
                             </AreaChart>
                             </ChartContainer>
@@ -397,7 +383,7 @@ export default function DatasetViewPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Daily Summary</CardTitle>
-                        <CardDescription>Details for {activeEntry && activeEntry[dateHeader] ? format(parseISO(activeEntry[dateHeader]), "PPP") : "N/A"}</CardDescription>
+                        <CardDescription>{activeEntry && activeEntry[dateHeader] ? format(parseISO(activeEntry[dateHeader]), "PPP") : "N/A"}</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4">
                         <DynamicSummary />
@@ -412,7 +398,7 @@ export default function DatasetViewPage() {
             <Table>
                 <TableHeader>
                 <TableRow>
-                    {allTableHeaders.map(key => <TableHead key={key} className="capitalize">{chartConfig && (chartConfig as any)[key.replace(/[^a-zA-Z0-9]/g, '_')]?.label || key.replace(/_/g, ' ')}</TableHead>)}
+                    {originalHeaders.map(header => <TableHead key={header}>{header.replace(/_/g, ' ')}</TableHead>)}
                     {isChartable && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
                 </TableHeader>
@@ -420,15 +406,15 @@ export default function DatasetViewPage() {
                 {filteredData.length > 0 ? (
                     filteredData.map((entry, index) => (
                     <TableRow key={index} className={cn(isChartable && entry === activeEntry && "bg-muted/50")}>
-                        {allTableHeaders.map(key => {
-                           const sanitizedKey = key.replace(/[^a-zA-Z0-9]/g, '_');
-                           return <TableCell key={key}>{entry[sanitizedKey] != null ? String(entry[sanitizedKey]) : 'N/A'}</TableCell>
+                        {originalHeaders.map(header => {
+                           const sanitizedKey = header.replace(/[^a-zA-Z0-9]/g, '_');
+                           return <TableCell key={header}>{entry[sanitizedKey] != null ? String(entry[sanitizedKey]) : 'N/A'}</TableCell>
                         })}
                         {isChartable && <TableCell className="text-right"><Button variant="outline" size="sm" onClick={() => handleViewSummary(entry)}>View Summary</Button></TableCell>}
                     </TableRow>
                     ))
                 ) : (
-                    <TableRow><TableCell colSpan={allTableHeaders.length + 1} className="h-24 text-center">No data available for the selected date range.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={originalHeaders.length + (isChartable ? 1 : 0)} className="h-24 text-center">No data available.</TableCell></TableRow>
                 )}
                 </TableBody>
             </Table>
