@@ -56,6 +56,11 @@ export default function NewDatasetPage() {
 
   const form = useForm<DatasetFormValues>({
     resolver: zodResolver(datasetFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      dataFile: undefined,
+    },
     mode: "onChange",
   });
   
