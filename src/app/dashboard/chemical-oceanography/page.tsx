@@ -51,11 +51,11 @@ interface OceanData {
   Date: string;
   Latitude: number;
   Longitude: number;
-  "Salinity (PSU)": number;
-  "pH": number;
-  "Nitrate (umol/L)": number;
-  "Phosphate (umol/L)": number;
-  "Silicate (umol/L)": number;
+  Salinity_PSU: number;
+  pH: number;
+  Nitrate_µmolL: number;
+  Phosphate_µmolL: number;
+  Silicate_µmolL: number;
 }
 
 const parseCSV = (csvData: string): OceanData[] => {
@@ -261,10 +261,10 @@ export default function ChemicalOceanographyPage() {
                         <Tooltip content={<ChartTooltipContent />} />
                         <Legend />
                         <Line yAxisId="ph" type="natural" dataKey="pH" stroke="var(--color-ph)" name="pH" dot={false} />
-                        <Line yAxisId="salinity" type="natural" dataKey="Salinity (PSU)" stroke="var(--color-salinity)" name="Salinity (PSU)" dot={false} />
-                        <Line yAxisId="nutrients" type="natural" dataKey="Nitrate (umol/L)" stroke="var(--color-nitrate)" name="Nitrate (µmol/L)" dot={false} />
-                        <Line yAxisId="nutrients" type="natural" dataKey="Phosphate (umol/L)" stroke="var(--color-phosphate)" name="Phosphate (µmol/L)" dot={false} />
-                        <Line yAxisId="nutrients" type="natural" dataKey="Silicate (umol/L)" stroke="var(--color-silicate)" name="Silicate (µmol/L)" dot={false} />
+                        <Line yAxisId="salinity" type="natural" dataKey="Salinity_PSU" stroke="var(--color-salinity)" name="Salinity (PSU)" dot={false} />
+                        <Line yAxisId="nutrients" type="natural" dataKey="Nitrate_µmolL" stroke="var(--color-nitrate)" name="Nitrate (µmol/L)" dot={false} />
+                        <Line yAxisId="nutrients" type="natural" dataKey="Phosphate_µmolL" stroke="var(--color-phosphate)" name="Phosphate (µmol/L)" dot={false} />
+                        <Line yAxisId="nutrients" type="natural" dataKey="Silicate_µmolL" stroke="var(--color-silicate)" name="Silicate (µmol/L)" dot={false} />
                     </LineChart>
                     </ChartContainer>
                 </CardContent>
@@ -291,7 +291,7 @@ export default function ChemicalOceanographyPage() {
                         <Droplet className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Salinity</span>
                     </div>
-                    <span>{activeEntry ? `${activeEntry["Salinity (PSU)"]} PSU` : 'N/A'}</span>
+                    <span>{activeEntry ? `${activeEntry["Salinity_PSU"]} PSU` : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
@@ -305,21 +305,21 @@ export default function ChemicalOceanographyPage() {
                         <Beaker className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Nitrate</span>
                     </div>
-                    <span>{activeEntry ? `${activeEntry["Nitrate (umol/L)"]} µmol/L` : 'N/A'}</span>
+                    <span>{activeEntry ? `${activeEntry["Nitrate_µmolL"]} µmol/L` : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
                         <Beaker className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Phosphate</span>
                     </div>
-                    <span>{activeEntry ? `${activeEntry["Phosphate (umol/L)"]} µmol/L` : 'N/A'}</span>
+                    <span>{activeEntry ? `${activeEntry["Phosphate_µmolL"]} µmol/L` : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
                         <Beaker className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Silicate</span>
                     </div>
-                    <span>{activeEntry ? `${activeEntry["Silicate (umol/L)"]} µmol/L` : 'N/A'}</span>
+                    <span>{activeEntry ? `${activeEntry["Silicate_µmolL"]} µmol/L` : 'N/A'}</span>
                 </div>
             </CardContent>
         </Card>
@@ -348,10 +348,10 @@ export default function ChemicalOceanographyPage() {
                   <TableRow key={index} className={cn(entry === activeEntry && "bg-muted/50")}>
                     <TableCell>{entry.Date}</TableCell>
                     <TableCell>{entry.pH.toFixed(2)}</TableCell>
-                    <TableCell>{entry["Salinity (PSU)"]} PSU</TableCell>
-                    <TableCell>{entry["Nitrate (umol/L)"]} µmol/L</TableCell>
-                    <TableCell>{entry["Phosphate (umol/L)"]} µmol/L</TableCell>
-                    <TableCell>{entry["Silicate (umol/L)"]} µmol/L</TableCell>
+                    <TableCell>{entry["Salinity_PSU"]} PSU</TableCell>
+                    <TableCell>{entry["Nitrate_µmolL"]} µmol/L</TableCell>
+                    <TableCell>{entry["Phosphate_µmolL"]} µmol/L</TableCell>
+                    <TableCell>{entry["Silicate_µmolL"]} µmol/L</TableCell>
                     <TableCell className="text-right">
                         <Button variant="outline" size="sm" onClick={() => handleViewSummary(entry)}>View Summary</Button>
                     </TableCell>
