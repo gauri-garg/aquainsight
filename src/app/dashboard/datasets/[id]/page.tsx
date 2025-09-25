@@ -413,7 +413,7 @@ export default function DatasetViewPage() {
                     </TableRow>
                     ))
                 ) : (
-                    <TableRow><TableCell colSpan={originalHeaders.length + (isChartable ? 1 : 0)} className="h-24 text-center">No data available.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={originalHeaders.length + (isChartable ? 1 : 0)} className="h-24 text-center">No data available for the selected date range.</TableCell></TableRow>
                 )}
                 </TableBody>
             </Table>
@@ -422,5 +422,3 @@ export default function DatasetViewPage() {
     </div>
   );
 }
-
-    
