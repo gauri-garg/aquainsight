@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/sheet";
 import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
-import { DatasetNav } from "@/components/dataset-nav";
+import { DynamicDatasetNav } from "@/components/dataset-nav-dynamic";
+import React from "react";
 
 export default function DashboardLayout({
   children,
@@ -38,7 +39,9 @@ export default function DashboardLayout({
           Manage Datasets
         </Link>
       )}
-      <DatasetNav />
+      <React.Suspense fallback={<div className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground">Loading datasets...</div>}>
+         <DynamicDatasetNav />
+      </React.Suspense>
     </nav>
   );
 
@@ -98,7 +101,9 @@ export default function DashboardLayout({
                     Manage Datasets
                   </Link>
                 )}
-                <DatasetNav isMobile={true} />
+                 <React.Suspense fallback={<div className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground">Loading...</div>}>
+                    <DynamicDatasetNav isMobile={true} />
+                 </React.Suspense>
               </nav>
             </SheetContent>
           </Sheet>

@@ -47,9 +47,8 @@ export function DatasetNav({ isMobile = false }: DatasetNavProps) {
         asChild
         onMouseEnter={() => setPopoverOpen(true)}
         onMouseLeave={() => setPopoverOpen(false)}
-        className={cn(isMobile ? mobileClasses : desktopClasses, "cursor-pointer")}
       >
-        <div>
+        <div className={cn(isMobile ? mobileClasses : desktopClasses, "cursor-pointer")}>
           <Database className={cn("h-4 w-4", isMobile && "h-5 w-5")} />
           Datasets
         </div>
