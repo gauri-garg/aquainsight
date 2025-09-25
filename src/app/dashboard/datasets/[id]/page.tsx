@@ -17,13 +17,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { cn } from "@/lib/utils";
 
 const generateChartConfig = (keys: string[]): ChartConfig => {
   const config: ChartConfig = {};
   keys.forEach((key, index) => {
-    config[key] = {
+    const sanitizedKey = key.replace(/[^a-zA-Z0-9]/g, '_');
+    config[sanitizedKey] = {
       label: key.replace(/_/g, " ").replace(/ C/g, "°C").replace(/ m s/g, " m/s"),
       color: `hsl(var(--chart-${(index % 5) + 1}))`,
     };
@@ -44,26 +45,27 @@ const parseCSV = (csvData: string): any[] => {
     const values = line.split(",");
     const entry: any = {};
     headers.forEach((header, index) => {
+      const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
       let value = values[index] ? values[index].trim() : '';
       
       if (header.toLowerCase().includes('date')) {
         try {
           // Handle potential extra characters or formatting issues
           const cleanedDate = value.split(' ')[0];
-          entry[header] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
+          entry[sanitizedHeader] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
         } catch (e) {
-          entry[header] = null;
+          entry[sanitizedHeader] = null;
         }
       } else if (value === '' || isNaN(Number(value)) || !isFinite(Number(value))) {
-        // Keeps non-numeric strings or handles empty values
-         entry[header] = value;
+        // Handles non-numeric strings or empty values as null for charting
+         entry[sanitizedHeader] = null;
       }
       else {
-        entry[header] = Number(value);
+        entry[sanitizedHeader] = Number(value);
       }
     });
     return entry;
-  }).filter(d => d[headers[dateHeaderIndex]]); // Filter out rows with invalid dates
+  }).filter(d => d[headers[dateHeaderIndex].replace(/[^a-zA-Z0-9]/g, '_')]); // Filter out rows with invalid dates
 };
 
 
@@ -116,12 +118,25 @@ export default function DatasetViewPage() {
                     setIsChartable(true);
                     setChartableKeys(numericKeys);
                     setNonChartableKeys(stringKeys);
-                    const config = generateChartConfig(numericKeys);
+                     const originalHeaders = fetchedDataset.csvData.split('\n')[0].split(',').map(h => h.trim());
+                    const originalNumericHeaders = originalHeaders.filter(h => numericKeys.includes(h.replace(/[^a-zA-Z0-9]/g, '_')));
+                    
+                    const config = generateChartConfig(originalNumericHeaders);
                     setChartConfig(config);
                     setParsedData(data);
                   } else {
                     setIsChartable(false);
-                    setParsedData(data); // still show raw data table
+                    // Still parse data for raw table view even if not chartable
+                     const rawData = fetchedDataset.csvData.trim().split('\n').slice(1).map(line => {
+                        const values = line.split(',');
+                        const entry: any = {};
+                        fetchedDataset.csvData.split('\n')[0].split(',').map(h => h.trim()).forEach((header, index) => {
+                           entry[header] = values[index];
+                        });
+                        return entry;
+                     });
+                     setParsedData(rawData);
+                     setFilteredData(rawData);
                   }
               }
             }
@@ -149,7 +164,7 @@ export default function DatasetViewPage() {
   }, [id, getDatasetById, router, toast]);
 
   useEffect(() => {
-    if (parsedData.length > 0) {
+    if (parsedData.length > 0 && isChartable) {
       const filtered = parsedData.filter(d => {
         if (!date?.from || !d[dateHeader]) return true; // Show all if no date filter
         try {
@@ -163,8 +178,10 @@ export default function DatasetViewPage() {
       });
       setFilteredData(filtered);
       setActiveEntry(filtered[filtered.length - 1] || filtered[0] || null);
+    } else {
+      setFilteredData(parsedData);
     }
-  }, [date, parsedData, dateHeader]);
+  }, [date, parsedData, dateHeader, isChartable]);
 
 
   const handleDownloadXlsx = () => {
@@ -273,22 +290,20 @@ export default function DatasetViewPage() {
   )
 
   const DynamicSummary = () => {
-    if (!activeEntry) return null;
+    if (!activeEntry || !chartConfig) return null;
     
     return (
       <>
-        {chartableKeys.map(key => (
-             <div key={key} className="flex items-center justify-between">
-                <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                <span>{activeEntry[key] != null ? activeEntry[key] : 'N/A'}</span>
-             </div>
-        ))}
-         {nonChartableKeys.map((key) => (
-            <div key={key} className="flex items-center justify-between">
-              <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-              <span>{String(activeEntry[key]) != null ? String(activeEntry[key]) : 'N/A'}</span>
-            </div>
-        ))}
+        {allHeaders.map(key => {
+            const configKey = key.replace(/[^a-zA-Z0-9]/g, '_');
+            const label = (chartConfig as any)[configKey]?.label || key.replace(/_/g, ' ');
+             return (
+                 <div key={key} className="flex items-center justify-between">
+                    <span className="text-muted-foreground capitalize">{label}</span>
+                    <span>{activeEntry[key] != null ? String(activeEntry[key]) : 'N/A'}</span>
+                 </div>
+             )
+        })}
       </>
     )
   }
@@ -329,11 +344,38 @@ export default function DatasetViewPage() {
                         </CardHeader>
                         <CardContent>
                         <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                            <LineChart
+                            <AreaChart
                                 data={filteredData}
                                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                                 onMouseMove={(state) => { if (state.isTooltipActive && state.activePayload?.[0]?.payload) { setActiveEntry(state.activePayload[0].payload) } }}
                             >
+                                <defs>
+                                  {chartableKeys.map((key) => {
+                                    const sanitizedKey = key.replace(/[^a-zA-Z0-9]/g, '_');
+                                    const color = (chartConfig as any)[sanitizedKey]?.color;
+                                    return (
+                                      <linearGradient
+                                        key={sanitizedKey}
+                                        id={`fill-${sanitizedKey}`}
+                                        x1="0"
+                                        y1="0"
+                                        x2="0"
+                                        y2="1"
+                                      >
+                                        <stop
+                                          offset="5%"
+                                          stopColor={color}
+                                          stopOpacity={0.8}
+                                        />
+                                        <stop
+                                          offset="95%"
+                                          stopColor={color}
+                                          stopOpacity={0.1}
+                                        />
+                                      </linearGradient>
+                                    );
+                                  })}
+                                </defs>
                                 <CartesianGrid vertical={false} />
                                 <XAxis dataKey={dateHeader} tickFormatter={(value) => { try { return format(parseISO(value), "MMM d") } catch (e) { return "" } }} padding={{ left: 20, right: 20 }} />
                                 <YAxis yAxisId="left" orientation="left" domain={['dataMin - 1', 'dataMax + 1']} hide />
@@ -342,10 +384,11 @@ export default function DatasetViewPage() {
                                 <Tooltip content={<ChartTooltipContent />} />
                                 <Legend />
                                 {chartableKeys.map((key, index) => {
+                                    const sanitizedKey = key.replace(/[^a-zA-Z0-9]/g, '_');
                                     const yAxisId = index % 2 === 0 ? 'left' : 'right';
-                                    return <Line key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[key].color} name={(chartConfig as any)[key].label} dot={false} activeDot={{ r: 8 }} />
+                                    return <Area key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[sanitizedKey].color} fillOpacity={0.4} fill={`url(#fill-${sanitizedKey})`} name={(chartConfig as any)[sanitizedKey].label} dot={false} activeDot={{ r: 8 }} />
                                 })}
-                            </LineChart>
+                            </AreaChart>
                             </ChartContainer>
                         </CardContent>
                     </Card>
@@ -368,7 +411,7 @@ export default function DatasetViewPage() {
             <Table>
                 <TableHeader>
                 <TableRow>
-                    {allHeaders.map(key => <TableHead key={key} className="capitalize">{key.replace(/_/g, ' ')}</TableHead>)}
+                    {allHeaders.map(key => <TableHead key={key} className="capitalize">{chartConfig && (chartConfig as any)[key.replace(/[^a-zA-Z0-9]/g, '_')]?.label || key.replace(/_/g, ' ')}</TableHead>)}
                     {isChartable && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
                 </TableHeader>
@@ -392,3 +435,5 @@ export default function DatasetViewPage() {
 }
 
   
+
+    
