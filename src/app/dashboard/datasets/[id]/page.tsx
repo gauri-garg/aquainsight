@@ -52,6 +52,7 @@ export default function DatasetViewPage() {
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [isChartable, setIsChartable] = useState(false);
+  const [availableChartKeys, setAvailableChartKeys] = useState<string[]>([]);
   
   // Chart-specific state
   const [parsedData, setParsedData] = useState<any[]>([]);
@@ -62,7 +63,7 @@ export default function DatasetViewPage() {
     to: new Date(),
   });
 
-  const chartableHeaders = useMemo(() => ['Date', 'pH', 'Salinity_PSU', 'Nitrate_µmolL', 'Phosphate_µmolL', 'Silicate_µmolL'], []);
+  const chartableHeaders = useMemo(() => Object.keys(chartConfig), []);
 
   useEffect(() => {
     if (id && typeof id === "string") {
@@ -75,10 +76,13 @@ export default function DatasetViewPage() {
             if (fetchedDataset.csvData) {
               const data = parseCSV(fetchedDataset.csvData);
               const headers = data.length > 0 ? Object.keys(data[0]) : [];
-              const hasRequiredHeaders = chartableHeaders.every(h => headers.includes(h));
               
-              if (hasRequiredHeaders) {
+              const hasDate = headers.includes('Date');
+              const availableKeys = chartableHeaders.filter(h => headers.includes(h));
+
+              if (hasDate && availableKeys.length > 0) {
                 setIsChartable(true);
+                setAvailableChartKeys(availableKeys);
                 const processedData = data.map(d => ({
                   ...d,
                   Date: d.Date ? format(parseISO(d.Date), 'yyyy-MM-dd') : null
@@ -221,6 +225,14 @@ export default function DatasetViewPage() {
       <CardContent className="space-y-2 text-sm">
         <div><span className="font-semibold">Submitted by: </span><span>{dataset.submittedBy}</span></div>
         <div><span className="font-semibold">Date Submitted: </span><span>{new Date(dataset.date).toLocaleDateString()}</span></div>
+        <div className="pt-4">
+            <h3 className="font-semibold mb-2">Raw Data Preview</h3>
+            <div className="overflow-x-auto p-2 border rounded-md bg-muted/50 max-h-80">
+                <pre className="text-xs">
+                    {dataset.csvData}
+                </pre>
+            </div>
+        </div>
       </CardContent>
     </Card>
   )
@@ -269,8 +281,8 @@ export default function DatasetViewPage() {
                                 <defs>
                                     {Object.keys(chartConfig).map(key => (
                                         <linearGradient key={key} id={`color${key}`} x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={chartConfig[key as keyof typeof chartConfig].color} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={chartConfig[key as keyof typeof chartConfig].color} stopOpacity={0.1}/>
+                                            <stop offset="5%" stopColor={(chartConfig as any)[key].color} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={(chartConfig as any)[key].color} stopOpacity={0.1}/>
                                         </linearGradient>
                                     ))}
                                 </defs>
@@ -281,9 +293,9 @@ export default function DatasetViewPage() {
                                 <YAxis yAxisId="nutrients" orientation="right" hide />
                                 <Tooltip content={<ChartTooltipContent />} />
                                 <Legend />
-                                {Object.keys(chartConfig).map(key => {
+                                {availableChartKeys.map(key => {
                                     const yAxisId = key === 'pH' ? 'ph' : key === 'Salinity_PSU' ? 'salinity' : 'nutrients';
-                                    return <Area key={key} yAxisId={yAxisId} type="natural" dataKey={key} stroke={chartConfig[key as keyof typeof chartConfig].color} fillOpacity={1} fill={`url(#color${key})`} name={chartConfig[key as keyof typeof chartConfig].label} dot={false} />
+                                    return <Area key={key} yAxisId={yAxisId} type="natural" dataKey={key} stroke={(chartConfig as any)[key].color} fillOpacity={1} fill={`url(#color${key})`} name={(chartConfig as any)[key].label} dot={false} />
                                 })}
                             </AreaChart>
                             </ChartContainer>
@@ -298,11 +310,11 @@ export default function DatasetViewPage() {
                     <CardContent className="grid gap-4">
                         <div className="flex items-center justify-between"><span className="text-muted-foreground">Latitude</span><span>{activeEntry?.Latitude?.toFixed(4) || "N/A"}</span></div>
                         <div className="flex items-center justify-between"><span className="text-muted-foreground">Longitude</span><span>{activeEntry?.Longitude?.toFixed(4) || "N/A"}</span></div>
-                        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Droplet className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Salinity</span></div><span>{activeEntry ? `${activeEntry.Salinity_PSU} PSU` : 'N/A'}</span></div>
-                        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Waves className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">pH</span></div><span>{activeEntry?.pH?.toFixed(2) || "N/A"}</span></div>
-                        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Nitrate</span></div><span>{activeEntry ? `${activeEntry.Nitrate_µmolL} µmol/L` : 'N/A'}</span></div>
-                        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Phosphate</span></div><span>{activeEntry ? `${activeEntry.Phosphate_µmolL} µmol/L` : 'N/A'}</span></div>
-                        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Silicate</span></div><span>{activeEntry ? `${activeEntry.Silicate_µmolL} µmol/L` : 'N/A'}</span></div>
+                        {availableChartKeys.includes('Salinity_PSU') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Droplet className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Salinity</span></div><span>{activeEntry ? `${activeEntry.Salinity_PSU} PSU` : 'N/A'}</span></div>}
+                        {availableChartKeys.includes('pH') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Waves className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">pH</span></div><span>{activeEntry?.pH?.toFixed(2) || "N/A"}</span></div>}
+                        {availableChartKeys.includes('Nitrate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Nitrate</span></div><span>{activeEntry ? `${activeEntry.Nitrate_µmolL} µmol/L` : 'N/A'}</span></div>}
+                        {availableChartKeys.includes('Phosphate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Phosphate</span></div><span>{activeEntry ? `${activeEntry.Phosphate_µmolL} µmol/L` : 'N/A'}</span></div>}
+                        {availableChartKeys.includes('Silicate_µmolL') && <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Beaker className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Silicate</span></div><span>{activeEntry ? `${activeEntry.Silicate_µmolL} µmol/L` : 'N/A'}</span></div>}
                     </CardContent>
                 </Card>
             </div>
@@ -313,11 +325,7 @@ export default function DatasetViewPage() {
                     <TableHeader>
                     <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead>pH</TableHead>
-                        <TableHead>Salinity</TableHead>
-                        <TableHead>Nitrate</TableHead>
-                        <TableHead>Phosphate</TableHead>
-                        <TableHead>Silicate</TableHead>
+                        {availableChartKeys.map(key => <TableHead key={key}>{(chartConfig as any)[key].label}</TableHead>)}
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                     </TableHeader>
@@ -326,16 +334,12 @@ export default function DatasetViewPage() {
                         filteredData.map((entry, index) => (
                         <TableRow key={index} className={cn(entry === activeEntry && "bg-muted/50")}>
                             <TableCell>{entry.Date}</TableCell>
-                            <TableCell>{entry.pH?.toFixed(2)}</TableCell>
-                            <TableCell>{entry.Salinity_PSU} PSU</TableCell>
-                            <TableCell>{entry.Nitrate_µmolL} µmol/L</TableCell>
-                            <TableCell>{entry.Phosphate_µmolL} µmol/L</TableCell>
-                            <TableCell>{entry.Silicate_µmolL} µmol/L</TableCell>
+                            {availableChartKeys.map(key => <TableCell key={key}>{entry[key] !== undefined ? entry[key] : 'N/A'}</TableCell>)}
                             <TableCell className="text-right"><Button variant="outline" size="sm" onClick={() => handleViewSummary(entry)}>View Summary</Button></TableCell>
                         </TableRow>
                         ))
                     ) : (
-                        <TableRow><TableCell colSpan={7} className="h-24 text-center">No data available for the selected date range.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={availableChartKeys.length + 2} className="h-24 text-center">No data available for the selected date range.</TableCell></TableRow>
                     )}
                     </TableBody>
                 </Table>
