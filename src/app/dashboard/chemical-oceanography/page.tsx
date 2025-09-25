@@ -35,8 +35,8 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -229,7 +229,7 @@ export default function ChemicalOceanographyPage() {
                 </CardHeader>
                 <CardContent>
                 <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                    <LineChart
+                    <AreaChart
                         data={filteredData}
                         margin={{
                             top: 5,
@@ -243,6 +243,28 @@ export default function ChemicalOceanographyPage() {
                             }
                         }}
                     >
+                        <defs>
+                            <linearGradient id="colorPh" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-ph)" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="var(--color-ph)" stopOpacity={0.1}/>
+                            </linearGradient>
+                            <linearGradient id="colorSalinity" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-salinity)" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="var(--color-salinity)" stopOpacity={0.1}/>
+                            </linearGradient>
+                             <linearGradient id="colorNitrate" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-nitrate)" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="var(--color-nitrate)" stopOpacity={0.1}/>
+                            </linearGradient>
+                            <linearGradient id="colorPhosphate" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-phosphate)" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="var(--color-phosphate)" stopOpacity={0.1}/>
+                            </linearGradient>
+                            <linearGradient id="colorSilicate" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-silicate)" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="var(--color-silicate)" stopOpacity={0.1}/>
+                            </linearGradient>
+                        </defs>
                         <CartesianGrid vertical={false} />
                         <XAxis
                         dataKey="Date"
@@ -260,12 +282,12 @@ export default function ChemicalOceanographyPage() {
                         <YAxis yAxisId="nutrients" orientation="right" hide />
                         <Tooltip content={<ChartTooltipContent />} />
                         <Legend />
-                        <Line yAxisId="ph" type="natural" dataKey="pH" stroke="var(--color-ph)" name="pH" dot={false} />
-                        <Line yAxisId="salinity" type="natural" dataKey="Salinity_PSU" stroke="var(--color-salinity)" name="Salinity (PSU)" dot={false} />
-                        <Line yAxisId="nutrients" type="natural" dataKey="Nitrate_µmolL" stroke="var(--color-nitrate)" name="Nitrate (µmol/L)" dot={false} />
-                        <Line yAxisId="nutrients" type="natural" dataKey="Phosphate_µmolL" stroke="var(--color-phosphate)" name="Phosphate (µmol/L)" dot={false} />
-                        <Line yAxisId="nutrients" type="natural" dataKey="Silicate_µmolL" stroke="var(--color-silicate)" name="Silicate (µmol/L)" dot={false} />
-                    </LineChart>
+                        <Area yAxisId="ph" type="natural" dataKey="pH" stroke="var(--color-ph)" fillOpacity={1} fill="url(#colorPh)" name="pH" dot={false} />
+                        <Area yAxisId="salinity" type="natural" dataKey="Salinity_PSU" stroke="var(--color-salinity)" fillOpacity={1} fill="url(#colorSalinity)" name="Salinity (PSU)" dot={false} />
+                        <Area yAxisId="nutrients" type="natural" dataKey="Nitrate_µmolL" stroke="var(--color-nitrate)" fillOpacity={1} fill="url(#colorNitrate)" name="Nitrate (µmol/L)" dot={false} />
+                        <Area yAxisId="nutrients" type="natural" dataKey="Phosphate_µmolL" stroke="var(--color-phosphate)" fillOpacity={1} fill="url(#colorPhosphate)" name="Phosphate (µmol/L)" dot={false} />
+                        <Area yAxisId="nutrients" type="natural" dataKey="Silicate_µmolL" stroke="var(--color-silicate)" fillOpacity={1} fill="url(#colorSilicate)" name="Silicate (µmol/L)" dot={false} />
+                    </AreaChart>
                     </ChartContainer>
                 </CardContent>
             </Card>
@@ -291,7 +313,7 @@ export default function ChemicalOceanographyPage() {
                         <Droplet className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Salinity</span>
                     </div>
-                    <span>{activeEntry ? `${activeEntry["Salinity_PSU"]} PSU` : 'N/A'}</span>
+                    <span>{activeEntry ? `${activeEntry.Salinity_PSU} PSU` : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
@@ -305,21 +327,21 @@ export default function ChemicalOceanographyPage() {
                         <Beaker className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Nitrate</span>
                     </div>
-                    <span>{activeEntry ? `${activeEntry["Nitrate_µmolL"]} µmol/L` : 'N/A'}</span>
+                    <span>{activeEntry ? `${activeEntry.Nitrate_µmolL} µmol/L` : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
                         <Beaker className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Phosphate</span>
                     </div>
-                    <span>{activeEntry ? `${activeEntry["Phosphate_µmolL"]} µmol/L` : 'N/A'}</span>
+                    <span>{activeEntry ? `${activeEntry.Phosphate_µmolL} µmol/L` : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                      <div className="flex items-center gap-2">
                         <Beaker className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">Silicate</span>
                     </div>
-                    <span>{activeEntry ? `${activeEntry["Silicate_µmolL"]} µmol/L` : 'N/A'}</span>
+                    <span>{activeEntry ? `${activeEntry.Silicate_µmolL} µmol/L` : 'N/A'}</span>
                 </div>
             </CardContent>
         </Card>
@@ -348,10 +370,10 @@ export default function ChemicalOceanographyPage() {
                   <TableRow key={index} className={cn(entry === activeEntry && "bg-muted/50")}>
                     <TableCell>{entry.Date}</TableCell>
                     <TableCell>{entry.pH.toFixed(2)}</TableCell>
-                    <TableCell>{entry["Salinity_PSU"]} PSU</TableCell>
-                    <TableCell>{entry["Nitrate_µmolL"]} µmol/L</TableCell>
-                    <TableCell>{entry["Phosphate_µmolL"]} µmol/L</TableCell>
-                    <TableCell>{entry["Silicate_µmolL"]} µmol/L</TableCell>
+                    <TableCell>{entry.Salinity_PSU} PSU</TableCell>
+                    <TableCell>{entry.Nitrate_µmolL} µmol/L</TableCell>
+                    <TableCell>{entry.Phosphate_µmolL} µmol/L</TableCell>
+                    <TableCell>{entry.Silicate_µmolL} µmol/L</TableCell>
                     <TableCell className="text-right">
                         <Button variant="outline" size="sm" onClick={() => handleViewSummary(entry)}>View Summary</Button>
                     </TableCell>
@@ -370,4 +392,5 @@ export default function ChemicalOceanographyPage() {
       </Card>
     </div>
   )
-}
+
+    
