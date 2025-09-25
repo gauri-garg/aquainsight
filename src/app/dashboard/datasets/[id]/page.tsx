@@ -271,7 +271,6 @@ export default function DatasetViewPage() {
         <CardDescription>{dataset.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
-        <div><span className="font-semibold">Submitted by: </span><span>{dataset.submittedBy}</span></div>
       </CardContent>
     </Card>
   )
