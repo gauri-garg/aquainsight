@@ -80,7 +80,7 @@ export default function DatasetViewPage() {
   const [isChartable, setIsChartable] = useState<boolean>(false);
   const [chartConfig, setChartConfig] = useState<ChartConfig | null>(null);
   const [chartableKeys, setChartableKeys] = useState<string[]>([]);
-  const [nonChartableKeys, setNonChartableKeys] = useState<string[]>([]);
+  const [originalHeaders, setOriginalHeaders] = useState<string[]>([]);
   const [dateHeader, setDateHeader] = useState<string>('Date');
   
   const [parsedData, setParsedData] = useState<any[]>([]);
@@ -113,24 +113,24 @@ export default function DatasetViewPage() {
                   const stringKeys = headers.filter(
                     key => key !== detectedDateHeader && !numericKeys.includes(key)
                   );
+                  
+                  const originalCsvHeaders = fetchedDataset.csvData.split('\n')[0].split(',').map(h => h.trim());
+                  setOriginalHeaders(originalCsvHeaders);
 
                   if (numericKeys.length > 0) {
                     setIsChartable(true);
                     setChartableKeys(numericKeys);
-                    setNonChartableKeys(stringKeys);
-                     const originalHeaders = fetchedDataset.csvData.split('\n')[0].split(',').map(h => h.trim());
-                    const originalNumericHeaders = originalHeaders.filter(h => numericKeys.includes(h.replace(/[^a-zA-Z0-9]/g, '_')));
+                    const originalNumericHeaders = originalCsvHeaders.filter(h => numericKeys.includes(h.replace(/[^a-zA-Z0-9]/g, '_')));
                     
                     const config = generateChartConfig(originalNumericHeaders);
                     setChartConfig(config);
                     setParsedData(data);
                   } else {
                     setIsChartable(false);
-                    // Still parse data for raw table view even if not chartable
                      const rawData = fetchedDataset.csvData.trim().split('\n').slice(1).map(line => {
                         const values = line.split(',');
                         const entry: any = {};
-                        fetchedDataset.csvData.split('\n')[0].split(',').map(h => h.trim()).forEach((header, index) => {
+                        originalCsvHeaders.forEach((header, index) => {
                            entry[header] = values[index];
                         });
                         return entry;
@@ -233,7 +233,7 @@ export default function DatasetViewPage() {
     return null;
   }
   
-  const allHeaders = parsedData.length > 0 ? Object.keys(parsedData[0]) : [];
+  const allTableHeaders = isChartable ? originalHeaders : (parsedData.length > 0 ? Object.keys(parsedData[0]) : []);
 
   const handleViewSummary = (entry: any) => {
     setActiveEntry(entry);
@@ -294,13 +294,14 @@ export default function DatasetViewPage() {
     
     return (
       <>
-        {allHeaders.map(key => {
-            const configKey = key.replace(/[^a-zA-Z0-9]/g, '_');
-            const label = (chartConfig as any)[configKey]?.label || key.replace(/_/g, ' ');
+        {originalHeaders.map(originalHeader => {
+            const sanitizedKey = originalHeader.replace(/[^a-zA-Z0-9]/g, '_');
+            const label = (chartConfig as any)[sanitizedKey]?.label || originalHeader.replace(/_/g, ' ');
+            const value = activeEntry[sanitizedKey];
              return (
-                 <div key={key} className="flex items-center justify-between">
+                 <div key={originalHeader} className="flex items-center justify-between">
                     <span className="text-muted-foreground capitalize">{label}</span>
-                    <span>{activeEntry[key] != null ? String(activeEntry[key]) : 'N/A'}</span>
+                    <span>{value != null ? String(value) : 'N/A'}</span>
                  </div>
              )
         })}
@@ -411,7 +412,7 @@ export default function DatasetViewPage() {
             <Table>
                 <TableHeader>
                 <TableRow>
-                    {allHeaders.map(key => <TableHead key={key} className="capitalize">{chartConfig && (chartConfig as any)[key.replace(/[^a-zA-Z0-9]/g, '_')]?.label || key.replace(/_/g, ' ')}</TableHead>)}
+                    {allTableHeaders.map(key => <TableHead key={key} className="capitalize">{chartConfig && (chartConfig as any)[key.replace(/[^a-zA-Z0-9]/g, '_')]?.label || key.replace(/_/g, ' ')}</TableHead>)}
                     {isChartable && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
                 </TableHeader>
@@ -419,12 +420,15 @@ export default function DatasetViewPage() {
                 {filteredData.length > 0 ? (
                     filteredData.map((entry, index) => (
                     <TableRow key={index} className={cn(isChartable && entry === activeEntry && "bg-muted/50")}>
-                        {allHeaders.map(key => <TableCell key={key}>{entry[key] != null ? String(entry[key]) : 'N/A'}</TableCell>)}
+                        {allTableHeaders.map(key => {
+                           const sanitizedKey = key.replace(/[^a-zA-Z0-9]/g, '_');
+                           return <TableCell key={key}>{entry[sanitizedKey] != null ? String(entry[sanitizedKey]) : 'N/A'}</TableCell>
+                        })}
                         {isChartable && <TableCell className="text-right"><Button variant="outline" size="sm" onClick={() => handleViewSummary(entry)}>View Summary</Button></TableCell>}
                     </TableRow>
                     ))
                 ) : (
-                    <TableRow><TableCell colSpan={allHeaders.length + 1} className="h-24 text-center">No data available for the selected date range.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={allTableHeaders.length + 1} className="h-24 text-center">No data available for the selected date range.</TableCell></TableRow>
                 )}
                 </TableBody>
             </Table>
@@ -433,7 +437,5 @@ export default function DatasetViewPage() {
     </div>
   );
 }
-
-  
 
     
