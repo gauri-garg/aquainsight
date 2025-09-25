@@ -1,16 +1,16 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, Dataset } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, FileText } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2, ArrowLeft, FileText, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import * as XLSX from "xlsx";
 
 export default function DatasetViewPage() {
   const { id } = useParams();
@@ -54,13 +54,38 @@ export default function DatasetViewPage() {
     }
   }, [id, getDatasetById, router, toast, role]);
 
-  const parsedCsv = useMemo(() => {
-    if (!dataset?.csvData) return { headers: [], rows: [] };
-    const lines = dataset.csvData.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const rows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
-    return { headers, rows };
-  }, [dataset]);
+  const handleDownload = () => {
+    if (!dataset?.csvData) {
+        toast({
+            title: "No Data",
+            description: "There is no data to download.",
+            variant: "destructive"
+        });
+        return;
+    }
+
+    try {
+        // Parse the CSV data string
+        const lines = dataset.csvData.trim().split('\n');
+        const data = lines.map(line => line.split(','));
+
+        // Create a new workbook and a worksheet
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Dataset");
+
+        // Generate XLSX file and trigger download
+        XLSX.writeFile(wb, `${dataset.name}.xlsx`);
+
+    } catch (error) {
+        toast({
+            title: "Download Error",
+            description: "Failed to create the XLSX file.",
+            variant: "destructive"
+        });
+    }
+  };
+
 
   if (loading) {
     return (
@@ -96,7 +121,7 @@ export default function DatasetViewPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-4 text-sm">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
                 <div>
                     <span className="font-semibold">Submitted by: </span>
                     <span>{dataset.submittedBy}</span>
@@ -110,48 +135,29 @@ export default function DatasetViewPage() {
                     <Badge variant="outline">Active</Badge>
                 </div>
             </div>
+            <div className="border-t pt-4">
+                 <Button onClick={handleDownload}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download as XLSX
+                </Button>
+            </div>
         </CardContent>
       </Card>
       
       <Card>
         <CardHeader>
-            <CardTitle>CSV Data Preview</CardTitle>
-            <CardDescription>A preview of the first 100 rows from the uploaded CSV file.</CardDescription>
+            <CardTitle>About this dataset</CardTitle>
+            <CardDescription>
+                This card provides context and metadata about the dataset file.
+                The uploaded CSV data can be downloaded for analysis.
+            </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="overflow-x-auto">
-                <Table>
-                <TableHeader>
-                    <TableRow>
-                    {parsedCsv.headers.map((header, index) => (
-                        <TableHead key={index}>{header}</TableHead>
-                    ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {parsedCsv.rows.slice(0, 100).map((row, rowIndex) => (
-                    <TableRow key={rowIndex}>
-                        {row.map((cell, cellIndex) => (
-                        <TableCell key={cellIndex}>{cell}</TableCell>
-                        ))}
-                    </TableRow>
-                    ))}
-                </TableBody>
-                </Table>
-            </div>
-             {parsedCsv.rows.length > 100 && (
-                <p className="text-sm text-muted-foreground mt-4">
-                    ... and {parsedCsv.rows.length - 100} more rows.
-                </p>
-            )}
-            {parsedCsv.rows.length === 0 && (
-                 <p className="text-sm text-muted-foreground mt-4">
-                    No data to preview. The file might be empty or formatted incorrectly.
-                </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+                Click the download button above to get the full dataset in Excel format. This allows for offline analysis, sharing, and integration with other tools.
+            </p>
         </CardContent>
       </Card>
     </div>
   );
 }
-
