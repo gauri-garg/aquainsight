@@ -79,6 +79,10 @@ const chartConfig = {
     label: "pH",
     color: "hsl(var(--chart-1))",
   },
+  salinity: {
+    label: "Salinity (PSU)",
+    color: "hsl(var(--chart-5))",
+  },
   nitrate: {
     label: "Nitrate (µmol/L)",
     color: "hsl(var(--chart-2))",
@@ -243,14 +247,16 @@ export default function ChemicalOceanographyPage() {
                         tickFormatter={(value) => format(parseISO(value), "MMM d")}
                         padding={{ left: 20, right: 20 }}
                         />
-                        <YAxis yAxisId="left" />
-                        <YAxis yAxisId="right" orientation="right" />
+                        <YAxis yAxisId="ph" domain={['dataMin - 0.1', 'dataMax + 0.1']} hide />
+                        <YAxis yAxisId="salinity" orientation="right" domain={['dataMin - 1', 'dataMax + 1']} hide/>
+                        <YAxis yAxisId="nutrients" orientation="right" hide />
                         <Tooltip content={<ChartTooltipContent />} />
                         <Legend />
-                        <Line yAxisId="left" type="monotone" dataKey="pH" stroke="var(--color-ph)" name="pH" dot={false} />
-                        <Line yAxisId="right" type="monotone" dataKey="Nitrate (umol/L)" stroke="var(--color-nitrate)" name="Nitrate (µmol/L)" dot={false} />
-                        <Line yAxisId="right" type="monotone" dataKey="Phosphate (umol/L)" stroke="var(--color-phosphate)" name="Phosphate (µmol/L)" dot={false} />
-                        <Line yAxisId="right" type="monotone" dataKey="Silicate (umol/L)" stroke="var(--color-silicate)" name="Silicate (µmol/L)" dot={false} />
+                        <Line yAxisId="ph" type="natural" dataKey="pH" stroke="var(--color-ph)" name="pH" dot={false} />
+                        <Line yAxisId="salinity" type="natural" dataKey="Salinity (PSU)" stroke="var(--color-salinity)" name="Salinity (PSU)" dot={false} />
+                        <Line yAxisId="nutrients" type="natural" dataKey="Nitrate (umol/L)" stroke="var(--color-nitrate)" name="Nitrate (µmol/L)" dot={false} />
+                        <Line yAxisId="nutrients" type="natural" dataKey="Phosphate (umol/L)" stroke="var(--color-phosphate)" name="Phosphate (µmol/L)" dot={false} />
+                        <Line yAxisId="nutrients" type="natural" dataKey="Silicate (umol/L)" stroke="var(--color-silicate)" name="Silicate (µmol/L)" dot={false} />
                     </LineChart>
                     </ChartContainer>
                 </CardContent>
@@ -321,6 +327,7 @@ export default function ChemicalOceanographyPage() {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>pH</TableHead>
+                <TableHead>Salinity</TableHead>
                 <TableHead>Nitrate</TableHead>
                 <TableHead>Phosphate</TableHead>
                 <TableHead>Silicate</TableHead>
@@ -333,6 +340,7 @@ export default function ChemicalOceanographyPage() {
                   <TableRow key={index} className={cn(entry === activeEntry && "bg-muted/50")}>
                     <TableCell>{entry.Date}</TableCell>
                     <TableCell>{entry.pH}</TableCell>
+                    <TableCell>{entry["Salinity (PSU)"]} PSU</TableCell>
                     <TableCell>{entry["Nitrate (umol/L)"]} µmol/L</TableCell>
                     <TableCell>{entry["Phosphate (umol/L)"]} µmol/L</TableCell>
                     <TableCell>{entry["Silicate (umol/L)"]} µmol/L</TableCell>
@@ -343,7 +351,7 @@ export default function ChemicalOceanographyPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     No data available for the selected date range.
                   </TableCell>
                 </TableRow>
@@ -355,3 +363,5 @@ export default function ChemicalOceanographyPage() {
     </div>
   )
 }
+
+    
