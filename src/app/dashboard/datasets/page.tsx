@@ -53,9 +53,9 @@ export default function DatasetsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    if (role !== "CMLRE") {
+    if (role && role !== "CMLRE") {
       router.push("/dashboard");
-    } else {
+    } else if (role) {
       const fetchDatasets = async () => {
         try {
           const fetchedDatasets = await getAllDatasets();
