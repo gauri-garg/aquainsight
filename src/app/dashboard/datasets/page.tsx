@@ -174,7 +174,11 @@ export default function DatasetsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>View</DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => router.push(`/dashboard/datasets/${dataset.id}`)}
+                          >
+                            View
+                          </DropdownMenuItem>
                           <DropdownMenuItem>Edit</DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-500 focus:text-red-500 focus:bg-red-50"
