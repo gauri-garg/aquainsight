@@ -73,6 +73,9 @@ interface AuthContextType {
   getDatasetById: (id: string) => Promise<Dataset | null>;
   updateDataset: (id: string, updates: Partial<Dataset>) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
+  getRequestedDatasets: () => Promise<RequestedDataset[]>;
+  approveDatasetRequest: (request: RequestedDataset) => Promise<void>;
+  rejectDatasetRequest: (requestId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -275,6 +278,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     });
   };
+  
+  const getRequestedDatasets = async (): Promise<RequestedDataset[]> => {
+    return new Promise((resolve, reject) => {
+      const requestsRef = ref(database, 'requested-data');
+      onValue(requestsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (snapshot.exists()) {
+          const requestsArray = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+          }));
+          resolve(requestsArray);
+        } else {
+          resolve([]);
+        }
+      }, (error) => {
+        reject(error);
+      });
+    });
+  };
+
+  const approveDatasetRequest = async (request: RequestedDataset) => {
+    if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
+    const { id, ...datasetData } = request;
+    
+    // Add to the main datasets collection
+    const datasetsRef = ref(database, "datasets");
+    const newDatasetRef = push(datasetsRef);
+    await set(newDatasetRef, datasetData);
+
+    // Remove from the requested-data collection
+    await remove(ref(database, `requested-data/${id}`));
+  };
+
+  const rejectDatasetRequest = async (requestId: string) => {
+    if (role !== "CMLRE") throw new Error("Permission denied.");
+    await remove(ref(database, `requested-data/${requestId}`));
+  };
 
   const getDatasetById = async (id: string): Promise<Dataset | null> => {
     const snapshot = await get(child(ref(database), `datasets/${id}`));
@@ -296,7 +337,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, updateDataset, deleteDataset }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, updateDataset, deleteDataset, getRequestedDatasets, approveDatasetRequest, rejectDatasetRequest }}>
       {children}
     </AuthContext.Provider>
   );
