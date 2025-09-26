@@ -38,18 +38,18 @@ const prompt = ai.definePrompt({
   name: 'matchEdnaSequencePrompt',
   input: {schema: MatchEdnaSequenceInputSchema},
   output: {schema: MatchEdnaSequenceOutputSchema},
-  prompt: `You are an expert in eDNA sequence matching.
+  prompt: `You are an expert marine biologist analyzing environmental DNA (eDNA) samples.
 
-You will be provided with an eDNA sequence and a description of the species database.
+You have been given a genetic sequence and a description of the ecosystem from which it was collected.
 
-Your task is to identify potential species matches from the database for the given eDNA sequence.
+Your task is to generate a list of plausible, hypothetical species that might correspond to this eDNA sequence, along with a confidence score for each match. The confidence score should be a number between 0 and 1.
+
+The species should be relevant to the described ecosystem.
 
 eDNA Sequence: {{{ednaSequence}}}
-Species Database Description: {{{speciesDatabaseDescription}}}
+Ecosystem Description: {{{speciesDatabaseDescription}}}
 
-Output the species matches and their corresponding confidence scores.
-
-If no plausible species are found in the described database for the given sequence, return empty arrays for both 'speciesMatches' and 'confidenceScores'.
+Generate a few potential matches (e.g., 3 to 5 species).
 
 Format the output as a JSON object with 'speciesMatches' and 'confidenceScores' arrays.
 `,
