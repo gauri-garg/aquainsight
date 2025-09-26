@@ -71,6 +71,7 @@ interface AuthContextType {
   createRequestedDataset: (dataset: Omit<RequestedDataset, "id">) => Promise<void>;
   getAllDatasets: () => Promise<Dataset[]>;
   getDatasetById: (id: string) => Promise<Dataset | null>;
+  getRequestedDatasetById: (id: string) => Promise<RequestedDataset | null>;
   updateDataset: (id: string, updates: Partial<Dataset>) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
   getRequestedDatasets: () => Promise<RequestedDataset[]>;
@@ -324,6 +325,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   };
+  
+  const getRequestedDatasetById = async (id: string): Promise<RequestedDataset | null> => {
+    const snapshot = await get(child(ref(database), `requested-data/${id}`));
+    if (snapshot.exists()) {
+      return { id, ...snapshot.val() };
+    }
+    return null;
+  };
 
   const updateDataset = async (id: string, updates: Partial<Dataset>) => {
     if (role !== "CMLRE") throw new Error("Permission denied.");
@@ -337,7 +346,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, updateDataset, deleteDataset, getRequestedDatasets, approveDatasetRequest, rejectDatasetRequest }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, approveDatasetRequest, rejectDatasetRequest }}>
       {children}
     </AuthContext.Provider>
   );

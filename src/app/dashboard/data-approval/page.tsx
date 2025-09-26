@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -105,6 +105,11 @@ export default function DataApprovalPage() {
       setProcessingId(null);
     }
   };
+  
+  const handleViewData = (requestId: string) => {
+    // router.push(`/dashboard/data-approval/${requestId}`);
+    toast({ title: "Coming Soon", description: "This functionality will be enabled in the next step."})
+  }
 
   if (loading || (role && role !== "CMLRE")) {
     return (
@@ -158,6 +163,15 @@ export default function DataApprovalPage() {
                       {new Date(request.date).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
+                       <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleViewData(request.id!)}
+                        disabled={true}
+                      >
+                         <Eye className="mr-2 h-4 w-4" />
+                         View Data
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
