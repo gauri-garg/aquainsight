@@ -55,6 +55,7 @@ export default function EditDatasetPage() {
     mode: "onChange",
   });
   const fileRef = form.register("dataFile");
+  const dataFile = form.watch("dataFile");
 
 
   useEffect(() => {
@@ -245,6 +246,7 @@ export default function EditDatasetPage() {
                     <FormControl>
                        <Input type="file" accept=".csv,.xls,.xlsx" {...fileRef} />
                     </FormControl>
+                    {dataFile?.[0] && <p className="text-sm text-muted-foreground mt-2">Selected file: {dataFile[0].name}</p>}
                     <FormDescription>
                       Upload a new file to replace the existing data. If you leave this blank, the original data will be kept.
                     </FormDescription>
