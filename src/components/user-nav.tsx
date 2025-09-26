@@ -35,6 +35,7 @@ import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "./ui/badge";
 
 export function UserNav() {
   const { user, role, userDetails, logout, deleteUserAccount, getUserNotifications, markNotificationsAsRead } = useAuth();
@@ -46,14 +47,14 @@ export function UserNav() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadNotifications, setUnreadNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
       const unsubscribe = getUserNotifications(user.uid, (newNotifications) => {
         setNotifications(newNotifications);
-        setUnreadNotifications(newNotifications.some(n => !n.read));
+        setUnreadCount(newNotifications.filter(n => !n.read).length);
       });
       return () => unsubscribe();
     }
@@ -61,9 +62,8 @@ export function UserNav() {
   
   const handlePopoverOpen = (open: boolean) => {
     setPopoverOpen(open);
-    if (!open && unreadNotifications) {
+    if (!open && unreadCount > 0) {
       markNotificationsAsRead();
-      setUnreadNotifications(false);
     }
   };
 
@@ -113,11 +113,13 @@ export function UserNav() {
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              {unreadNotifications && (
-                <span className="absolute top-1 right-1 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
+              {unreadCount > 0 && (
+                 <Badge
+                    variant="destructive"
+                    className="absolute top-0 right-0 h-5 w-5 justify-center rounded-full p-0 text-xs"
+                >
+                    {unreadCount}
+                </Badge>
               )}
               <span className="sr-only">Notifications</span>
             </Button>
@@ -245,3 +247,5 @@ export function UserNav() {
     </>
   );
 }
+
+    
