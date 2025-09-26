@@ -1,0 +1,148 @@
+
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+
+const submissionFormSchema = z.object({
+  name: z.string().min(3, {
+    message: "Dataset name must be at least 3 characters.",
+  }),
+  description: z.string().min(10, {
+    message: "Description must be at least 10 characters.",
+  }),
+  dataFile: z
+    .any()
+    .refine((files) => files?.length == 1, "File is required.")
+    .refine(
+      (files) =>
+        [
+          "text/csv",
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ].includes(files?.[0]?.type),
+      "Only .csv, .xls, or .xlsx files are accepted."
+    ),
+});
+
+type SubmissionFormValues = z.infer<typeof submissionFormSchema>;
+
+export default function SubmitDataPage() {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<SubmissionFormValues>({
+    resolver: zodResolver(submissionFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      dataFile: undefined,
+    },
+    mode: "onChange",
+  });
+  
+  const fileRef = form.register("dataFile");
+
+  async function onSubmit(data: SubmissionFormValues) {
+    setIsSubmitting(true);
+    // Simulate submission process
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    toast({
+      title: "Submission Successful!",
+      description: "Your dataset has been sent for review.",
+    });
+
+    form.reset();
+    setIsSubmitting(false);
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Submit a Dataset</CardTitle>
+          <CardDescription>
+            Fill out the form below to submit your dataset for review by CMLRE staff.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-8"
+            >
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dataset Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Krill Distribution Study 2024" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="A detailed summary of what this dataset contains, including collection methods, location, and date range."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="dataFile"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dataset File</FormLabel>
+                    <FormControl>
+                       <Input type="file" accept=".csv,.xls,.xlsx" {...fileRef} />
+                    </FormControl>
+                    <FormDescription>
+                      Upload the dataset in CSV or Excel format (.csv, .xls, .xlsx).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit Dataset
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
