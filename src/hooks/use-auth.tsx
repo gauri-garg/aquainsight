@@ -22,7 +22,7 @@ import {
   updatePassword,
   deleteUser,
 } from "firebase/auth";
-import { ref, set, get, child, update, remove, push, onValue } from "firebase/database";
+import { ref, set, get, child, update, remove, push, onValue, query, orderByChild, equalTo } from "firebase/database";
 
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
@@ -81,6 +81,7 @@ interface AuthContextType {
   getAllDatasets: () => Promise<Dataset[]>;
   getDatasetById: (id: string) => Promise<Dataset | null>;
   getRequestedDatasetById: (id: string) => Promise<RequestedDataset | null>;
+  getRequestedDatasetsByUserId: (userId: string) => Promise<RequestedDataset[]>;
   updateDataset: (id: string, updates: Partial<Dataset>) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
   getRequestedDatasets: () => Promise<RequestedDataset[]>;
@@ -310,6 +311,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const getRequestedDatasetsByUserId = async (userId: string): Promise<RequestedDataset[]> => {
+    return new Promise((resolve, reject) => {
+      const requestsRef = ref(database, 'requested-data');
+      const userRequestsQuery = query(requestsRef, orderByChild('userId'), equalTo(userId));
+
+      onValue(userRequestsQuery, (snapshot) => {
+        const data = snapshot.val();
+        if (snapshot.exists()) {
+          const requestsArray = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+          })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          resolve(requestsArray);
+        } else {
+          resolve([]);
+        }
+      }, (error) => {
+        reject(error);
+      });
+    });
+  };
+
   const approveDatasetRequest = async (request: RequestedDataset) => {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
     const { id, ...datasetData } = request;
@@ -398,7 +421,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, approveDatasetRequest, rejectDatasetRequest, getUserNotifications, markNotificationsAsRead }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, getUserNotifications, markNotificationsAsRead }}>
       {children}
     </AuthContext.Provider>
   );

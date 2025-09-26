@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Menu, FlaskConical, Database, BrainCircuit, Upload, CheckCheck } from "lucide-react";
+import { Home, Menu, FlaskConical, Database, BrainCircuit, Upload, CheckCheck, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -66,13 +66,22 @@ export default function DashboardLayout({
         AI Analysis
       </Link>
       {(role === 'Student' || role === 'Researcher') && (
-        <Link
-          href="/dashboard/submit-data"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-        >
-          <Upload className="h-4 w-4" />
-          Submit Data
-        </Link>
+        <>
+          <Link
+            href="/dashboard/submit-data"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+          >
+            <Upload className="h-4 w-4" />
+            Submit Data
+          </Link>
+           <Link
+            href="/dashboard/my-submissions"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+          >
+            <History className="h-4 w-4" />
+            My Submissions
+          </Link>
+        </>
       )}
 
       <React.Suspense fallback={<div className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground">Loading datasets...</div>}>
@@ -161,13 +170,22 @@ export default function DashboardLayout({
                   AI Analysis
                 </Link>
                 {(role === 'Student' || role === 'Researcher') && (
-                  <Link
-                    href="/dashboard/submit-data"
-                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                  >
-                      <Upload className="h-5 w-5" />
-                      Submit Data
-                  </Link>
+                  <>
+                    <Link
+                      href="/dashboard/submit-data"
+                      className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                    >
+                        <Upload className="h-5 w-5" />
+                        Submit Data
+                    </Link>
+                     <Link
+                      href="/dashboard/my-submissions"
+                      className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                    >
+                        <History className="h-5 w-5" />
+                        My Submissions
+                    </Link>
+                  </>
                 )}
                  <React.Suspense fallback={<div className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground">Loading...</div>}>
                     <DynamicDatasetNav isMobile={true} />
