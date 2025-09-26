@@ -23,7 +23,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, CircleHelp, CircleCheck, CircleX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+
+const StatusBadge = ({ status }: { status: SubmissionStatus }) => {
+  switch (status) {
+    case "approved":
+      return <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700"><CircleCheck className="mr-2 h-4 w-4" />Approved</Badge>;
+    case "rejected":
+      return <Badge variant="destructive"><CircleX className="mr-2 h-4 w-4" />Rejected</Badge>;
+    case "pending":
+    default:
+      return <Badge variant="outline"><CircleHelp className="mr-2 h-4 w-4" />Pending Review</Badge>;
+  }
+};
 
 export default function MySubmissionsPage() {
   const {
@@ -61,18 +72,6 @@ export default function MySubmissionsPage() {
   const handleViewData = (requestId: string) => {
     router.push(`/dashboard/my-submissions/${requestId}`);
   }
-
-  const StatusBadge = ({ status }: { status: SubmissionStatus }) => {
-    switch (status) {
-      case "approved":
-        return <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700"><CircleCheck className="mr-2 h-4 w-4" />Approved</Badge>;
-      case "rejected":
-        return <Badge variant="destructive"><CircleX className="mr-2 h-4 w-4" />Rejected</Badge>;
-      case "pending":
-      default:
-        return <Badge variant="outline"><CircleHelp className="mr-2 h-4 w-4" />Pending Review</Badge>;
-    }
-  };
 
   if (loading || (role && role === "CMLRE")) {
     return (
@@ -138,5 +137,3 @@ export default function MySubmissionsPage() {
     </div>
   );
 }
-
-    
