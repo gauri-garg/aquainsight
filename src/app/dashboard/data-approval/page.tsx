@@ -102,11 +102,11 @@ export default function DataApprovalPage() {
     if (!requestToReject || !requestToReject.id) return;
     setProcessingId(requestToReject.id);
     try {
-      await rejectDatasetRequest(requestToReject.id);
-      setRequests(requests.filter((r) => r.id !== requestToReject.id));
+      await rejectDatasetRequest(requestToReject);
+      setRequests(requests.filter((r) => r.id !== requestToReject!.id));
       toast({
         title: "Dataset Rejected",
-        description: `"${requestToReject.name}" has been rejected.`,
+        description: `"${requestToReject.name}" has been rejected and the user has been notified.`,
         variant: "destructive",
       });
     } catch (error: any) {
@@ -237,7 +237,7 @@ export default function DataApprovalPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently reject the dataset &quot;{requestToReject?.name}&quot; and remove its submission.
+              This action cannot be undone. This will permanently reject the dataset &quot;{requestToReject?.name}&quot; and remove its submission. The user will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

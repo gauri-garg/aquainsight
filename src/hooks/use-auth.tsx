@@ -47,6 +47,15 @@ export interface RequestedDataset {
   userId: string;
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  datasetName: string;
+  date: string;
+  message: string;
+  read: boolean;
+}
+
 interface UserDetails {
   fullName?: string;
   approvedId?: string;
@@ -76,7 +85,9 @@ interface AuthContextType {
   deleteDataset: (id: string) => Promise<void>;
   getRequestedDatasets: () => Promise<RequestedDataset[]>;
   approveDatasetRequest: (request: RequestedDataset) => Promise<void>;
-  rejectDatasetRequest: (requestId: string) => Promise<void>;
+  rejectDatasetRequest: (request: RequestedDataset) => Promise<void>;
+  getUserNotifications: (userId: string, callback: (notifications: Notification[]) => void) => () => void;
+  markNotificationsAsRead: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -222,7 +233,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const latestUserDetails = await getUserDetails(user.uid);
     setUserDetails(latestUserDetails);
     
-    // Force a re-render by creating a new user object
     if (auth.currentUser) {
       setUser({ ...auth.currentUser });
     }
@@ -304,18 +314,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
     const { id, ...datasetData } = request;
     
-    // Add to the main datasets collection
     const datasetsRef = ref(database, "datasets");
     const newDatasetRef = push(datasetsRef);
     await set(newDatasetRef, datasetData);
 
-    // Remove from the requested-data collection
     await remove(ref(database, `requested-data/${id}`));
   };
 
-  const rejectDatasetRequest = async (requestId: string) => {
-    if (role !== "CMLRE") throw new Error("Permission denied.");
-    await remove(ref(database, `requested-data/${requestId}`));
+  const rejectDatasetRequest = async (request: RequestedDataset) => {
+    if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
+    
+    const newNotifRef = push(ref(database, `notifications/${request.userId}`));
+    await set(newNotifRef, {
+      userId: request.userId,
+      datasetName: request.name,
+      date: new Date().toISOString(),
+      message: `Your dataset submission "${request.name}" was rejected.`,
+      read: false,
+    });
+
+    await remove(ref(database, `requested-data/${request.id}`));
+  };
+
+  const getUserNotifications = (userId: string, callback: (notifications: Notification[]) => void) => {
+    const notificationsRef = ref(database, `notifications/${userId}`);
+    const listener = onValue(notificationsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const notificationsArray = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key]
+        })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        callback(notificationsArray);
+      } else {
+        callback([]);
+      }
+    });
+    return listener;
+  };
+  
+  const markNotificationsAsRead = async () => {
+    if (!user) return;
+    const notificationsRef = ref(database, `notifications/${user.uid}`);
+    const snapshot = await get(notificationsRef);
+    if (snapshot.exists()) {
+      const updates: { [key: string]: boolean } = {};
+      snapshot.forEach((childSnapshot) => {
+        if (!childSnapshot.val().read) {
+          updates[`${childSnapshot.key}/read`] = true;
+        }
+      });
+      if (Object.keys(updates).length > 0) {
+        await update(notificationsRef, updates);
+      }
+    }
   };
 
   const getDatasetById = async (id: string): Promise<Dataset | null> => {
@@ -346,7 +398,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, approveDatasetRequest, rejectDatasetRequest }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, approveDatasetRequest, rejectDatasetRequest, getUserNotifications, markNotificationsAsRead }}>
       {children}
     </AuthContext.Provider>
   );

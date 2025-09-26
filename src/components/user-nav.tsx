@@ -13,6 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -22,23 +27,45 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, Notification } from "@/hooks/use-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Bell, Loader2, PackageX } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 export function UserNav() {
-  const { user, role, userDetails, logout, deleteUserAccount } = useAuth();
+  const { user, role, userDetails, logout, deleteUserAccount, getUserNotifications, markNotificationsAsRead } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [password, setPassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = getUserNotifications(user.uid, (newNotifications) => {
+        setNotifications(newNotifications);
+        setUnreadNotifications(newNotifications.some(n => !n.read));
+      });
+      return () => unsubscribe();
+    }
+  }, [user, getUserNotifications]);
+  
+  const handlePopoverOpen = (open: boolean) => {
+    setPopoverOpen(open);
+    if (!open && unreadNotifications) {
+      markNotificationsAsRead();
+      setUnreadNotifications(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -79,14 +106,56 @@ export function UserNav() {
   const roleDescription = role === "CMLRE" ? "Staff" : role === "Researcher" ? "Researcher" : "Student";
   const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
 
-
   return (
     <>
       <div className="flex items-center gap-2">
-         <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-            <span className="sr-only">Notifications</span>
-          </Button>
+         <Popover open={popoverOpen} onOpenChange={handlePopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              {unreadNotifications && (
+                <span className="absolute top-1 right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              )}
+              <span className="sr-only">Notifications</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" align="end">
+            <div className="p-4 pt-2">
+              <h4 className="font-medium leading-none">Notifications</h4>
+              <p className="text-sm text-muted-foreground">
+                Recent updates and alerts.
+              </p>
+            </div>
+            <div className="p-2">
+              {notifications.length > 0 ? (
+                notifications.map((notif) => (
+                  <div key={notif.id} className="flex items-start gap-3 p-2 rounded-lg">
+                    <div className="bg-red-100 dark:bg-red-900/50 p-2 rounded-full">
+                       <PackageX className="h-5 w-5 text-red-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Dataset Rejected</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        &quot;{notif.datasetName}&quot;
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                         {new Date(notif.date).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-sm text-muted-foreground p-4">
+                  You have no new notifications.
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-3 cursor-pointer">
