@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, Loader2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,6 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 
 export default function DatasetsPage() {
   const { role, getAllDatasets, deleteDataset } = useAuth();
@@ -51,6 +52,7 @@ export default function DatasetsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [datasetToDelete, setDatasetToDelete] = useState<Dataset | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (role && role !== "CMLRE") {
@@ -102,6 +104,13 @@ export default function DatasetsPage() {
     }
   };
 
+  const filteredDatasets = useMemo(() => {
+    if (!searchTerm) return datasets;
+    return datasets.filter((dataset) =>
+      dataset.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [datasets, searchTerm]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -115,6 +124,16 @@ export default function DatasetsPage() {
       <div className="flex items-center">
         <h1 className="text-lg font-semibold md:text-2xl">Datasets</h1>
         <div className="ml-auto flex items-center gap-2">
+           <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search datasets..."
+              className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <Button size="sm" className="h-8 gap-1" asChild>
             <Link href="/dashboard/datasets/new">
               <PlusCircle className="h-3.5 w-3.5" />
@@ -151,8 +170,8 @@ export default function DatasetsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasets.length > 0 ? (
-                datasets.map((dataset) => (
+              {filteredDatasets.length > 0 ? (
+                filteredDatasets.map((dataset) => (
                   <TableRow key={dataset.id}>
                     <TableCell className="font-medium">{dataset.name}</TableCell>
                     <TableCell>
