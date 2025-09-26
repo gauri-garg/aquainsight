@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import * as XLSX from "xlsx";
 import { useRouter } from "next/navigation";
@@ -50,9 +50,15 @@ type SubmissionFormValues = z.infer<typeof submissionFormSchema>;
 
 export default function SubmitDataPage() {
   const { toast } = useToast();
-  const { user, userDetails, createRequestedDataset } = useAuth();
+  const { user, userDetails, createRequestedDataset, role } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (role && role === "CMLRE") {
+      router.push("/dashboard");
+    }
+  }, [role, router]);
 
   const form = useForm<SubmissionFormValues>({
     resolver: zodResolver(submissionFormSchema),
@@ -134,6 +140,14 @@ export default function SubmitDataPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (role && role === 'CMLRE') {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (

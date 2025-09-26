@@ -56,13 +56,15 @@ export default function DashboardLayout({
         <BrainCircuit className="h-4 w-4" />
         AI Analysis
       </Link>
-      <Link
-        href="/dashboard/submit-data"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-      >
-        <Upload className="h-4 w-4" />
-        Submit Data
-      </Link>
+      {(role === 'Student' || role === 'Researcher') && (
+        <Link
+          href="/dashboard/submit-data"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+        >
+          <Upload className="h-4 w-4" />
+          Submit Data
+        </Link>
+      )}
 
       <React.Suspense fallback={<div className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground">Loading datasets...</div>}>
          <DynamicDatasetNav />
@@ -140,13 +142,15 @@ export default function DashboardLayout({
                   <BrainCircuit className="h-5 w-5" />
                   AI Analysis
                 </Link>
-                <Link
-                  href="/dashboard/submit-data"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                    <Upload className="h-5 w-5" />
-                    Submit Data
-                </Link>
+                {(role === 'Student' || role === 'Researcher') && (
+                  <Link
+                    href="/dashboard/submit-data"
+                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                  >
+                      <Upload className="h-5 w-5" />
+                      Submit Data
+                  </Link>
+                )}
                  <React.Suspense fallback={<div className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground">Loading...</div>}>
                     <DynamicDatasetNav isMobile={true} />
                  </React.Suspense>
