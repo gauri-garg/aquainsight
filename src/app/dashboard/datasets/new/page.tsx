@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 
 const datasetFormSchema = z.object({
@@ -49,10 +49,16 @@ const datasetFormSchema = z.object({
 type DatasetFormValues = z.infer<typeof datasetFormSchema>;
 
 export default function NewDatasetPage() {
-  const { user, userDetails, createDataset } = useAuth();
+  const { user, userDetails, createDataset, role } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+   useEffect(() => {
+    if (role && role !== "CMLRE") {
+      router.push("/dashboard");
+    }
+  }, [role, router]);
 
   const form = useForm<DatasetFormValues>({
     resolver: zodResolver(datasetFormSchema),
@@ -130,6 +136,14 @@ export default function NewDatasetPage() {
     } finally {
         setIsSubmitting(false);
     }
+  }
+
+  if (role && role !== 'CMLRE') {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (

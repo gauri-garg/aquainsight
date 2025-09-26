@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Menu, FlaskConical, Database, BrainCircuit } from "lucide-react";
+import { Home, Menu, FlaskConical, Database, BrainCircuit, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -31,8 +31,8 @@ export default function DashboardLayout({
         <Home className="h-4 w-4" />
         Dashboard
       </Link>
+      
       {role === 'CMLRE' && (
-        <>
          <Link
           href="/dashboard/datasets"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
@@ -40,22 +40,23 @@ export default function DashboardLayout({
           <Database className="h-4 w-4" />
           Manage Datasets
         </Link>
-        <Link
-          href="/dashboard/edna-matching"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-        >
-          <FlaskConical className="h-4 w-4" />
-          eDNA Matching
-        </Link>
-        <Link
-          href="/dashboard/ai-analysis"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-        >
-          <BrainCircuit className="h-4 w-4" />
-          AI Analysis
-        </Link>
-        </>
       )}
+
+      <Link
+        href="/dashboard/edna-matching"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+      >
+        <FlaskConical className="h-4 w-4" />
+        eDNA Matching
+      </Link>
+      <Link
+        href="/dashboard/ai-analysis"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+      >
+        <BrainCircuit className="h-4 w-4" />
+        AI Analysis
+      </Link>
+
       <React.Suspense fallback={<div className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground">Loading datasets...</div>}>
          <DynamicDatasetNav />
       </React.Suspense>
@@ -110,7 +111,6 @@ export default function DashboardLayout({
                   Dashboard
                 </Link>
                  {role === 'CMLRE' && (
-                  <>
                   <Link
                     href="/dashboard/datasets"
                     className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
@@ -118,22 +118,21 @@ export default function DashboardLayout({
                     <Database className="h-5 w-5" />
                     Manage Datasets
                   </Link>
-                   <Link
-                    href="/dashboard/edna-matching"
-                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
-                  >
-                    <FlaskConical className="h-5 w-5" />
-                    eDNA Matching
-                  </Link>
-                  <Link
-                    href="/dashboard/ai-analysis"
-                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
-                  >
-                    <BrainCircuit className="h-5 w-5" />
-                    AI Analysis
-                  </Link>
-                  </>
                 )}
+                <Link
+                  href="/dashboard/edna-matching"
+                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                >
+                  <FlaskConical className="h-5 w-5" />
+                  eDNA Matching
+                </Link>
+                <Link
+                  href="/dashboard/ai-analysis"
+                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                >
+                  <BrainCircuit className="h-5 w-5" />
+                  AI Analysis
+                </Link>
                  <React.Suspense fallback={<div className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground">Loading...</div>}>
                     <DynamicDatasetNav isMobile={true} />
                  </React.Suspense>

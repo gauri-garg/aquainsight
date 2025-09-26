@@ -43,7 +43,7 @@ type EditDatasetFormValues = z.infer<typeof editDatasetFormSchema>;
 export default function EditDatasetPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { getDatasetById, updateDataset, userDetails, user } = useAuth();
+  const { getDatasetById, updateDataset, userDetails, user, role } = useAuth();
   const { toast } = useToast();
   
   const [dataset, setDataset] = useState<Dataset | null>(null);
@@ -59,6 +59,11 @@ export default function EditDatasetPage() {
 
 
   useEffect(() => {
+    if (role && role !== "CMLRE") {
+      router.push("/dashboard");
+      return;
+    }
+
     if (typeof id === "string") {
       const fetchDataset = async () => {
         setLoading(true);
@@ -91,7 +96,7 @@ export default function EditDatasetPage() {
       };
       fetchDataset();
     }
-  }, [id, getDatasetById, form, router, toast]);
+  }, [id, getDatasetById, form, router, toast, role]);
 
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -163,7 +168,7 @@ export default function EditDatasetPage() {
     }
   }
 
-  if (loading) {
+  if (loading || (role && role !== 'CMLRE')) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
