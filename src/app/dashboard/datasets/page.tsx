@@ -111,7 +111,8 @@ export default function DatasetsPage() {
       return (
         dataset.name.toLowerCase().includes(lowercasedTerm) ||
         dataset.description.toLowerCase().includes(lowercasedTerm) ||
-        dataset.submittedBy.toLowerCase().includes(lowercasedTerm)
+        dataset.submittedBy.toLowerCase().includes(lowercasedTerm) ||
+        (dataset.csvData && dataset.csvData.toLowerCase().includes(lowercasedTerm))
       );
     });
   }, [datasets, searchTerm]);
