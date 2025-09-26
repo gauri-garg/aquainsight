@@ -66,14 +66,14 @@ export function GlobalSearch() {
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search by name, description, latitude, longitude, family..." />
+        <CommandInput placeholder="Search datasets..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Datasets">
             {datasets.map((dataset) => (
               <CommandItem
                 key={dataset.id}
-                value={`${dataset.name} ${dataset.description} ${dataset.submittedBy} ${dataset.csvData}`}
+                value={`${dataset.name} ${dataset.description}`}
                 onSelect={() => {
                   runCommand(() => router.push(`/dashboard/datasets/${dataset.id}`));
                 }}
@@ -88,4 +88,3 @@ export function GlobalSearch() {
     </>
   );
 }
-
