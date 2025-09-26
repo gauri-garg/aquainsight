@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Menu, FlaskConical, Database } from "lucide-react";
+import { Home, Menu, FlaskConical, Database, Asteroid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -46,6 +46,13 @@ export default function DashboardLayout({
         >
           <FlaskConical className="h-4 w-4" />
           eDNA Matching
+        </Link>
+        <Link
+          href="/dashboard/ai-analysis"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+        >
+          <Asteroid className="h-4 w-4" />
+          AI Analysis
         </Link>
         </>
       )}
@@ -117,6 +124,13 @@ export default function DashboardLayout({
                   >
                     <FlaskConical className="h-5 w-5" />
                     eDNA Matching
+                  </Link>
+                  <Link
+                    href="/dashboard/ai-analysis"
+                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
+                  >
+                    <Asteroid className="h-5 w-5" />
+                    AI Analysis
                   </Link>
                   </>
                 )}
