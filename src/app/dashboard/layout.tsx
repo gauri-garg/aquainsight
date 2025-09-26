@@ -32,6 +32,7 @@ export default function DashboardLayout({
         Dashboard
       </Link>
       {role === 'CMLRE' && (
+        <>
          <Link
           href="/dashboard/datasets"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
@@ -39,6 +40,14 @@ export default function DashboardLayout({
           <Database className="h-4 w-4" />
           Manage Datasets
         </Link>
+        <Link
+          href="/dashboard/edna-matching"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+        >
+          <FlaskConical className="h-4 w-4" />
+          eDNA Matching
+        </Link>
+        </>
       )}
       <React.Suspense fallback={<div className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground">Loading datasets...</div>}>
          <DynamicDatasetNav />
@@ -94,6 +103,7 @@ export default function DashboardLayout({
                   Dashboard
                 </Link>
                  {role === 'CMLRE' && (
+                  <>
                   <Link
                     href="/dashboard/datasets"
                     className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
@@ -101,6 +111,14 @@ export default function DashboardLayout({
                     <Database className="h-5 w-5" />
                     Manage Datasets
                   </Link>
+                   <Link
+                    href="/dashboard/edna-matching"
+                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
+                  >
+                    <FlaskConical className="h-5 w-5" />
+                    eDNA Matching
+                  </Link>
+                  </>
                 )}
                  <React.Suspense fallback={<div className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground">Loading...</div>}>
                     <DynamicDatasetNav isMobile={true} />
