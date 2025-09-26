@@ -107,8 +107,7 @@ export default function DataApprovalPage() {
   };
   
   const handleViewData = (requestId: string) => {
-    // router.push(`/dashboard/data-approval/${requestId}`);
-    toast({ title: "Coming Soon", description: "This functionality will be enabled in the next step."})
+    router.push(`/dashboard/data-approval/${requestId}`);
   }
 
   if (loading || (role && role !== "CMLRE")) {
@@ -167,7 +166,7 @@ export default function DataApprovalPage() {
                         size="sm"
                         variant="secondary"
                         onClick={() => handleViewData(request.id!)}
-                        disabled={true}
+                        disabled={processingId === request.id}
                       >
                          <Eye className="mr-2 h-4 w-4" />
                          View Data
