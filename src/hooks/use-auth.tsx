@@ -37,6 +37,16 @@ export interface Dataset {
   userId: string;
 }
 
+export interface RequestedDataset {
+  id?: string;
+  name: string;
+  description: string;
+  csvData: string;
+  submittedBy: string;
+  date: string;
+  userId: string;
+}
+
 interface UserDetails {
   fullName?: string;
   approvedId?: string;
@@ -58,6 +68,7 @@ interface AuthContextType {
   changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
   deleteUserAccount: (email: string, password: string) => Promise<void>;
   createDataset: (dataset: Omit<Dataset, "id">) => Promise<void>;
+  createRequestedDataset: (dataset: Omit<RequestedDataset, "id">) => Promise<void>;
   getAllDatasets: () => Promise<Dataset[]>;
   getDatasetById: (id: string) => Promise<Dataset | null>;
   updateDataset: (id: string, updates: Partial<Dataset>) => Promise<void>;
@@ -239,6 +250,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await set(newDatasetRef, dataset);
   };
 
+  const createRequestedDataset = async (dataset: Omit<RequestedDataset, "id">) => {
+    const requestedDatasetsRef = ref(database, "requested-data");
+    const newRequestedDatasetRef = push(requestedDatasetsRef);
+    await set(newRequestedDatasetRef, dataset);
+  };
+
   const getAllDatasets = async (): Promise<Dataset[]> => {
     return new Promise((resolve, reject) => {
       const datasetsRef = ref(database, 'datasets');
@@ -279,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, getAllDatasets, getDatasetById, updateDataset, deleteDataset }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, updateDataset, deleteDataset }}>
       {children}
     </AuthContext.Provider>
   );

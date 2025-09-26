@@ -20,6 +20,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import * as XLSX from "xlsx";
+import { useRouter } from "next/navigation";
+
 
 const submissionFormSchema = z.object({
   name: z.string().min(3, {
@@ -46,6 +50,8 @@ type SubmissionFormValues = z.infer<typeof submissionFormSchema>;
 
 export default function SubmitDataPage() {
   const { toast } = useToast();
+  const { user, userDetails, createRequestedDataset } = useAuth();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SubmissionFormValues>({
@@ -59,19 +65,75 @@ export default function SubmitDataPage() {
   });
   
   const fileRef = form.register("dataFile");
+  
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => resolve(event.target?.result as string);
+      reader.onerror = (error) => reject(error);
+      reader.readAsText(file);
+    });
+  };
+
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => resolve(event.target?.result as ArrayBuffer);
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
+  };
 
   async function onSubmit(data: SubmissionFormValues) {
+    if (!user || !userDetails) {
+      toast({ title: "Authentication error", description: "You must be logged in.", variant: "destructive"});
+      return;
+    }
+    
     setIsSubmitting(true);
-    // Simulate submission process
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    try {
+      const file = data.dataFile[0];
+      let csvData: string;
 
-    toast({
-      title: "Submission Successful!",
-      description: "Your dataset has been sent for review.",
-    });
+      if (file.type === "text/csv") {
+        csvData = await readFileAsText(file);
+      } else {
+        const arrayBuffer = await readFileAsArrayBuffer(file);
+        const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        csvData = XLSX.utils.sheet_to_csv(worksheet);
+      }
 
-    form.reset();
-    setIsSubmitting(false);
+      const newRequestedDataset = {
+        name: data.name,
+        description: data.description,
+        csvData: csvData,
+        submittedBy: userDetails.fullName || user.email || "Unknown",
+        date: new Date().toISOString(),
+        userId: user.uid,
+      };
+
+      await createRequestedDataset(newRequestedDataset);
+
+      toast({
+        title: "Submission Successful!",
+        description: "Your dataset has been sent for review.",
+      });
+
+      form.reset();
+      router.push("/dashboard");
+
+    } catch (error: any) {
+       toast({
+        title: "Submission Failed",
+        description: error.message || "Could not process the file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
