@@ -106,9 +106,14 @@ export default function DatasetsPage() {
 
   const filteredDatasets = useMemo(() => {
     if (!searchTerm) return datasets;
-    return datasets.filter((dataset) =>
-      dataset.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return datasets.filter((dataset) => {
+      return (
+        dataset.name.toLowerCase().includes(lowercasedTerm) ||
+        dataset.description.toLowerCase().includes(lowercasedTerm) ||
+        dataset.submittedBy.toLowerCase().includes(lowercasedTerm)
+      );
+    });
   }, [datasets, searchTerm]);
 
   if (loading) {
