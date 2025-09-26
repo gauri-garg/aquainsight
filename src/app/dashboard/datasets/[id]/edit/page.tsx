@@ -32,6 +32,9 @@ const editDatasetFormSchema = z.object({
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
   }),
+  submittedBy: z.string().min(2, {
+    message: "Submitter name must be at least 2 characters.",
+  }),
   dataFile: z.any().optional(),
 });
 
@@ -65,6 +68,7 @@ export default function EditDatasetPage() {
             form.reset({
               name: fetchedDataset.name,
               description: fetchedDataset.description,
+              submittedBy: fetchedDataset.submittedBy,
             });
           } else {
             toast({
@@ -135,7 +139,7 @@ export default function EditDatasetPage() {
         name: data.name,
         description: data.description,
         csvData: csvData,
-        submittedBy: userDetails.fullName || user.email || "Unknown", // Update submitted by on edit
+        submittedBy: data.submittedBy,
         date: new Date().toISOString(), // Update date on edit
       };
 
@@ -214,6 +218,19 @@ export default function EditDatasetPage() {
                         className="resize-none"
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="submittedBy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Submitted by</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Jane Doe" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
