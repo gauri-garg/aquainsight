@@ -13,6 +13,7 @@ import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
 import { DynamicDatasetNav } from "@/components/dataset-nav-dynamic";
 import React from "react";
+import { GlobalSearch } from "@/components/global-search";
 
 export default function DashboardLayout({
   children,
@@ -108,7 +109,7 @@ export default function DashboardLayout({
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-             {/* Search can be added back later */}
+            <GlobalSearch />
           </div>
           <UserNav />
         </header>
