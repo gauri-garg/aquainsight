@@ -8,10 +8,20 @@ import { useAuth, RequestedDataset, SubmissionStatus } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Download, CircleHelp, CircleCheck, CircleX } from "lucide-react";
+import { Loader2, ArrowLeft, Download, CircleHelp, CircleCheck, CircleX, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
   if (!csvData) return { data: [], headers: [] };
@@ -49,10 +59,12 @@ const StatusBadge = ({ status }: { status: SubmissionStatus }) => {
 export default function MySubmissionViewPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { getRequestedDatasetById, role, user } = useAuth();
+  const { getRequestedDatasetById, role, user, deleteRequestedDataset } = useAuth();
   const { toast } = useToast();
   const [dataset, setDataset] = useState<RequestedDataset | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [originalHeaders, setOriginalHeaders] = useState<string[]>([]);
@@ -96,6 +108,28 @@ export default function MySubmissionViewPage() {
       fetchDataset();
     }
   }, [id, getRequestedDatasetById, router, toast, role, user]);
+
+  const handleDelete = async () => {
+    if (!dataset || !user) return;
+    setIsDeleting(true);
+    try {
+      await deleteRequestedDataset(dataset.id!, user.uid);
+      toast({
+        title: "Submission Deleted",
+        description: `"${dataset.name}" has been successfully deleted.`,
+      });
+      router.push("/dashboard/my-submissions");
+    } catch (error: any) {
+      toast({
+        title: "Deletion Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
 
   const handleDownloadXlsx = () => {
@@ -166,6 +200,17 @@ export default function MySubmissionViewPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Download as CSV
             </Button>
+            {dataset.status === 'pending' && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={isDeleting}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            )}
         </div>
       </div>
   );
@@ -190,35 +235,65 @@ export default function MySubmissionViewPage() {
   )
 
   return (
-    <div className="space-y-6">
-      <PageHeader />
-      <MetadataCard />
-      <Card>
-        <CardHeader><CardTitle>Submitted Data Preview</CardTitle></CardHeader>
-        <CardContent>
-        <Table>
-            <TableHeader>
-            <TableRow>
-                {originalHeaders.map(header => <TableHead key={header}>{header.replace(/_/g, ' ')}</TableHead>)}
-            </TableRow>
-            </TableHeader>
-            <TableBody>
-            {parsedData.length > 0 ? (
-                parsedData.map((entry, index) => (
-                <TableRow key={index}>
-                    {originalHeaders.map(header => {
-                        const sanitizedKey = header.replace(/[^a-zA-Z0-9]/g, '_');
-                        return <TableCell key={header}>{entry[sanitizedKey] != null ? String(entry[sanitizedKey]) : 'N/A'}</TableCell>
-                    })}
-                </TableRow>
-                ))
-            ) : (
-                <TableRow><TableCell colSpan={originalHeaders.length} className="h-24 text-center">No data available in this file.</TableCell></TableRow>
-            )}
-            </TableBody>
-        </Table>
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <div className="space-y-6">
+        <PageHeader />
+        <MetadataCard />
+        <Card>
+          <CardHeader><CardTitle>Submitted Data Preview</CardTitle></CardHeader>
+          <CardContent>
+          <Table>
+              <TableHeader>
+              <TableRow>
+                  {originalHeaders.map(header => <TableHead key={header}>{header.replace(/_/g, ' ')}</TableHead>)}
+              </TableRow>
+              </TableHeader>
+              <TableBody>
+              {parsedData.length > 0 ? (
+                  parsedData.map((entry, index) => (
+                  <TableRow key={index}>
+                      {originalHeaders.map(header => {
+                          const sanitizedKey = header.replace(/[^a-zA-Z0-9]/g, '_');
+                          return <TableCell key={header}>{entry[sanitizedKey] != null ? String(entry[sanitizedKey]) : 'N/A'}</TableCell>
+                      })}
+                  </TableRow>
+                  ))
+              ) : (
+                  <TableRow><TableCell colSpan={originalHeaders.length} className="h-24 text-center">No data available in this file.</TableCell></TableRow>
+              )}
+              </TableBody>
+          </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your submission &quot;{dataset?.name}&quot;.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

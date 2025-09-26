@@ -21,8 +21,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Eye, CircleHelp, CircleCheck, CircleX } from "lucide-react";
+import { Loader2, Eye, CircleHelp, CircleCheck, CircleX, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const StatusBadge = ({ status }: { status: SubmissionStatus }) => {
   switch (status) {
@@ -41,11 +51,16 @@ export default function MySubmissionsPage() {
     role,
     user,
     getRequestedDatasetsByUserId,
+    deleteRequestedDataset,
   } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [requests, setRequests] = useState<RequestedDataset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<RequestedDataset | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
 
   useEffect(() => {
     if (role && role === "CMLRE") {
@@ -68,6 +83,34 @@ export default function MySubmissionsPage() {
       fetchRequests();
     }
   }, [role, user, router, getRequestedDatasetsByUserId, toast]);
+
+  const confirmDelete = (request: RequestedDataset) => {
+    setRequestToDelete(request);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDelete = async () => {
+    if (!requestToDelete || !user) return;
+    setIsDeleting(true);
+    try {
+      await deleteRequestedDataset(requestToDelete.id!, user.uid);
+      setRequests(requests.filter((d) => d.id !== requestToDelete.id));
+      toast({
+        title: "Submission Deleted",
+        description: `"${requestToDelete.name}" has been successfully deleted.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Deletion Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setRequestToDelete(null);
+    }
+  };
   
   const handleViewData = (requestId: string) => {
     router.push(`/dashboard/my-submissions/${requestId}`);
@@ -82,58 +125,105 @@ export default function MySubmissionsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>My Submissions</CardTitle>
-          <CardDescription>
-            View the status of your dataset submissions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Dataset Name</TableHead>
-                <TableHead>Date Submitted</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requests.length > 0 ? (
-                requests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell className="font-medium">{request.name}</TableCell>
-                    <TableCell>
-                      {new Date(request.date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={request.status} />
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleViewData(request.id!)}
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        View
-                      </Button>
+    <>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>My Submissions</CardTitle>
+            <CardDescription>
+              View the status of your dataset submissions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dataset Name</TableHead>
+                  <TableHead>Date Submitted</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {requests.length > 0 ? (
+                  requests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="font-medium">{request.name}</TableCell>
+                      <TableCell>
+                        {new Date(request.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={request.status} />
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleViewData(request.id!)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
+                        </Button>
+                        {request.status === 'pending' && (
+                           <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => confirmDelete(request)}
+                            disabled={isDeleting && requestToDelete?.id === request.id}
+                          >
+                             {isDeleting && requestToDelete?.id === request.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                               <>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                               </>
+                            )}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      You have not submitted any datasets.
                     </TableCell>
                   </TableRow>
-                ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your submission &quot;{requestToDelete?.name}&quot;.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
               ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    You have not submitted any datasets.
-                  </TableCell>
-                </TableRow>
+                "Delete"
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

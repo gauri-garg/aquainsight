@@ -91,6 +91,7 @@ interface AuthContextType {
   getRequestedDatasets: () => Promise<RequestedDataset[]>;
   approveDatasetRequest: (request: RequestedDataset) => Promise<void>;
   rejectDatasetRequest: (request: RequestedDataset) => Promise<void>;
+  deleteRequestedDataset: (id: string, userId: string) => Promise<void>;
   getUserNotifications: (userId: string, callback: (notifications: Notification[]) => void) => () => void;
   markNotificationsAsRead: () => Promise<void>;
 }
@@ -376,6 +377,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     await update(ref(database, `requested-data/${request.id}`), { status: 'rejected' });
   };
+  
+  const deleteRequestedDataset = async (id: string, userId: string) => {
+    if (!user || user.uid !== userId) throw new Error("Permission denied.");
+    const requestRef = ref(database, `requested-data/${id}`);
+    const snapshot = await get(requestRef);
+    if(snapshot.exists() && snapshot.val().status === 'pending') {
+      await remove(requestRef);
+    } else {
+      throw new Error("Can only delete pending submissions that you own.");
+    }
+  };
 
   const getUserNotifications = (userId: string, callback: (notifications: Notification[]) => void) => {
     const notificationsRef = ref(database, `notifications/${userId}`);
@@ -439,7 +451,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, getUserNotifications, markNotificationsAsRead }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead }}>
       {children}
     </AuthContext.Provider>
   );
@@ -452,5 +464,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
