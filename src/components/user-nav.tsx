@@ -30,7 +30,7 @@ import {
 import { useAuth, Notification } from "@/hooks/use-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, Loader2, PackageX } from "lucide-react";
+import { Bell, Loader2, PackageX, CircleCheck, CircleX } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -105,6 +105,21 @@ export function UserNav() {
   const displayName = userDetails?.fullName || user?.email || "User";
   const roleDescription = role === "CMLRE" ? "Staff" : role === "Researcher" ? "Researcher" : "Student";
   const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
+  
+  const NotificationIcon = ({status}: {status: Notification['status']}) => {
+    if (status === 'approved') {
+        return (
+            <div className="bg-green-100 dark:bg-green-900/50 p-2 rounded-full">
+                <CircleCheck className="h-5 w-5 text-green-500" />
+            </div>
+        )
+    }
+    return (
+        <div className="bg-red-100 dark:bg-red-900/50 p-2 rounded-full">
+            <CircleX className="h-5 w-5 text-red-500" />
+        </div>
+    )
+  }
 
   return (
     <>
@@ -135,11 +150,9 @@ export function UserNav() {
               {notifications.length > 0 ? (
                 notifications.map((notif) => (
                   <div key={notif.id} className="flex items-start gap-3 p-2 rounded-lg">
-                    <div className="bg-red-100 dark:bg-red-900/50 p-2 rounded-full">
-                       <PackageX className="h-5 w-5 text-red-500" />
-                    </div>
+                    <NotificationIcon status={notif.status} />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Dataset Rejected</p>
+                      <p className="text-sm font-medium capitalize">Dataset {notif.status}</p>
                       <p className="text-sm text-muted-foreground truncate">
                         &quot;{notif.datasetName}&quot;
                       </p>

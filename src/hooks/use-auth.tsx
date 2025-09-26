@@ -37,6 +37,8 @@ export interface Dataset {
   userId: string;
 }
 
+export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
+
 export interface RequestedDataset {
   id?: string;
   name: string;
@@ -45,6 +47,7 @@ export interface RequestedDataset {
   submittedBy: string;
   date: string;
   userId: string;
+  status: SubmissionStatus;
 }
 
 export interface Notification {
@@ -54,6 +57,7 @@ export interface Notification {
   date: string;
   message: string;
   read: boolean;
+  status: 'approved' | 'rejected';
 }
 
 interface UserDetails {
@@ -77,7 +81,7 @@ interface AuthContextType {
   changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
   deleteUserAccount: (email: string, password: string) => Promise<void>;
   createDataset: (dataset: Omit<Dataset, "id">) => Promise<void>;
-  createRequestedDataset: (dataset: Omit<RequestedDataset, "id">) => Promise<void>;
+  createRequestedDataset: (dataset: Omit<RequestedDataset, "id" | 'status'>) => Promise<void>;
   getAllDatasets: () => Promise<Dataset[]>;
   getDatasetById: (id: string) => Promise<Dataset | null>;
   getRequestedDatasetById: (id: string) => Promise<RequestedDataset | null>;
@@ -265,10 +269,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await set(newDatasetRef, dataset);
   };
 
-  const createRequestedDataset = async (dataset: Omit<RequestedDataset, "id">) => {
+  const createRequestedDataset = async (dataset: Omit<RequestedDataset, "id" | "status">) => {
     const requestedDatasetsRef = ref(database, "requested-data");
     const newRequestedDatasetRef = push(requestedDatasetsRef);
-    await set(newRequestedDatasetRef, dataset);
+    await set(newRequestedDatasetRef, {...dataset, status: 'pending'});
   };
 
   const getAllDatasets = async (): Promise<Dataset[]> => {
@@ -293,7 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const getRequestedDatasets = async (): Promise<RequestedDataset[]> => {
     return new Promise((resolve, reject) => {
-      const requestsRef = ref(database, 'requested-data');
+      const requestsRef = query(ref(database, 'requested-data'), orderByChild('status'), equalTo('pending'));
       onValue(requestsRef, (snapshot) => {
         const data = snapshot.val();
         if (snapshot.exists()) {
@@ -335,13 +339,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const approveDatasetRequest = async (request: RequestedDataset) => {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
-    const { id, ...datasetData } = request;
+    const { id, status, ...datasetData } = request;
     
+    // Add to main datasets
     const datasetsRef = ref(database, "datasets");
     const newDatasetRef = push(datasetsRef);
     await set(newDatasetRef, datasetData);
 
-    await remove(ref(database, `requested-data/${id}`));
+    // Update status of request
+    await update(ref(database, `requested-data/${id}`), { status: 'approved' });
+    
+    // Send notification
+    const newNotifRef = push(ref(database, `notifications/${request.userId}`));
+    await set(newNotifRef, {
+      userId: request.userId,
+      datasetName: request.name,
+      date: new Date().toISOString(),
+      message: `Your dataset submission "${request.name}" has been approved.`,
+      read: false,
+      status: 'approved'
+    });
   };
 
   const rejectDatasetRequest = async (request: RequestedDataset) => {
@@ -354,9 +371,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       date: new Date().toISOString(),
       message: `Your dataset submission "${request.name}" was rejected.`,
       read: false,
+      status: 'rejected',
     });
 
-    await remove(ref(database, `requested-data/${request.id}`));
+    await update(ref(database, `requested-data/${request.id}`), { status: 'rejected' });
   };
 
   const getUserNotifications = (userId: string, callback: (notifications: Notification[]) => void) => {
@@ -434,3 +452,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    

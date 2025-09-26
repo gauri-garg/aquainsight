@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth, RequestedDataset } from "@/hooks/use-auth";
+import { useAuth, RequestedDataset, SubmissionStatus } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import {
@@ -21,8 +21,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2, Eye, CircleHelp, CircleCheck, CircleX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function MySubmissionsPage() {
   const {
@@ -61,6 +62,18 @@ export default function MySubmissionsPage() {
     router.push(`/dashboard/my-submissions/${requestId}`);
   }
 
+  const StatusBadge = ({ status }: { status: SubmissionStatus }) => {
+    switch (status) {
+      case "approved":
+        return <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700"><CircleCheck className="mr-2 h-4 w-4" />Approved</Badge>;
+      case "rejected":
+        return <Badge variant="destructive"><CircleX className="mr-2 h-4 w-4" />Rejected</Badge>;
+      case "pending":
+      default:
+        return <Badge variant="outline"><CircleHelp className="mr-2 h-4 w-4" />Pending Review</Badge>;
+    }
+  };
+
   if (loading || (role && role === "CMLRE")) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -97,7 +110,7 @@ export default function MySubmissionsPage() {
                       {new Date(request.date).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">Pending Review</Badge>
+                      <StatusBadge status={request.status} />
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
@@ -125,3 +138,5 @@ export default function MySubmissionsPage() {
     </div>
   );
 }
+
+    

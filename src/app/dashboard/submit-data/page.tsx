@@ -129,7 +129,7 @@ export default function SubmitDataPage() {
       });
 
       form.reset();
-      router.push("/dashboard");
+      router.push("/dashboard/my-submissions");
 
     } catch (error: any) {
        toast({
@@ -222,3 +222,5 @@ export default function SubmitDataPage() {
     </div>
   );
 }
+
+    
