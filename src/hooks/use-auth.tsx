@@ -298,14 +298,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const getRequestedDatasets = async (): Promise<RequestedDataset[]> => {
     return new Promise((resolve, reject) => {
-      const requestsRef = query(ref(database, 'requested-data'), orderByChild('status'), equalTo('pending'));
+      const requestsRef = query(ref(database, 'requested-data'), orderByChild('date'));
       onValue(requestsRef, (snapshot) => {
         const data = snapshot.val();
         if (snapshot.exists()) {
           const requestsArray = Object.keys(data).map(key => ({
             id: key,
             ...data[key]
-          }));
+          })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
           resolve(requestsArray);
         } else {
           resolve([]);

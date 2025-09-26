@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth, RequestedDataset } from "@/hooks/use-auth";
+import { useAuth, RequestedDataset, SubmissionStatus } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import {
@@ -21,7 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2, Eye, CircleCheck, CircleX, CircleHelp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -40,6 +41,18 @@ import {
 } from "@/components/ui/alert-dialog";
 
 
+const StatusBadge = ({ status }: { status: SubmissionStatus }) => {
+    switch (status) {
+      case "approved":
+        return <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700"><CircleCheck className="mr-2 h-4 w-4" />Approved</Badge>;
+      case "rejected":
+        return <Badge variant="destructive"><CircleX className="mr-2 h-4 w-4" />Rejected</Badge>;
+      case "pending":
+      default:
+        return <Badge variant="outline"><CircleHelp className="mr-2 h-4 w-4" />Pending Review</Badge>;
+    }
+  };
+
 export default function DataApprovalPage() {
   const {
     role,
@@ -55,38 +68,39 @@ export default function DataApprovalPage() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [requestToReject, setRequestToReject] = useState<RequestedDataset | null>(null);
 
+  const fetchRequests = async () => {
+    try {
+      const fetchedRequests = await getRequestedDatasets();
+      setRequests(fetchedRequests);
+    } catch (error: any) {
+      toast({
+        title: "Error fetching requests",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (role && role !== "CMLRE") {
       router.push("/dashboard");
     } else if (role) {
-      const fetchRequests = async () => {
-        try {
-          const fetchedRequests = await getRequestedDatasets();
-          setRequests(fetchedRequests);
-        } catch (error: any) {
-          toast({
-            title: "Error fetching requests",
-            description: error.message,
-            variant: "destructive",
-          });
-        } finally {
-          setLoading(false);
-        }
-      };
       fetchRequests();
     }
-  }, [role, router, getRequestedDatasets, toast]);
+  }, [role, router, toast]);
 
   const handleApprove = async (request: RequestedDataset) => {
     if (!request.id) return;
     setProcessingId(request.id);
     try {
       await approveDatasetRequest(request);
-      setRequests(requests.filter((r) => r.id !== request.id));
       toast({
         title: "Dataset Approved",
         description: `"${request.name}" has been added to the main datasets.`,
       });
+      fetchRequests(); // Refetch to update status
     } catch (error: any) {
       toast({
         title: "Approval Failed",
@@ -103,12 +117,12 @@ export default function DataApprovalPage() {
     setProcessingId(requestToReject.id);
     try {
       await rejectDatasetRequest(requestToReject);
-      setRequests(requests.filter((r) => r.id !== requestToReject!.id));
       toast({
         title: "Dataset Rejected",
         description: `"${requestToReject.name}" has been rejected and the user has been notified.`,
         variant: "destructive",
       });
+       fetchRequests(); // Refetch to update status
     } catch (error: any) {
       toast({
         title: "Rejection Failed",
@@ -154,9 +168,9 @@ export default function DataApprovalPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Dataset Name</TableHead>
-                  <TableHead>Description</TableHead>
                   <TableHead>Submitted by</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -164,59 +178,67 @@ export default function DataApprovalPage() {
                 {requests.length > 0 ? (
                   requests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell className="font-medium">{request.name}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium">
                         <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <p className="truncate max-w-xs">
-                                {request.description}
-                              </p>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-md">{request.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <p className="truncate max-w-[200px]">{request.name}</p>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p className="max-w-md">{request.description}</p>
+                                </TooltipContent>
+                            </Tooltip>
                         </TooltipProvider>
                       </TableCell>
                       <TableCell>{request.submittedBy}</TableCell>
                       <TableCell>
                         {new Date(request.date).toLocaleDateString()}
                       </TableCell>
+                      <TableCell>
+                        <StatusBadge status={request.status} />
+                      </TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
                           size="sm"
-                          variant="secondary"
+                          variant="outline"
                           onClick={() => handleViewData(request.id!)}
                           disabled={processingId === request.id}
                         >
                           <Eye className="mr-2 h-4 w-4" />
                           View Data
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleApprove(request)}
-                          disabled={processingId === request.id}
-                        >
-                          {processingId === request.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Approve"
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => confirmReject(request)}
-                          disabled={processingId === request.id}
-                        >
-                          {processingId === request.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Reject"
-                          )}
-                        </Button>
+                        {request.status === 'pending' ? (
+                            <>
+                                <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => handleApprove(request)}
+                                disabled={processingId === request.id}
+                                >
+                                {processingId === request.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    "Approve"
+                                )}
+                                </Button>
+                                <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => confirmReject(request)}
+                                disabled={processingId === request.id}
+                                >
+                                {processingId === request.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    "Reject"
+                                )}
+                                </Button>
+                            </>
+                        ) : (
+                           <Badge variant={request.status === 'approved' ? 'default' : 'destructive'} className="capitalize">
+                                Action Performed
+                            </Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -262,5 +284,3 @@ export default function DataApprovalPage() {
     </>
   );
 }
-
-    
