@@ -8,7 +8,7 @@ import { useAuth, Dataset } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Download } from "lucide-react";
+import { Loader2, ArrowLeft, Download, Edit } from "lucide-react";
 import * as XLSX from "xlsx";
 import { addDays, format, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -94,7 +94,7 @@ export default function DatasetViewPage() {
       const fetchDataset = async () => {
         setLoading(true);
         try {
-          const fetchedDataset = await getDatasetById(id);
+          const fetchedDataset = await getDatasetById(id as string);
           if (fetchedDataset) {
             setDataset(fetchedDataset);
             if (fetchedDataset.csvData) {
@@ -257,7 +257,10 @@ export default function DatasetViewPage() {
             </Button>
             {role === 'CMLRE' && (
               <Button asChild>
-                <Link href={`/dashboard/datasets/${id}/edit`}>Edit</Link>
+                <Link href={`/dashboard/datasets/${id}/edit`}>
+                   <Edit className="mr-2 h-4 w-4" />
+                   Edit
+                </Link>
               </Button>
             )}
         </div>
@@ -367,7 +370,7 @@ export default function DatasetViewPage() {
                                 <YAxis yAxisId="left" orientation="left" domain={['dataMin - 1', 'dataMax + 1']} hide />
                                 <YAxis yAxisId="right" orientation="right" domain={['dataMin - 1', 'dataMax + 1']} hide/>
                                 
-                                <Tooltip content={<ChartTooltipContent />} />
+                                <Tooltip content={<ChartTooltipContent indicator="dot" />} />
                                 <Legend />
                                 {chartableKeys.map((key, index) => {
                                     const yAxisId = index % 2 === 0 ? 'left' : 'right';
@@ -421,3 +424,5 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
