@@ -448,7 +448,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const deleteDataset = async (id: string) => {
     if (role !== "CMLRE") throw new Error("Permission denied.");
-    await remove(ref(database, `datasets/${id}`));
+    
+    const datasetRef = ref(database, `datasets/${id}`);
+    const snapshot = await get(datasetRef);
+
+    if (snapshot.exists()) {
+      const dataToMove = snapshot.val();
+      const archiveRef = ref(database, `deleted-data/${id}`);
+      await set(archiveRef, dataToMove);
+      await remove(datasetRef);
+    }
   };
 
   const getTotalDatasets = async (): Promise<number> => {
@@ -480,10 +489,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (snapshot.exists()) {
         const dataToMove = snapshot.val();
-
-        // Use update to merge with existing archived data
+        
         const archiveRef = ref(database, 'archived-data');
-        await update(archiveRef, dataToMove);
+        const newArchiveRef = push(archiveRef);
+        await set(newArchiveRef, dataToMove);
         
         await remove(requestedDataRef);
     }
