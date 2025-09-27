@@ -22,8 +22,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, Users, Database, FileText } from "lucide-react";
-import { format, parseISO } from 'date-fns';
+import { ArrowUpRight, Users, Database, FileText, TrendingUp, TrendingDown } from "lucide-react";
+import { format, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 const COLORS = {
     'CMLRE': 'hsl(var(--chart-1))',
@@ -53,6 +53,7 @@ export function CMLREDashboard() {
   const [totalRecords, setTotalRecords] = useState(0);
   const [recentSubmissions, setRecentSubmissions] = useState<RequestedDataset[]>([]);
   const [userRoleData, setUserRoleData] = useState<{name: UserRole, value: number}[]>([]);
+  const [monthlyTrend, setMonthlyTrend] = useState({ recordsThisMonth: 0, percentageChange: 0 });
   
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +76,28 @@ export function CMLREDashboard() {
 
       setTotalRecords(recordsCount);
       setRecentSubmissions(submissions.slice(0, 5));
+      
+      const now = new Date();
+      const startOfThisMonth = startOfMonth(now);
+      const startOfLastMonth = startOfMonth(subMonths(now, 1));
+      const endOfLastMonth = endOfMonth(subMonths(now, 1));
+
+      const recordsThisMonth = submissions
+        .filter(s => new Date(s.date) >= startOfThisMonth)
+        .reduce((acc, s) => acc + (s.csvData.split('\n').length -1), 0);
+
+      const recordsLastMonth = submissions
+        .filter(s => {
+            const subDate = new Date(s.date);
+            return subDate >= startOfLastMonth && subDate <= endOfLastMonth;
+        })
+        .reduce((acc, s) => acc + (s.csvData.split('\n').length -1), 0);
+
+      const percentageChange = recordsLastMonth > 0 
+        ? ((recordsThisMonth - recordsLastMonth) / recordsLastMonth) * 100
+        : recordsThisMonth > 0 ? 100 : 0;
+        
+      setMonthlyTrend({ recordsThisMonth, percentageChange });
     };
 
     fetchData();
@@ -121,32 +144,22 @@ export function CMLREDashboard() {
             </p>
           </CardContent>
         </Card>
-         <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Recent Activity
+            </CardTitle>
+            {monthlyTrend.percentageChange >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+                <TrendingDown className="h-4 w-4 text-muted-foreground" />
+            )}
           </CardHeader>
           <CardContent>
-             <Table>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead>Dataset</TableHead>
-                    <TableHead className="hidden text-right sm:table-cell">Date</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {recentSubmissions.slice(0,2).map((sub) => (
-                         <TableRow key={sub.id}>
-                            <TableCell>
-                                <div className="font-medium">{sub.name}</div>
-                                <div className="text-sm text-muted-foreground md:inline">
-                                    by {sub.submittedBy}
-                                </div>
-                            </TableCell>
-                            <TableCell className="hidden text-right sm:table-cell">{new Date(sub.date).toLocaleDateString()}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-             </Table>
+            <div className="text-2xl font-bold">+{monthlyTrend.recordsThisMonth.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {monthlyTrend.percentageChange.toFixed(2)}% from last month
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -223,3 +236,5 @@ export function CMLREDashboard() {
     </div>
   );
 }
+
+    
