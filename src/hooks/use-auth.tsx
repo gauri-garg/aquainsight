@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, {
@@ -58,6 +59,7 @@ export interface ArchivedSubmission {
   archivedDate: string;
   status: SubmissionStatus;
   originalId: string;
+  type: 'Dataset' | 'Submission';
 }
 
 export interface Notification {
@@ -111,8 +113,8 @@ interface AuthContextType {
   getTotalUsers: () => Promise<UserDetails[]>;
   getTotalRecords: () => Promise<number>;
   clearSubmissionHistory: () => Promise<void>;
-  getArchivedData: () => Promise<any[]>;
-  permanentlyDeleteSubmission: (archiveId: string, type: 'Dataset' | 'Submission') => Promise<void>;
+  getArchivedData: () => Promise<ArchivedSubmission[]>;
+  permanentlyDeleteSubmission: (id: string, type: 'Dataset' | 'Submission') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -381,20 +383,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const approveDatasetRequest = async (request: RequestedDataset) => {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
-    const { id, status, ...datasetData } = request;
     
+    // Copy the dataset to the main 'datasets' collection
+    const { id, status, ...datasetData } = request;
     const datasetsRef = ref(database, "datasets");
     const newDatasetRef = push(datasetsRef);
     await set(newDatasetRef, datasetData);
 
+    // Update the status of the original request
     await update(ref(database, `requested-data/${id}`), { status: 'approved' });
     
+    // Send a notification to the user who submitted it
     const newNotifRef = push(ref(database, `notifications/${request.userId}`));
     await set(newNotifRef, {
       userId: request.userId,
       datasetName: request.name,
       date: new Date().toISOString(),
-      message: `Dataset ${status}`,
+      message: 'Dataset approved',
       read: false,
       status: 'approved'
     });
@@ -408,7 +413,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId: request.userId,
       datasetName: request.name,
       date: new Date().toISOString(),
-      message: `Dataset ${request.status}`,
+      message: `Dataset rejected`,
       read: false,
       status: 'rejected',
     });
@@ -428,7 +433,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const getUserNotifications = (userId: string, callback: (notifications: Notification[]) => void) => {
-    const notificationsRef = ref(database, `notifications/${userId}`);
+    const notificationsRef = query(ref(database, `notifications/${userId}`), orderByChild('date'));
     const listener = onValue(notificationsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -554,13 +559,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const getArchivedData = async (): Promise<any[]> => {
+  const getArchivedData = async (): Promise<ArchivedSubmission[]> => {
     if (role !== "CMLRE") throw new Error("Permission denied.");
     const archiveRef = ref(database, 'archived-data');
     const snapshot = await get(archiveRef);
     if (snapshot.exists()) {
       const allArchives = snapshot.val();
-      const combined = [];
+      const combined: ArchivedSubmission[] = [];
+
       if (allArchives.datasets) {
         combined.push(...Object.keys(allArchives.datasets).map(key => ({
           id: key,
@@ -587,18 +593,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const permanentlyDeleteSubmission = async (id: string, type: 'Dataset' | 'Submission') => {
     if (role !== "CMLRE") throw new Error("Permission denied.");
     
-    let archiveRef;
-    if (type === 'Dataset') {
-      archiveRef = ref(database, `archived-data/datasets/${id}`);
-    } else {
-      archiveRef = ref(database, `archived-data/submissions/${id}`);
-    }
+    const node = type === 'Dataset' ? 'datasets' : 'submissions';
+    const archiveRef = ref(database, `archived-data/${node}/${id}`);
 
     const snapshot = await get(archiveRef);
     if (snapshot.exists()) {
       await remove(archiveRef);
     } else {
-      throw new Error("Archived item not found.");
+      throw new Error(`Archived ${type} not found at path: archived-data/${node}/${id}`);
     }
   };
 
@@ -617,3 +619,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    

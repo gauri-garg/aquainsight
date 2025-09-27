@@ -77,6 +77,7 @@ export default function DataApprovalPage() {
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
 
   const fetchRequests = async () => {
+    setLoading(true);
     try {
       const { datasets: fetchedRequests } = await getRequestedDatasets();
       setRequests(fetchedRequests);
@@ -382,3 +383,5 @@ export default function DataApprovalPage() {
     </>
   );
 }
+
+    
