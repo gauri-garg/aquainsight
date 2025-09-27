@@ -360,25 +360,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const getRequestedDatasetsByUserId = async (userId: string): Promise<RequestedDataset[]> => {
-    return new Promise((resolve, reject) => {
-      const requestsRef = ref(database, 'requested-data');
-      const userRequestsQuery = query(requestsRef, orderByChild('userId'), equalTo(userId));
-
-      onValue(userRequestsQuery, (snapshot) => {
+    const activeReqsPromise = new Promise<RequestedDataset[]>((resolve, reject) => {
+      const activeRef = query(ref(database, 'requested-data'), orderByChild('userId'), equalTo(userId));
+      onValue(activeRef, snapshot => {
+        if (!snapshot.exists()) return resolve([]);
         const data = snapshot.val();
-        if (snapshot.exists()) {
-          const requestsArray = Object.keys(data).map(key => ({
-            id: key,
-            ...data[key]
-          })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          resolve(requestsArray);
-        } else {
-          resolve([]);
-        }
-      }, (error) => {
-        reject(error);
-      });
+        resolve(Object.keys(data).map(key => ({ id: key, ...data[key] })));
+      }, reject, { onlyOnce: true });
     });
+
+    const archivedReqsPromise = new Promise<RequestedDataset[]>((resolve, reject) => {
+      const archivedRef = query(ref(database, 'archived-data/submissions'), orderByChild('userId'), equalTo(userId));
+      onValue(archivedRef, snapshot => {
+        if (!snapshot.exists()) return resolve([]);
+        const data = snapshot.val();
+        resolve(Object.keys(data).map(key => ({ id: key, ...data[key] })));
+      }, reject, { onlyOnce: true });
+    });
+  
+    const [active, archived] = await Promise.all([activeReqsPromise, archivedReqsPromise]);
+  
+    // Combine and remove duplicates, giving preference to active submissions.
+    const combined = [...active, ...archived];
+    const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+  
+    return unique.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   const approveDatasetRequest = async (request: RequestedDataset) => {
@@ -626,4 +632,5 @@ export function useAuth() {
 }
 
     
+
 
