@@ -110,7 +110,7 @@ interface AuthContextType {
   getTotalRecords: () => Promise<number>;
   clearSubmissionHistory: () => Promise<void>;
   getArchivedData: () => Promise<any[]>;
-  permanentlyDeleteSubmission: (archiveId: string) => Promise<void>;
+  permanentlyDeleteSubmission: (archiveId: string, type: 'Dataset' | 'Submission') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -548,20 +548,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return [];
   };
   
-  const permanentlyDeleteSubmission = async (id: string) => {
-     if (role !== "CMLRE") throw new Error("Permission denied.");
-     const datasetArchiveRef = ref(database, `archived-data/datasets/${id}`);
-     const submissionArchiveRef = ref(database, `archived-data/submissions/${id}`);
+  const permanentlyDeleteSubmission = async (id: string, type: 'Dataset' | 'Submission') => {
+    if (role !== "CMLRE") throw new Error("Permission denied.");
+    
+    let archiveRef;
+    if (type === 'Dataset') {
+      archiveRef = ref(database, `archived-data/datasets/${id}`);
+    } else {
+      archiveRef = ref(database, `archived-data/submissions/${id}`);
+    }
 
-     const datasetSnapshot = await get(datasetArchiveRef);
-     if (datasetSnapshot.exists()) {
-        await remove(datasetArchiveRef);
-     }
-     
-     const submissionSnapshot = await get(submissionArchiveRef);
-     if (submissionSnapshot.exists()) {
-       await remove(submissionArchiveRef);
-     }
+    const snapshot = await get(archiveRef);
+    if (snapshot.exists()) {
+      await remove(archiveRef);
+    } else {
+      throw new Error("Archived item not found.");
+    }
   };
 
 
@@ -579,4 +581,3 @@ export function useAuth() {
   }
   return context;
 }
-

@@ -98,7 +98,7 @@ export default function ArchivedDataPage() {
     if (!itemToDelete) return;
     setIsDeleting(true);
     try {
-      await permanentlyDeleteSubmission(itemToDelete.id);
+      await permanentlyDeleteSubmission(itemToDelete.id, itemToDelete.type);
       toast({
         title: "Item Deleted",
         description: `"${itemToDelete.name}" has been permanently deleted.`,
