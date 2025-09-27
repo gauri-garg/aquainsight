@@ -78,6 +78,11 @@ interface UserDetails {
   role?: UserRole;
   uid?: string;
 }
+
+export interface SpeciesData {
+    name: string;
+    count: number;
+}
 interface AuthContextType {
   user: User | null;
   role: UserRole | null;
@@ -118,6 +123,7 @@ interface AuthContextType {
   permanentlyDeleteSubmission: (id: string, type: 'Dataset' | 'Submission') => Promise<void>;
   getUserSubmissionsCount: (userId: string) => Promise<number>;
   getUserTotalRecords: (userId: string) => Promise<number>;
+  getSpeciesDistribution: () => Promise<SpeciesData[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -658,10 +664,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return acc + (rowCount > 0 ? rowCount : 0);
     }, 0);
   };
+  
+  const getSpeciesDistribution = async (): Promise<SpeciesData[]> => {
+    const approvedSubmissions = await getAllApprovedSubmissions();
+    const speciesCount: { [key: string]: number } = {};
+
+    approvedSubmissions.forEach(sub => {
+      if (sub.csvData) {
+        const lines = sub.csvData.trim().split('\n');
+        if (lines.length < 2) return;
+
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const speciesHeaderVariants = ['species', 'species_name', 'scientificname', 'organism'];
+        let speciesIndex = -1;
+        for (const variant of speciesHeaderVariants) {
+            speciesIndex = headers.findIndex(h => h.includes(variant));
+            if (speciesIndex !== -1) break;
+        }
+
+        if (speciesIndex !== -1) {
+          for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',');
+            const speciesName = values[speciesIndex]?.trim();
+            if (speciesName) {
+              speciesCount[speciesName] = (speciesCount[speciesName] || 0) + 1;
+            }
+          }
+        }
+      }
+    });
+
+    return Object.entries(speciesCount)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Return top 10 for better visualization
+  }
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords, getSpeciesDistribution }}>
       {children}
     </AuthContext.Provider>
   );
@@ -681,6 +722,7 @@ export function useAuth() {
 
 
     
+
 
 
 
