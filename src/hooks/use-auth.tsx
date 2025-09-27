@@ -675,12 +675,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (lines.length < 2) return;
 
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const speciesHeaderVariants = ['species', 'species_name', 'scientificname', 'organism'];
-        let speciesIndex = -1;
-        for (const variant of speciesHeaderVariants) {
-            speciesIndex = headers.findIndex(h => h.includes(variant));
-            if (speciesIndex !== -1) break;
-        }
+        const speciesIndex = headers.findIndex(h => h.includes('species'));
 
         if (speciesIndex !== -1) {
           for (let i = 1; i < lines.length; i++) {
@@ -722,6 +717,7 @@ export function useAuth() {
 
 
     
+
 
 
 
