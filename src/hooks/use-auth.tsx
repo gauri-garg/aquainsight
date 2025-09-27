@@ -343,32 +343,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       onValue(requestsRef, (snapshot) => {
         const data = snapshot.val();
         if (snapshot.exists()) {
-          const requestsArray = Object.keys(data).map(key => ({
+          const requestsArray: RequestedDataset[] = Object.keys(data).map(key => ({
             id: key,
             ...data[key]
           }));
           
-          const pendingSubmissions = requestsArray.filter(r => r.status === 'pending');
-          const pendingCount = pendingSubmissions.length;
+          const pendingCount = requestsArray.filter(r => r.status === 'pending').length;
           
-          if (pendingCount > 0) {
-            resolve({ datasets: requestsArray.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), pendingCount });
-          } else {
-            // If no pending, fetch approved from archives
-            const archivedRef = query(ref(database, 'archived-data/submissions'), orderByChild('status'), equalTo('approved'));
-            onValue(archivedRef, (archiveSnapshot) => {
-              if (archiveSnapshot.exists()) {
-                const archiveData = archiveSnapshot.val();
-                const archivedApproved = Object.keys(archiveData).map(key => ({
-                  id: key,
-                  ...archiveData[key]
-                })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                resolve({ datasets: archivedApproved, pendingCount: 0 });
-              } else {
-                resolve({ datasets: [], pendingCount: 0 });
-              }
-            }, (error) => reject(error), { onlyOnce: true });
-          }
+          resolve({ 
+              datasets: requestsArray.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), 
+              pendingCount 
+          });
+
         } else {
           resolve({ datasets: [], pendingCount: 0 });
         }
@@ -401,7 +387,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
     // Combine and remove duplicates, giving preference to active submissions.
     const combined = [...active, ...archived];
-    const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+    const unique = Array.from(new Map(combined.map(item => [item.name, item])).values());
   
     return unique.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
@@ -679,4 +665,5 @@ export function useAuth() {
 
 
     
+
 
