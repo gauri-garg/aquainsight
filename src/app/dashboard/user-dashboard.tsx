@@ -4,30 +4,33 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Database, FileText, UploadCloud } from "lucide-react";
+import { Database, FileText, UploadCloud, Layers } from "lucide-react";
 
 export function UserDashboard() {
-  const { user, userDetails, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords } = useAuth();
+  const { user, userDetails, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords, getTotalRecords } = useAuth();
   
   const [totalDatasets, setTotalDatasets] = useState(0);
   const [totalSubmissions, setTotalSubmissions] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
+  const [userTotalRecords, setUserTotalRecords] = useState(0);
+  const [platformTotalRecords, setPlatformTotalRecords] = useState(0);
 
   useEffect(() => {
     if (user) {
       const fetchData = async () => {
-        const [datasetsCount, submissionsCount, recordsCount] = await Promise.all([
+        const [datasetsCount, submissionsCount, userRecordsCount, platformRecordsCount] = await Promise.all([
           getTotalDatasets(),
           getUserSubmissionsCount(user.uid),
           getUserTotalRecords(user.uid),
+          getTotalRecords(),
         ]);
         setTotalDatasets(datasetsCount);
         setTotalSubmissions(submissionsCount);
-        setTotalRecords(recordsCount);
+        setUserTotalRecords(userRecordsCount);
+        setPlatformTotalRecords(platformRecordsCount);
       };
       fetchData();
     }
-  }, [user, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords]);
+  }, [user, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords, getTotalRecords]);
   
   const getTitle = () => {
     return `Welcome, ${userDetails?.fullName || user?.email || 'User'}!`;
@@ -51,7 +54,7 @@ export function UserDashboard() {
                 {getDescription()}
             </p>
        </div>
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -63,6 +66,18 @@ export function UserDashboard() {
             <div className="text-2xl font-bold">{totalDatasets}</div>
             <p className="text-xs text-muted-foreground">
               Total approved datasets on the platform.
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
+            <Layers className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">~{platformTotalRecords.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Estimated across all datasets.
             </p>
           </CardContent>
         </Card>
@@ -84,7 +99,7 @@ export function UserDashboard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">~{totalRecords.toLocaleString()}</div>
+            <div className="text-2xl font-bold">~{userTotalRecords.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Records from your approved submissions.
             </p>
