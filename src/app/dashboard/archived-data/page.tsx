@@ -66,6 +66,7 @@ export default function ArchivedDataPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchArchives = async () => {
+    setLoading(true);
     try {
       const fetchedArchives = await getArchivedData();
       setArchives(fetchedArchives);
@@ -155,7 +156,7 @@ export default function ArchivedDataPage() {
                         <StatusBadge status={item.status || 'approved'} />
                       </TableCell>
                        <TableCell>
-                        {new Date(item.archivedDate).toLocaleDateString()}
+                        {new Date(item.archivedDate || item.date).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

@@ -467,7 +467,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (snapshot.exists()) {
       const dataToMove = snapshot.val();
       const archiveRef = ref(database, `archived-data/datasets/${id}`);
-      await set(archiveRef, dataToMove);
+      await set(archiveRef, {...dataToMove, archivedDate: new Date().toISOString()});
       await remove(datasetRef);
     }
   };
@@ -503,7 +503,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const dataToMove = snapshot.val();
         
         const archiveRef = ref(database, 'archived-data/submissions');
-        await update(archiveRef, dataToMove);
+        
+        const timestampedData = Object.keys(dataToMove).reduce((acc, key) => {
+            acc[key] = {
+                ...dataToMove[key],
+                archivedDate: new Date().toISOString(),
+            };
+            return acc;
+        }, {} as any);
+
+        await update(archiveRef, timestampedData);
         
         await remove(requestedDataRef);
     }
@@ -520,7 +529,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         combined.push(...Object.keys(allArchives.datasets).map(key => ({
           id: key,
           type: 'Dataset',
-          archivedDate: new Date().toISOString(), 
           ...allArchives.datasets[key]
         })));
       }
@@ -528,22 +536,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          combined.push(...Object.keys(allArchives.submissions).map(key => ({
           id: key,
           type: 'Submission',
-          archivedDate: new Date().toISOString(),
            ...allArchives.submissions[key]
         })));
       }
-      return combined.sort((a, b) => new Date(b.archivedDate).getTime() - new Date(a.archivedDate).getTime());
+      return combined.sort((a, b) => {
+        const dateA = a.archivedDate || a.date;
+        const dateB = b.archivedDate || b.date;
+        return new Date(dateB).getTime() - new Date(dateA).getTime()
+      });
     }
     return [];
   };
   
   const permanentlyDeleteSubmission = async (id: string) => {
      if (role !== "CMLRE") throw new Error("Permission denied.");
-     // This is a simplified deletion. A robust implementation would check both archives.
      const datasetArchiveRef = ref(database, `archived-data/datasets/${id}`);
-     await remove(datasetArchiveRef);
      const submissionArchiveRef = ref(database, `archived-data/submissions/${id}`);
-     await remove(submissionArchiveRef);
+
+     const datasetSnapshot = await get(datasetArchiveRef);
+     if (datasetSnapshot.exists()) {
+        await remove(datasetArchiveRef);
+     }
+     
+     const submissionSnapshot = await get(submissionArchiveRef);
+     if (submissionSnapshot.exists()) {
+       await remove(submissionArchiveRef);
+     }
   };
 
 
@@ -561,3 +579,4 @@ export function useAuth() {
   }
   return context;
 }
+
