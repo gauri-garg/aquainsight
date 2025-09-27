@@ -2,45 +2,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth, SpeciesData } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Database, FileText, UploadCloud } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip, YAxis } from "recharts";
-import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-
-const chartConfig = {
-  count: {
-    label: "Count",
-    color: "hsl(var(--chart-1))",
-  },
-} satisfies ChartConfig;
-
 
 export function UserDashboard() {
-  const { user, userDetails, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords, getSpeciesDistribution } = useAuth();
+  const { user, userDetails, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords } = useAuth();
   
   const [totalDatasets, setTotalDatasets] = useState(0);
   const [totalSubmissions, setTotalSubmissions] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [speciesData, setSpeciesData] = useState<SpeciesData[]>([]);
 
   useEffect(() => {
     if (user) {
       const fetchData = async () => {
-        const [datasetsCount, submissionsCount, recordsCount, speciesDist] = await Promise.all([
+        const [datasetsCount, submissionsCount, recordsCount] = await Promise.all([
           getTotalDatasets(),
           getUserSubmissionsCount(user.uid),
           getUserTotalRecords(user.uid),
-          getSpeciesDistribution(),
         ]);
         setTotalDatasets(datasetsCount);
         setTotalSubmissions(submissionsCount);
         setTotalRecords(recordsCount);
-        setSpeciesData(speciesDist);
       };
       fetchData();
     }
-  }, [user, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords, getSpeciesDistribution]);
+  }, [user, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords]);
   
   const getTitle = () => {
     return `Welcome, ${userDetails?.fullName || user?.email || 'User'}!`;
@@ -104,26 +91,6 @@ export function UserDashboard() {
           </CardContent>
         </Card>
       </div>
-      
-      <Card>
-          <CardHeader>
-            <CardTitle>Species Distribution</CardTitle>
-            <CardDescription>
-              A summary of the top species found across all approved datasets.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart accessibilityLayer data={speciesData} layout="vertical" margin={{ left: 20, right: 20 }}>
-                <CartesianGrid horizontal={false} />
-                <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} width={120} />
-                <XAxis type="number" />
-                <Tooltip cursor={{ fill: "hsl(var(--muted))" }} content={<ChartTooltipContent indicator="dot" />} />
-                <Bar dataKey="count" fill="var(--color-count)" radius={4} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
     </div>
   );
 }

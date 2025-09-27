@@ -123,7 +123,6 @@ interface AuthContextType {
   permanentlyDeleteSubmission: (id: string, type: 'Dataset' | 'Submission') => Promise<void>;
   getUserSubmissionsCount: (userId: string) => Promise<number>;
   getUserTotalRecords: (userId: string) => Promise<number>;
-  getSpeciesDistribution: () => Promise<SpeciesData[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -664,44 +663,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return acc + (rowCount > 0 ? rowCount : 0);
     }, 0);
   };
-  
-  const getSpeciesDistribution = async (): Promise<SpeciesData[]> => {
-    const snapshot = await get(ref(database, 'datasets'));
-    if (!snapshot.exists()) {
-        return [];
-    }
-    const datasets = snapshot.val();
-    const speciesCount: { [key: string]: number } = {};
-
-    Object.values<Dataset>(datasets).forEach(sub => {
-      if (sub.csvData) {
-        const lines = sub.csvData.trim().split('\n');
-        if (lines.length < 2) return;
-
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const speciesIndex = headers.findIndex(h => h.includes('species'));
-
-        if (speciesIndex !== -1) {
-          for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',');
-            const speciesName = values[speciesIndex]?.trim();
-            if (speciesName) {
-              speciesCount[speciesName] = (speciesCount[speciesName] || 0) + 1;
-            }
-          }
-        }
-      }
-    });
-
-    return Object.entries(speciesCount)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10); // Return top 10 for better visualization
-  }
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords, getSpeciesDistribution }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords }}>
       {children}
     </AuthContext.Provider>
   );
@@ -721,6 +686,7 @@ export function useAuth() {
 
 
     
+
 
 
 
