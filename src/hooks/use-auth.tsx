@@ -106,6 +106,7 @@ interface AuthContextType {
   deleteRequestedDataset: (id: string, userId: string) => Promise<void>;
   getUserNotifications: (userId: string, callback: (notifications: Notification[]) => void) => () => void;
   markNotificationsAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
   getTotalDatasets: () => Promise<number>;
   getTotalUsers: () => Promise<UserDetails[]>;
   getTotalRecords: () => Promise<number>;
@@ -460,6 +461,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteNotification = async (notificationId: string) => {
+    if (!user) throw new Error("Not authenticated");
+    await remove(ref(database, `notifications/${user.uid}/${notificationId}`));
+  };
+
   const getDatasetById = async (id: string): Promise<Dataset | null> => {
     const snapshot = await get(child(ref(database), `datasets/${id}`));
     if (snapshot.exists()) {
@@ -598,7 +604,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission }}>
       {children}
     </AuthContext.Provider>
   );

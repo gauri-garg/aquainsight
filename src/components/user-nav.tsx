@@ -30,7 +30,7 @@ import {
 import { useAuth, Notification } from "@/hooks/use-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, Loader2, PackageX, CircleCheck, CircleX, FilePlus } from "lucide-react";
+import { Bell, Loader2, PackageX, CircleCheck, CircleX, FilePlus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -38,7 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "./ui/badge";
 
 export function UserNav() {
-  const { user, role, userDetails, logout, deleteUserAccount, getUserNotifications, markNotificationsAsRead } = useAuth();
+  const { user, role, userDetails, logout, deleteUserAccount, getUserNotifications, markNotificationsAsRead, deleteNotification } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -156,7 +156,7 @@ export function UserNav() {
             <div className="p-2">
               {notifications.length > 0 ? (
                 notifications.map((notif) => (
-                  <div key={notif.id} className="flex items-start gap-3 p-2 rounded-lg">
+                  <div key={notif.id} className="group relative flex items-start gap-3 p-2 rounded-lg">
                     <NotificationIcon status={notif.status} />
                     <div className="flex-1">
                       <p className="text-sm font-medium capitalize">{notif.message}</p>
@@ -167,6 +167,17 @@ export function UserNav() {
                          {new Date(notif.date).toLocaleString()}
                       </p>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notif.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
                   </div>
                 ))
               ) : (
@@ -240,7 +251,7 @@ export function UserNav() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.targe.value)}
               placeholder="Enter your password"
               disabled={isDeleting}
             />
