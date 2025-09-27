@@ -383,15 +383,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const approveDatasetRequest = async (request: RequestedDataset) => {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
-    
-    // Copy the dataset to the main 'datasets' collection
-    const { id, status, ...datasetData } = request;
-    const datasetsRef = ref(database, "datasets");
-    const newDatasetRef = push(datasetsRef);
-    await set(newDatasetRef, datasetData);
 
     // Update the status of the original request
-    await update(ref(database, `requested-data/${id}`), { status: 'approved' });
+    await update(ref(database, `requested-data/${request.id}`), { status: 'approved' });
     
     // Send a notification to the user who submitted it
     const newNotifRef = push(ref(database, `notifications/${request.userId}`));
