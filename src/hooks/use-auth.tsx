@@ -98,6 +98,7 @@ interface AuthContextType {
   getTotalDatasets: () => Promise<number>;
   getTotalUsers: () => Promise<UserDetails[]>;
   getTotalRecords: () => Promise<number>;
+  clearSubmissionHistory: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -470,10 +471,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return acc + (rowCount > 0 ? rowCount : 0);
     }, 0);
   };
+  
+  const clearSubmissionHistory = async () => {
+    if (role !== "CMLRE") throw new Error("Permission denied.");
+
+    const requestedDataRef = ref(database, 'requested-data');
+    const snapshot = await get(requestedDataRef);
+
+    if (snapshot.exists()) {
+        const dataToMove = snapshot.val();
+
+        // Use update to merge with existing archived data
+        const archiveRef = ref(database, 'archived-data');
+        await update(archiveRef, dataToMove);
+        
+        await remove(requestedDataRef);
+    }
+  };
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, getTotalDatasets, getTotalUsers, getTotalRecords }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory }}>
       {children}
     </AuthContext.Provider>
   );

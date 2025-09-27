@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Eye, CircleCheck, CircleX, CircleHelp } from "lucide-react";
+import { Loader2, Eye, CircleCheck, CircleX, CircleHelp, Archive } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -59,18 +59,22 @@ export default function DataApprovalPage() {
     getRequestedDatasets,
     approveDatasetRequest,
     rejectDatasetRequest,
+    clearSubmissionHistory,
   } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [requests, setRequests] = useState<RequestedDataset[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
   
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [requestToReject, setRequestToReject] = useState<RequestedDataset | null>(null);
   
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [requestToApprove, setRequestToApprove] = useState<RequestedDataset | null>(null);
+  
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
 
   const fetchRequests = async () => {
     try {
@@ -141,6 +145,27 @@ export default function DataApprovalPage() {
       setRequestToReject(null);
     }
   };
+  
+  const handleArchive = async () => {
+    setIsArchiving(true);
+    try {
+      await clearSubmissionHistory();
+      toast({
+        title: "History Cleared",
+        description: "All submission records have been archived.",
+      });
+      fetchRequests();
+    } catch (error: any) {
+      toast({
+        title: "Archiving Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsArchiving(false);
+      setShowArchiveDialog(false);
+    }
+  }
 
   const confirmApprove = (request: RequestedDataset) => {
     setRequestToApprove(request);
@@ -168,11 +193,21 @@ export default function DataApprovalPage() {
     <>
       <div className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Data Approval Queue</CardTitle>
-            <CardDescription>
-              Review and approve or reject dataset submissions from users.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Data Approval Queue</CardTitle>
+              <CardDescription>
+                Review and approve or reject dataset submissions from users.
+              </CardDescription>
+            </div>
+             <Button 
+                variant="outline" 
+                onClick={() => setShowArchiveDialog(true)}
+                disabled={isArchiving || requests.length === 0}
+            >
+              <Archive className="mr-2 h-4 w-4" />
+              Clear History
+            </Button>
           </CardHeader>
           <CardContent>
             <Table>
@@ -313,6 +348,32 @@ export default function DataApprovalPage() {
                 </>
               ) : (
                 "Confirm Reject"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to clear history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will archive all current submission records and clear this list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isArchiving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleArchive}
+              disabled={isArchiving}
+            >
+              {isArchiving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Archiving...
+                </>
+              ) : (
+                "Confirm Archive"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
