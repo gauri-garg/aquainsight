@@ -46,7 +46,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 
 export function CMLREDashboard() {
-  const { getTotalDatasets, getTotalUsers, getTotalRecords, getRequestedDatasets } = useAuth();
+  const { getTotalDatasets, getTotalUsers, getTotalRecords, getAllApprovedSubmissions, getRequestedDatasets } = useAuth();
 
   const [totalDatasets, setTotalDatasets] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -57,10 +57,11 @@ export function CMLREDashboard() {
   
   useEffect(() => {
     const fetchData = async () => {
-      const [datasetsCount, users, recordsCount, requestedData] = await Promise.all([
+      const [datasetsCount, users, recordsCount, approvedSubmissions, requestedData] = await Promise.all([
         getTotalDatasets(),
         getTotalUsers(),
         getTotalRecords(),
+        getAllApprovedSubmissions(),
         getRequestedDatasets(),
       ]);
 
@@ -77,7 +78,6 @@ export function CMLREDashboard() {
       setTotalUsers(users.length);
 
       setTotalRecords(recordsCount);
-      const approvedSubmissions = submissions.filter(s => s.status === 'approved');
       setRecentSubmissions(approvedSubmissions);
       
       const now = new Date();
@@ -85,11 +85,14 @@ export function CMLREDashboard() {
       const startOfLastMonth = startOfMonth(subMonths(now, 1));
       const endOfLastMonth = endOfMonth(subMonths(now, 1));
 
-      const recordsThisMonth = submissions
+      const allSubmissions = [...submissions, ...approvedSubmissions];
+      const uniqueSubmissions = Array.from(new Map(allSubmissions.map(item => [item.id, item])).values());
+
+      const recordsThisMonth = uniqueSubmissions
         .filter(s => new Date(s.date) >= startOfThisMonth)
         .reduce((acc, s) => acc + (s.csvData.split('\n').length -1), 0);
 
-      const recordsLastMonth = submissions
+      const recordsLastMonth = uniqueSubmissions
         .filter(s => {
             const subDate = new Date(s.date);
             return subDate >= startOfLastMonth && subDate <= endOfLastMonth;
@@ -104,7 +107,7 @@ export function CMLREDashboard() {
     };
 
     fetchData();
-  }, [getTotalDatasets, getTotalUsers, getTotalRecords, getRequestedDatasets]);
+  }, [getTotalDatasets, getTotalUsers, getTotalRecords, getAllApprovedSubmissions, getRequestedDatasets]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -172,7 +175,7 @@ export function CMLREDashboard() {
           <CardHeader>
             <CardTitle>Recent Submissions</CardTitle>
             <CardDescription>
-              New datasets pending review.
+              All approved submissions.
             </CardDescription>
           </CardHeader>
           <CardContent>

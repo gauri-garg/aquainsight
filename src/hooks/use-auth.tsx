@@ -103,6 +103,7 @@ interface AuthContextType {
   updateDataset: (id: string, updates: Partial<Dataset>) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
   getRequestedDatasets: () => Promise<{ datasets: RequestedDataset[]; pendingCount: number }>;
+  getAllApprovedSubmissions: () => Promise<RequestedDataset[]>;
   approveDatasetRequest: (request: RequestedDataset) => Promise<RequestedDataset>;
   rejectDatasetRequest: (request: RequestedDataset) => Promise<RequestedDataset>;
   deleteRequestedDataset: (id: string, userId: string) => Promise<void>;
@@ -629,10 +630,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(`Archived item not found for ID: ${id}`);
     }
   };
+  
+  const getAllApprovedSubmissions = async (): Promise<RequestedDataset[]> => {
+    const activePromise = new Promise<RequestedDataset[]>((resolve, reject) => {
+      const activeRef = query(ref(database, 'requested-data'), orderByChild('status'), equalTo('approved'));
+      onValue(activeRef, snapshot => {
+        if (!snapshot.exists()) return resolve([]);
+        const data = snapshot.val();
+        resolve(Object.keys(data).map(key => ({ id: key, ...data[key] })));
+      }, reject, { onlyOnce: true });
+    });
+
+    const archivedPromise = new Promise<RequestedDataset[]>((resolve, reject) => {
+      const archivedRef = query(ref(database, 'archived-data/submissions'), orderByChild('status'), equalTo('approved'));
+      onValue(archivedRef, snapshot => {
+        if (!snapshot.exists()) return resolve([]);
+        const data = snapshot.val();
+        resolve(Object.keys(data).map(key => ({ id: key, ...data[key] })));
+      }, reject, { onlyOnce: true });
+    });
+
+    const [active, archived] = await Promise.all([activePromise, archivedPromise]);
+    const combined = [...active, ...archived];
+    const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+    
+    return unique.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission }}>
       {children}
     </AuthContext.Provider>
   );
@@ -652,3 +679,4 @@ export function useAuth() {
 
 
     
+
