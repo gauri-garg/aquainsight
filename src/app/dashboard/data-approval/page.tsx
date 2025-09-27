@@ -78,7 +78,7 @@ export default function DataApprovalPage() {
 
   const fetchRequests = async () => {
     try {
-      const fetchedRequests = await getRequestedDatasets();
+      const { datasets: fetchedRequests } = await getRequestedDatasets();
       setRequests(fetchedRequests);
     } catch (error: any) {
       toast({
