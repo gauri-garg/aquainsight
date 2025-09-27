@@ -65,8 +65,12 @@ export default function DataApprovalPage() {
   const [requests, setRequests] = useState<RequestedDataset[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [requestToReject, setRequestToReject] = useState<RequestedDataset | null>(null);
+  
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [requestToApprove, setRequestToApprove] = useState<RequestedDataset | null>(null);
 
   const fetchRequests = async () => {
     try {
@@ -89,16 +93,16 @@ export default function DataApprovalPage() {
     } else if (role) {
       fetchRequests();
     }
-  }, [role, router, toast]);
+  }, [role, router]);
 
-  const handleApprove = async (request: RequestedDataset) => {
-    if (!request.id) return;
-    setProcessingId(request.id);
+  const handleApprove = async () => {
+    if (!requestToApprove || !requestToApprove.id) return;
+    setProcessingId(requestToApprove.id);
     try {
-      await approveDatasetRequest(request);
+      await approveDatasetRequest(requestToApprove);
       toast({
         title: "Dataset Approved",
-        description: `"${request.name}" has been added to the main datasets.`,
+        description: `"${requestToApprove.name}" has been added to the main datasets.`,
       });
       fetchRequests(); // Refetch to update status
     } catch (error: any) {
@@ -109,6 +113,8 @@ export default function DataApprovalPage() {
       });
     } finally {
       setProcessingId(null);
+      setShowApproveDialog(false);
+      setRequestToApprove(null);
     }
   };
 
@@ -135,6 +141,11 @@ export default function DataApprovalPage() {
       setRequestToReject(null);
     }
   };
+
+  const confirmApprove = (request: RequestedDataset) => {
+    setRequestToApprove(request);
+    setShowApproveDialog(true);
+  }
 
   const confirmReject = (request: RequestedDataset) => {
     setRequestToReject(request);
@@ -212,7 +223,7 @@ export default function DataApprovalPage() {
                                 <Button
                                 size="sm"
                                 variant="secondary"
-                                onClick={() => handleApprove(request)}
+                                onClick={() => confirmApprove(request)}
                                 disabled={processingId === request.id}
                                 >
                                 {processingId === request.id ? (
@@ -254,6 +265,32 @@ export default function DataApprovalPage() {
           </CardContent>
         </Card>
       </div>
+      <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will approve the dataset &quot;{requestToApprove?.name}&quot; and add it to the public datasets. The user will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!processingId}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleApprove}
+              disabled={!!processingId}
+            >
+              {processingId === requestToApprove?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Approving...
+                </>
+              ) : (
+                "Confirm Approve"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
