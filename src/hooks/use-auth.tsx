@@ -116,6 +116,8 @@ interface AuthContextType {
   clearSubmissionHistory: () => Promise<void>;
   getArchivedData: () => Promise<ArchivedSubmission[]>;
   permanentlyDeleteSubmission: (id: string, type: 'Dataset' | 'Submission') => Promise<void>;
+  getUserSubmissionsCount: (userId: string) => Promise<number>;
+  getUserTotalRecords: (userId: string) => Promise<number>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -643,9 +645,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unique.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
+  const getUserSubmissionsCount = async (userId: string): Promise<number> => {
+    const submissions = await getRequestedDatasetsByUserId(userId);
+    return submissions.length;
+  };
+  
+  const getUserTotalRecords = async (userId: string): Promise<number> => {
+    const submissions = await getRequestedDatasetsByUserId(userId);
+    const approvedSubmissions = submissions.filter(s => s.status === 'approved');
+    return approvedSubmissions.reduce((acc, ds) => {
+        const rowCount = (ds.csvData?.split('\n').length || 1) - 1;
+        return acc + (rowCount > 0 ? rowCount : 0);
+    }, 0);
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords }}>
       {children}
     </AuthContext.Provider>
   );
@@ -665,5 +681,6 @@ export function useAuth() {
 
 
     
+
 
 

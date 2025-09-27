@@ -3,37 +3,11 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { CMLREDashboard } from "./cmlre-dashboard";
+import { UserDashboard } from "./user-dashboard";
 import { Loader2 } from "lucide-react";
 
 export default function Dashboard() {
-  const { role, userDetails, loading } = useAuth();
-
-  const getTitle = () => {
-    switch (role) {
-      case "Student":
-        return `Welcome, ${userDetails?.fullName || 'Student'}!`;
-      case "Researcher":
-        return `Welcome, ${userDetails?.fullName || 'Researcher'}!`;
-      case "CMLRE":
-        // CMLRE will have its own component, but we can have a fallback
-        return "CMLRE Staff Dashboard";
-      default:
-        return "Dashboard";
-    }
-  };
-
-  const getDescription = () => {
-    switch (role) {
-      case "Student":
-        return "Explore datasets, submit your findings, and contribute to marine science.";
-      case "Researcher":
-        return "Access data, analyze trends, and collaborate with a community of scientists.";
-      case "CMLRE":
-        return "Manage datasets, review submissions, and oversee the platform's health.";
-      default:
-        return "Welcome to the AquaInsight platform.";
-    }
-  };
+  const { role, loading } = useAuth();
 
   if (loading) {
     return (
@@ -47,13 +21,17 @@ export default function Dashboard() {
     return <CMLREDashboard />;
   }
 
+  if (role === 'Student' || role === 'Researcher') {
+    return <UserDashboard />;
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center">
+    <div className="flex items-center justify-center h-full text-center">
       <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">
-        {getTitle()}
+        Welcome to AquaInsight
       </h1>
       <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mt-4">
-        {getDescription()}
+        Please contact support if your role is not assigned.
       </p>
     </div>
   );
