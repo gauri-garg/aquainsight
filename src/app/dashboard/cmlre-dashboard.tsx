@@ -80,20 +80,9 @@ export function CMLREDashboard() {
     fetchData();
   }, [getTotalDatasets, getTotalUsers, getTotalRecords, getRequestedDatasets]);
 
-  const submissionData = useMemo(() => {
-    const monthCounts = recentSubmissions.reduce((acc, sub) => {
-        const month = format(parseISO(sub.date), 'MMM yyyy');
-        acc[month] = (acc[month] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(monthCounts).map(([name, total]) => ({ name, total })).reverse();
-  }, [recentSubmissions]);
-
-
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -130,6 +119,34 @@ export function CMLREDashboard() {
             <p className="text-xs text-muted-foreground">
               Estimated across all datasets
             </p>
+          </CardContent>
+        </Card>
+         <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+             <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Dataset</TableHead>
+                    <TableHead className="hidden text-right sm:table-cell">Date</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {recentSubmissions.slice(0,2).map((sub) => (
+                         <TableRow key={sub.id}>
+                            <TableCell>
+                                <div className="font-medium">{sub.name}</div>
+                                <div className="text-sm text-muted-foreground md:inline">
+                                    by {sub.submittedBy}
+                                </div>
+                            </TableCell>
+                            <TableCell className="hidden text-right sm:table-cell">{new Date(sub.date).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+             </Table>
           </CardContent>
         </Card>
       </div>
@@ -203,28 +220,6 @@ export function CMLREDashboard() {
           </CardContent>
         </Card>
       </div>
-
-       <Card>
-        <CardHeader>
-            <CardTitle>Submissions Over Time</CardTitle>
-            <CardDescription>Monthly dataset submission trends.</CardDescription>
-        </CardHeader>
-        <CardContent className="pl-2">
-            <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={submissionData}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                    dataKey="name"
-                    stroke="#888888"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    />
-                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-            </ResponsiveContainer>
-        </CardContent>
-       </Card>
     </div>
   );
 }
