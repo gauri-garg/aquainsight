@@ -12,15 +12,36 @@ import {
 import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
 import { DynamicDatasetNav } from "@/components/dataset-nav-dynamic";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { GlobalSearch } from "@/components/global-search";
+import { Badge } from "@/components/ui/badge";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { role } = useAuth();
+  const { role, getRequestedDatasets } = useAuth();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (role === 'CMLRE') {
+      const fetchPendingCount = async () => {
+        try {
+          const { datasets } = await getRequestedDatasets();
+          const pending = datasets.filter(d => d.status === 'pending');
+          setPendingCount(pending.length);
+        } catch (error) {
+          console.error("Failed to fetch pending count", error);
+        }
+      };
+      
+      const interval = setInterval(fetchPendingCount, 30000); // Poll every 30 seconds
+      fetchPendingCount();
+
+      return () => clearInterval(interval);
+    }
+  }, [role, getRequestedDatasets]);
 
   const SidebarNav = () => (
     <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
@@ -36,10 +57,13 @@ export default function DashboardLayout({
         <>
           <Link
             href="/dashboard/data-approval"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
           >
-            <CheckCheck className="h-4 w-4" />
-            Data Approvals
+            <div className="flex items-center gap-3">
+              <CheckCheck className="h-4 w-4" />
+              Data Approvals
+            </div>
+            {pendingCount > 0 && <Badge variant="destructive">{pendingCount}</Badge>}
           </Link>
           <Link
             href="/dashboard/datasets"
@@ -148,10 +172,13 @@ export default function DashboardLayout({
                   <>
                     <Link
                       href="/dashboard/data-approval"
-                      className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                      className="mx-[-0.65rem] flex items-center justify-between gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
                     >
-                      <CheckCheck className="h-5 w-5" />
-                      Data Approvals
+                      <div className="flex items-center gap-4">
+                        <CheckCheck className="h-5 w-5" />
+                        Data Approvals
+                      </div>
+                      {pendingCount > 0 && <Badge variant="destructive">{pendingCount}</Badge>}
                     </Link>
                     <Link
                       href="/dashboard/datasets"

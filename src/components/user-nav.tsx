@@ -30,7 +30,7 @@ import {
 import { useAuth, Notification } from "@/hooks/use-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, Loader2, PackageX, CircleCheck, CircleX } from "lucide-react";
+import { Bell, Loader2, PackageX, CircleCheck, CircleX, FilePlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -114,9 +114,16 @@ export function UserNav() {
             </div>
         )
     }
+    if (status === 'rejected') {
+        return (
+            <div className="bg-red-100 dark:bg-red-900/50 p-2 rounded-full">
+                <CircleX className="h-5 w-5 text-red-500" />
+            </div>
+        )
+    }
     return (
-        <div className="bg-red-100 dark:bg-red-900/50 p-2 rounded-full">
-            <CircleX className="h-5 w-5 text-red-500" />
+       <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-full">
+            <FilePlus className="h-5 w-5 text-blue-500" />
         </div>
     )
   }
@@ -152,7 +159,7 @@ export function UserNav() {
                   <div key={notif.id} className="flex items-start gap-3 p-2 rounded-lg">
                     <NotificationIcon status={notif.status} />
                     <div className="flex-1">
-                      <p className="text-sm font-medium capitalize">Dataset {notif.status}</p>
+                      <p className="text-sm font-medium capitalize">{notif.message}</p>
                       <p className="text-sm text-muted-foreground truncate">
                         &quot;{notif.datasetName}&quot;
                       </p>

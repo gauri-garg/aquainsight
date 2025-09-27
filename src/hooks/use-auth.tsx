@@ -37,7 +37,7 @@ export interface Dataset {
   userId: string;
 }
 
-export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
+export type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'new';
 
 export interface RequestedDataset {
   id?: string;
@@ -67,13 +67,14 @@ export interface Notification {
   date: string;
   message: string;
   read: boolean;
-  status: 'approved' | 'rejected';
+  status: 'approved' | 'rejected' | 'new';
 }
 
 interface UserDetails {
   fullName?: string;
   approvedId?: string;
   role?: UserRole;
+  uid?: string;
 }
 interface AuthContextType {
   user: User | null;
@@ -99,7 +100,7 @@ interface AuthContextType {
   getRequestedDatasetsByUserId: (userId: string) => Promise<RequestedDataset[]>;
   updateDataset: (id: string, updates: Partial<Dataset>) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
-  getRequestedDatasets: () => Promise<RequestedDataset[]>;
+  getRequestedDatasets: () => Promise<{ datasets: RequestedDataset[]; pendingCount: number }>;
   approveDatasetRequest: (request: RequestedDataset) => Promise<void>;
   rejectDatasetRequest: (request: RequestedDataset) => Promise<void>;
   deleteRequestedDataset: (id: string, userId: string) => Promise<void>;
@@ -155,10 +156,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if(authUser) {
           return {
             fullName: details.fullName || authUser.displayName,
+            uid,
             ...details,
           }
         }
-        return details;
+        return {...details, uid};
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -291,6 +293,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const requestedDatasetsRef = ref(database, "requested-data");
     const newRequestedDatasetRef = push(requestedDatasetsRef);
     await set(newRequestedDatasetRef, {...dataset, status: 'pending'});
+
+    // Notify all CMLRE staff
+    const allUsers = await getTotalUsers();
+    const cmlreStaff = allUsers.filter(u => u.role === 'CMLRE');
+    
+    for (const staff of cmlreStaff) {
+      if (staff.uid) {
+        const newNotifRef = push(ref(database, `notifications/${staff.uid}`));
+        await set(newNotifRef, {
+          userId: staff.uid,
+          datasetName: dataset.name,
+          date: new Date().toISOString(),
+          message: 'New Submission',
+          read: false,
+          status: 'new'
+        });
+      }
+    }
   };
 
   const getAllDatasets = async (): Promise<Dataset[]> => {
@@ -313,7 +333,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
   
-  const getRequestedDatasets = async (): Promise<RequestedDataset[]> => {
+  const getRequestedDatasets = async (): Promise<{ datasets: RequestedDataset[]; pendingCount: number }> => {
     return new Promise((resolve, reject) => {
       const requestsRef = query(ref(database, 'requested-data'), orderByChild('date'));
       onValue(requestsRef, (snapshot) => {
@@ -323,9 +343,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: key,
             ...data[key]
           })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          resolve(requestsArray);
+          
+          const pendingCount = requestsArray.filter(r => r.status === 'pending').length;
+          
+          resolve({ datasets: requestsArray, pendingCount });
         } else {
-          resolve([]);
+          resolve({ datasets: [], pendingCount: 0 });
         }
       }, (error) => {
         reject(error);
@@ -370,7 +393,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId: request.userId,
       datasetName: request.name,
       date: new Date().toISOString(),
-      message: `Your dataset submission "${request.name}" has been approved.`,
+      message: `Dataset ${status}`,
       read: false,
       status: 'approved'
     });
@@ -384,7 +407,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId: request.userId,
       datasetName: request.name,
       date: new Date().toISOString(),
-      message: `Your dataset submission "${request.name}" was rejected.`,
+      message: `Dataset ${request.status}`,
       read: false,
       status: 'rejected',
     });
@@ -479,7 +502,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const getTotalUsers = async (): Promise<UserDetails[]> => {
     const snapshot = await get(ref(database, 'users'));
-    return snapshot.exists() ? Object.values(snapshot.val()) : [];
+    if (snapshot.exists()) {
+      const usersData = snapshot.val();
+      return Object.keys(usersData).map(uid => ({
+        uid,
+        ...usersData[uid]
+      }));
+    }
+    return [];
   };
 
   const getTotalRecords = async (): Promise<number> => {
