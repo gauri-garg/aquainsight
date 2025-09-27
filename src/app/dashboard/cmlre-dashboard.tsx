@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth, RequestedDataset, UserRole } from "@/hooks/use-auth";
 import Link from "next/link";
-import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell, ResponsiveContainer } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell, ResponsiveContainer, AreaChart, Area, Tooltip, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -23,7 +23,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Users, Database, FileText, TrendingUp, TrendingDown } from "lucide-react";
-import { format, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, subMonths, getMonth, getYear } from 'date-fns';
+import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 const COLORS = {
     'CMLRE': 'hsl(var(--chart-1))',
@@ -44,6 +45,13 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
+const chartConfig = {
+  submissions: {
+    label: "Submissions",
+    color: "hsl(var(--chart-1))",
+  },
+} satisfies ChartConfig;
+
 
 export function CMLREDashboard() {
   const { getTotalDatasets, getTotalUsers, getTotalRecords, getAllApprovedSubmissions, getRequestedDatasets } = useAuth();
@@ -54,6 +62,7 @@ export function CMLREDashboard() {
   const [recentSubmissions, setRecentSubmissions] = useState<RequestedDataset[]>([]);
   const [userRoleData, setUserRoleData] = useState<{name: UserRole, value: number}[]>([]);
   const [monthlyTrend, setMonthlyTrend] = useState({ recordsThisMonth: 0, percentageChange: 0 });
+  const [monthlyData, setMonthlyData] = useState<{ month: string, submissions: number }[]>([]);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -104,6 +113,32 @@ export function CMLREDashboard() {
         : recordsThisMonth > 0 ? 100 : 0;
         
       setMonthlyTrend({ recordsThisMonth, percentageChange });
+
+      // Aggregate data by month for the last year
+      const monthlyCounts: { [key: string]: number } = {};
+      const oneYearAgo = subMonths(now, 11);
+      oneYearAgo.setDate(1);
+
+      for (let i = 0; i < 12; i++) {
+          const date = subMonths(now, 11-i);
+          const monthKey = format(date, 'MMM yy');
+          monthlyCounts[monthKey] = 0;
+      }
+      
+      uniqueSubmissions.forEach(s => {
+        const subDate = new Date(s.date);
+        if (subDate >= oneYearAgo) {
+            const monthKey = format(subDate, 'MMM yy');
+            monthlyCounts[monthKey] = (monthlyCounts[monthKey] || 0) + 1;
+        }
+      });
+      
+      const chartData = Object.entries(monthlyCounts).map(([month, count]) => ({
+          month: month,
+          submissions: count,
+      }));
+
+      setMonthlyData(chartData);
     };
 
     fetchData();
@@ -170,6 +205,26 @@ export function CMLREDashboard() {
         </Card>
       </div>
 
+       <Card>
+        <CardHeader>
+          <CardTitle>Monthly Submissions</CardTitle>
+          <CardDescription>
+            A look at the total number of data submissions per month over the last year.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <AreaChart accessibilityLayer data={monthlyData} margin={{ left: 12, right: 12, top: 12 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+              <YAxis />
+              <Tooltip content={<ChartTooltipContent indicator="dot" />} />
+              <Area dataKey="submissions" type="natural" fill="var(--color-submissions)" fillOpacity={0.4} stroke="var(--color-submissions)" />
+            </AreaChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
@@ -187,7 +242,8 @@ export function CMLREDashboard() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {recentSubmissions.map((sub) => (
+                    {recentSubmissions.length > 0 ? (
+                      recentSubmissions.map((sub) => (
                          <TableRow key={sub.id}>
                             <TableCell>
                                 <div className="font-medium">{sub.name}</div>
@@ -197,7 +253,14 @@ export function CMLREDashboard() {
                             </TableCell>
                             <TableCell className="hidden text-right sm:table-cell">{new Date(sub.date).toLocaleDateString()}</TableCell>
                         </TableRow>
-                    ))}
+                      ))
+                    ) : (
+                       <TableRow>
+                          <TableCell colSpan={2} className="h-24 text-center">
+                            No approved submissions yet.
+                          </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
              </Table>
           </CardContent>
@@ -242,5 +305,7 @@ export function CMLREDashboard() {
     </div>
   );
 }
+
+    
 
     
