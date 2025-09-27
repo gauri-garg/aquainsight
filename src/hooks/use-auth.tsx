@@ -666,10 +666,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   
   const getSpeciesDistribution = async (): Promise<SpeciesData[]> => {
-    const approvedSubmissions = await getAllApprovedSubmissions();
+    const snapshot = await get(ref(database, 'datasets'));
+    if (!snapshot.exists()) {
+        return [];
+    }
+    const datasets = snapshot.val();
     const speciesCount: { [key: string]: number } = {};
 
-    approvedSubmissions.forEach(sub => {
+    Object.values<Dataset>(datasets).forEach(sub => {
       if (sub.csvData) {
         const lines = sub.csvData.trim().split('\n');
         if (lines.length < 2) return;
@@ -717,6 +721,7 @@ export function useAuth() {
 
 
     
+
 
 
 
