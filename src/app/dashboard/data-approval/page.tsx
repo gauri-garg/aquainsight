@@ -104,12 +104,12 @@ export default function DataApprovalPage() {
     if (!requestToApprove || !requestToApprove.id) return;
     setProcessingId(requestToApprove.id);
     try {
-      await approveDatasetRequest(requestToApprove);
+      const updatedRequest = await approveDatasetRequest(requestToApprove);
+      setRequests(prev => prev.map(r => r.id === updatedRequest.id ? updatedRequest : r));
       toast({
         title: "Dataset Approved",
-        description: `"${requestToApprove.name}" has been added to the main datasets.`,
+        description: `"${requestToApprove.name}" has been marked as approved.`,
       });
-      fetchRequests(); // Refetch to update status
     } catch (error: any) {
       toast({
         title: "Approval Failed",
@@ -127,13 +127,13 @@ export default function DataApprovalPage() {
     if (!requestToReject || !requestToReject.id) return;
     setProcessingId(requestToReject.id);
     try {
-      await rejectDatasetRequest(requestToReject);
+      const updatedRequest = await rejectDatasetRequest(requestToReject);
+      setRequests(prev => prev.map(r => r.id === updatedRequest.id ? updatedRequest : r));
       toast({
         title: "Dataset Rejected",
-        description: `"${requestToReject.name}" has been rejected and the user has been notified.`,
-        variant: "destructive",
+        description: `"${requestToReject.name}" has been marked as rejected.`,
+        variant: "default",
       });
-       fetchRequests(); // Refetch to update status
     } catch (error: any) {
       toast({
         title: "Rejection Failed",
@@ -204,7 +204,7 @@ export default function DataApprovalPage() {
              <Button 
                 variant="outline" 
                 onClick={() => setShowArchiveDialog(true)}
-                disabled={isArchiving || requests.length === 0}
+                disabled={isArchiving || requests.filter(r => r.status !== 'pending').length === 0}
             >
               <Archive className="mr-2 h-4 w-4" />
               Clear History
@@ -383,5 +383,3 @@ export default function DataApprovalPage() {
     </>
   );
 }
-
-    

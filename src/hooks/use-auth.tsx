@@ -103,8 +103,8 @@ interface AuthContextType {
   updateDataset: (id: string, updates: Partial<Dataset>) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
   getRequestedDatasets: () => Promise<{ datasets: RequestedDataset[]; pendingCount: number }>;
-  approveDatasetRequest: (request: RequestedDataset) => Promise<void>;
-  rejectDatasetRequest: (request: RequestedDataset) => Promise<void>;
+  approveDatasetRequest: (request: RequestedDataset) => Promise<RequestedDataset>;
+  rejectDatasetRequest: (request: RequestedDataset) => Promise<RequestedDataset>;
   deleteRequestedDataset: (id: string, userId: string) => Promise<void>;
   getUserNotifications: (userId: string, callback: (notifications: Notification[]) => void) => () => void;
   markNotificationsAsRead: () => Promise<void>;
@@ -405,9 +405,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unique.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
-  const approveDatasetRequest = async (request: RequestedDataset) => {
+  const approveDatasetRequest = async (request: RequestedDataset): Promise<RequestedDataset> => {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
 
+    const updatedRequest = { ...request, status: 'approved' as SubmissionStatus };
     await update(ref(database, `requested-data/${request.id}`), { status: 'approved' });
     
     const newNotifRef = push(ref(database, `notifications/${request.userId}`));
@@ -419,10 +420,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       read: false,
       status: 'approved'
     });
+    return updatedRequest;
   };
 
-  const rejectDatasetRequest = async (request: RequestedDataset) => {
+  const rejectDatasetRequest = async (request: RequestedDataset): Promise<RequestedDataset> => {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
+    
+    const updatedRequest = { ...request, status: 'rejected' as SubmissionStatus };
+    await update(ref(database, `requested-data/${request.id}`), { status: 'rejected' });
     
     const newNotifRef = push(ref(database, `notifications/${request.userId}`));
     await set(newNotifRef, {
@@ -434,7 +439,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status: 'rejected',
     });
 
-    await update(ref(database, `requested-data/${request.id}`), { status: 'rejected' });
+    return updatedRequest;
   };
   
   const deleteRequestedDataset = async (id: string, userId: string) => {
