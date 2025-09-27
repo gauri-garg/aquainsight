@@ -57,12 +57,14 @@ export function CMLREDashboard() {
   
   useEffect(() => {
     const fetchData = async () => {
-      const [datasetsCount, users, recordsCount, submissions] = await Promise.all([
+      const [datasetsCount, users, recordsCount, requestedData] = await Promise.all([
         getTotalDatasets(),
         getTotalUsers(),
         getTotalRecords(),
         getRequestedDatasets(),
       ]);
+
+      const { datasets: submissions } = requestedData;
 
       setTotalDatasets(datasetsCount);
       

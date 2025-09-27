@@ -28,9 +28,8 @@ export default function DashboardLayout({
     if (role === 'CMLRE') {
       const fetchPendingCount = async () => {
         try {
-          const { datasets } = await getRequestedDatasets();
-          const pending = datasets.filter(d => d.status === 'pending');
-          setPendingCount(pending.length);
+          const { pendingCount } = await getRequestedDatasets();
+          setPendingCount(pendingCount);
         } catch (error) {
           console.error("Failed to fetch pending count", error);
         }
@@ -246,3 +245,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+    
