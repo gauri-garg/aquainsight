@@ -384,10 +384,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const approveDatasetRequest = async (request: RequestedDataset) => {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
 
-    // Update the status of the original request
     await update(ref(database, `requested-data/${request.id}`), { status: 'approved' });
     
-    // Send a notification to the user who submitted it
     const newNotifRef = push(ref(database, `notifications/${request.userId}`));
     await set(newNotifRef, {
       userId: request.userId,
@@ -535,21 +533,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const snapshot = await get(requestedDataRef);
 
     if (snapshot.exists()) {
-        const dataToMove = snapshot.val();
-        
-        const archiveRef = ref(database, 'archived-data/submissions');
-        
-        const timestampedData = Object.keys(dataToMove).reduce((acc, key) => {
-            acc[key] = {
-                ...dataToMove[key],
-                archivedDate: new Date().toISOString(),
-            };
-            return acc;
-        }, {} as any);
+        const allSubmissions = snapshot.val();
+        const submissionsToArchive: { [key: string]: any } = {};
+        const submissionsToRemove: { [key: string]: null } = {};
 
-        await update(archiveRef, timestampedData);
+        for (const key in allSubmissions) {
+            const submission = allSubmissions[key];
+            if (submission.status === 'approved' || submission.status === 'rejected') {
+                submissionsToArchive[key] = {
+                    ...submission,
+                    archivedDate: new Date().toISOString(),
+                };
+                submissionsToRemove[key] = null; // Mark for deletion
+            }
+        }
         
-        await remove(requestedDataRef);
+        if (Object.keys(submissionsToArchive).length > 0) {
+          const archiveRef = ref(database, 'archived-data/submissions');
+          await update(archiveRef, submissionsToArchive);
+          await update(requestedDataRef, submissionsToRemove);
+        }
     }
   };
 
@@ -623,3 +626,4 @@ export function useAuth() {
 }
 
     
+
