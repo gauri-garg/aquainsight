@@ -78,7 +78,7 @@ export function CMLREDashboard() {
 
       setTotalRecords(recordsCount);
       const approvedSubmissions = submissions.filter(s => s.status === 'approved');
-      setRecentSubmissions(approvedSubmissions.slice(0, 5));
+      setRecentSubmissions(approvedSubmissions);
       
       const now = new Date();
       const startOfThisMonth = startOfMonth(now);
