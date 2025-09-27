@@ -251,7 +251,7 @@ export function UserNav() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.targe.value)}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               disabled={isDeleting}
             />

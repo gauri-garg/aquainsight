@@ -600,7 +600,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (snapshot.exists()) {
       await remove(archiveRef);
     } else {
-      throw new Error(`Archived ${type} not found at path: archived-data/${node}/${id}`);
+      // If it fails, maybe the type was wrong, try the other one. This is a fallback.
+      const otherNode = type === 'Dataset' ? 'submissions' : 'datasets';
+      const otherArchiveRef = ref(database, `archived-data/${otherNode}/${id}`);
+      const otherSnapshot = await get(otherArchiveRef);
+      if (otherSnapshot.exists()) {
+        await remove(otherArchiveRef);
+      } else {
+        throw new Error(`Archived item not found for ID: ${id}`);
+      }
     }
   };
 
