@@ -114,11 +114,11 @@ export function UserDashboard() {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart accessibilityLayer data={speciesData} layout="vertical" margin={{ left: 20, right: 20, top: 20, bottom: 20 }}>
+              <BarChart accessibilityLayer data={speciesData} layout="vertical" margin={{ left: 20, right: 20 }}>
                 <CartesianGrid horizontal={false} />
                 <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} width={120} />
-                <XAxis type="number" dataKey="count" />
-                <Tooltip content={<ChartTooltipContent />} />
+                <XAxis type="number" />
+                <Tooltip cursor={{ fill: "hsl(var(--muted))" }} content={<ChartTooltipContent indicator="dot" />} />
                 <Bar dataKey="count" fill="var(--color-count)" radius={4} />
               </BarChart>
             </ChartContainer>
