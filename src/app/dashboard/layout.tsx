@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Menu, FlaskConical, Database, BrainCircuit, Upload, CheckCheck, History } from "lucide-react";
+import { Home, Menu, FlaskConical, Database, BrainCircuit, Upload, CheckCheck, History, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -47,6 +47,13 @@ export default function DashboardLayout({
           >
             <Database className="h-4 w-4" />
             Manage Datasets
+          </Link>
+          <Link
+            href="/dashboard/archived-data"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+          >
+            <Archive className="h-4 w-4" />
+            Archived Data
           </Link>
         </>
       )}
@@ -152,6 +159,13 @@ export default function DashboardLayout({
                     >
                       <Database className="h-5 w-5" />
                       Manage Datasets
+                    </Link>
+                    <Link
+                      href="/dashboard/archived-data"
+                      className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <Archive className="h-5 w-5" />
+                      Archived Data
                     </Link>
                   </>
                 )}

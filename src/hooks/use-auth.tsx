@@ -50,6 +50,16 @@ export interface RequestedDataset {
   status: SubmissionStatus;
 }
 
+export interface ArchivedSubmission {
+  id: string;
+  name: string;
+  submittedBy: string;
+  date: string;
+  archivedDate: string;
+  status: SubmissionStatus;
+  originalId: string;
+}
+
 export interface Notification {
   id: string;
   userId: string;
@@ -99,6 +109,8 @@ interface AuthContextType {
   getTotalUsers: () => Promise<UserDetails[]>;
   getTotalRecords: () => Promise<number>;
   clearSubmissionHistory: () => Promise<void>;
+  getArchivedData: () => Promise<any[]>;
+  permanentlyDeleteSubmission: (archiveId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -454,7 +466,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (snapshot.exists()) {
       const dataToMove = snapshot.val();
-      const archiveRef = ref(database, `deleted-data/${id}`);
+      const archiveRef = ref(database, `archived-data/datasets/${id}`);
       await set(archiveRef, dataToMove);
       await remove(datasetRef);
     }
@@ -490,17 +502,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (snapshot.exists()) {
         const dataToMove = snapshot.val();
         
-        const archiveRef = ref(database, 'archived-data');
-        const newArchiveRef = push(archiveRef);
-        await set(newArchiveRef, dataToMove);
+        const archiveRef = ref(database, 'archived-data/submissions');
+        await update(archiveRef, dataToMove);
         
         await remove(requestedDataRef);
     }
   };
 
+  const getArchivedData = async (): Promise<any[]> => {
+    if (role !== "CMLRE") throw new Error("Permission denied.");
+    const archiveRef = ref(database, 'archived-data');
+    const snapshot = await get(archiveRef);
+    if (snapshot.exists()) {
+      const allArchives = snapshot.val();
+      const combined = [];
+      if (allArchives.datasets) {
+        combined.push(...Object.keys(allArchives.datasets).map(key => ({
+          id: key,
+          type: 'Dataset',
+          archivedDate: new Date().toISOString(), 
+          ...allArchives.datasets[key]
+        })));
+      }
+      if (allArchives.submissions) {
+         combined.push(...Object.keys(allArchives.submissions).map(key => ({
+          id: key,
+          type: 'Submission',
+          archivedDate: new Date().toISOString(),
+           ...allArchives.submissions[key]
+        })));
+      }
+      return combined.sort((a, b) => new Date(b.archivedDate).getTime() - new Date(a.archivedDate).getTime());
+    }
+    return [];
+  };
+  
+  const permanentlyDeleteSubmission = async (id: string) => {
+     if (role !== "CMLRE") throw new Error("Permission denied.");
+     // This is a simplified deletion. A robust implementation would check both archives.
+     const datasetArchiveRef = ref(database, `archived-data/datasets/${id}`);
+     await remove(datasetArchiveRef);
+     const submissionArchiveRef = ref(database, `archived-data/submissions/${id}`);
+     await remove(submissionArchiveRef);
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission }}>
       {children}
     </AuthContext.Provider>
   );
