@@ -345,11 +345,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const requestsArray = Object.keys(data).map(key => ({
             id: key,
             ...data[key]
-          })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          }));
           
-          const pendingCount = requestsArray.filter(r => r.status === 'pending').length;
+          const pendingSubmissions = requestsArray.filter(r => r.status === 'pending');
+          const pendingCount = pendingSubmissions.length;
           
-          resolve({ datasets: requestsArray, pendingCount });
+          if (pendingCount > 0) {
+            resolve({ datasets: requestsArray.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), pendingCount });
+          } else {
+            // If no pending, fetch approved from archives
+            const archivedRef = query(ref(database, 'archived-data/submissions'), orderByChild('status'), equalTo('approved'));
+            onValue(archivedRef, (archiveSnapshot) => {
+              if (archiveSnapshot.exists()) {
+                const archiveData = archiveSnapshot.val();
+                const archivedApproved = Object.keys(archiveData).map(key => ({
+                  id: key,
+                  ...archiveData[key]
+                })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                resolve({ datasets: archivedApproved, pendingCount: 0 });
+              } else {
+                resolve({ datasets: [], pendingCount: 0 });
+              }
+            }, (error) => reject(error), { onlyOnce: true });
+          }
         } else {
           resolve({ datasets: [], pendingCount: 0 });
         }
@@ -596,22 +614,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const permanentlyDeleteSubmission = async (id: string, type: 'Dataset' | 'Submission') => {
     if (role !== "CMLRE") throw new Error("Permission denied.");
     
-    const node = type === 'Dataset' ? 'datasets' : 'submissions';
+    const node = type.toLowerCase() + 's'; // 'datasets' or 'submissions'
     const archiveRef = ref(database, `archived-data/${node}/${id}`);
 
     const snapshot = await get(archiveRef);
     if (snapshot.exists()) {
       await remove(archiveRef);
     } else {
-      // If it fails, maybe the type was wrong, try the other one. This is a fallback.
-      const otherNode = type === 'Dataset' ? 'submissions' : 'datasets';
-      const otherArchiveRef = ref(database, `archived-data/${otherNode}/${id}`);
-      const otherSnapshot = await get(otherArchiveRef);
-      if (otherSnapshot.exists()) {
-        await remove(otherArchiveRef);
-      } else {
         throw new Error(`Archived item not found for ID: ${id}`);
-      }
     }
   };
 
@@ -634,3 +644,6 @@ export function useAuth() {
     
 
 
+
+
+    
