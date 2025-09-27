@@ -77,7 +77,8 @@ export function CMLREDashboard() {
       setTotalUsers(users.length);
 
       setTotalRecords(recordsCount);
-      setRecentSubmissions(submissions.slice(0, 5));
+      const pendingSubmissions = submissions.filter(s => s.status === 'pending');
+      setRecentSubmissions(pendingSubmissions.slice(0, 5));
       
       const now = new Date();
       const startOfThisMonth = startOfMonth(now);
