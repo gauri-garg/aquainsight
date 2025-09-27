@@ -1,22 +1,30 @@
 
-
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth, SubmissionStatusCounts, SubmissionStatus } from "@/hooks/use-auth";
+import { useAuth, SubmissionStatusCounts, SubmissionStatus, MonthlySubmission } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Database, FileText, UploadCloud, Layers } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
+import { Database, FileText, UploadCloud, Layers, BarChart } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+
+const chartConfig = {
+  submissions: {
+    label: "Submissions",
+    color: "hsl(var(--chart-1))",
+  },
+} satisfies ChartConfig;
 
 
 export function UserDashboard() {
-  const { user, userDetails, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords, getTotalRecords, getUserSubmissionsStatusCounts } = useAuth();
+  const { user, userDetails, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords, getTotalRecords, getUserSubmissionsStatusCounts, getUserSubmissionHistory } = useAuth();
   
   const [totalDatasets, setTotalDatasets] = useState(0);
   const [totalSubmissions, setTotalSubmissions] = useState(0);
   const [userTotalRecords, setUserTotalRecords] = useState(0);
   const [platformTotalRecords, setPlatformTotalRecords] = useState(0);
   const [submissionStatusData, setSubmissionStatusData] = useState<{name: string, value: number}[]>([]);
+  const [submissionHistory, setSubmissionHistory] = useState<MonthlySubmission[]>([]);
 
 
   const STATUS_COLORS: Record<SubmissionStatus, string> = {
@@ -29,17 +37,19 @@ export function UserDashboard() {
   useEffect(() => {
     if (user) {
       const fetchData = async () => {
-        const [datasetsCount, submissionsCount, userRecordsCount, platformRecordsCount, statusCounts] = await Promise.all([
+        const [datasetsCount, submissionsCount, userRecordsCount, platformRecordsCount, statusCounts, history] = await Promise.all([
           getTotalDatasets(),
           getUserSubmissionsCount(user.uid),
           getUserTotalRecords(user.uid),
           getTotalRecords(),
           getUserSubmissionsStatusCounts(user.uid),
+          getUserSubmissionHistory(user.uid),
         ]);
         setTotalDatasets(datasetsCount);
         setTotalSubmissions(submissionsCount);
         setUserTotalRecords(userRecordsCount);
         setPlatformTotalRecords(platformRecordsCount);
+        setSubmissionHistory(history);
         
         if (statusCounts.total > 0) {
             const chartData = Object.entries(statusCounts)
@@ -53,7 +63,7 @@ export function UserDashboard() {
       };
       fetchData();
     }
-  }, [user, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords, getTotalRecords, getUserSubmissionsStatusCounts]);
+  }, [user, getTotalDatasets, getUserSubmissionsCount, getUserTotalRecords, getTotalRecords, getUserSubmissionsStatusCounts, getUserSubmissionHistory]);
   
   const getTitle = () => {
     return `Welcome, ${userDetails?.fullName || user?.email || 'User'}!`;
@@ -170,6 +180,30 @@ export function UserDashboard() {
                         <p>No submission data to display yet.</p>
                     </div>
                 )}
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Your Submission Activity</CardTitle>
+                <CardDescription>A look at your submissions over the last year.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 {submissionHistory.length > 0 ? (
+                    <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                        <AreaChart accessibilityLayer data={submissionHistory} margin={{ left: 12, right: 12, top: 12 }}>
+                            <CartesianGrid vertical={false} />
+                            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip content={<ChartTooltipContent indicator="dot" />} />
+                            <Area dataKey="submissions" type="natural" fill="var(--color-submissions)" fillOpacity={0.4} stroke="var(--color-submissions)" />
+                        </AreaChart>
+                    </ChartContainer>
+                 ) : (
+                    <div className="flex h-[250px] items-center justify-center text-muted-foreground">
+                        <BarChart className="h-6 w-6 mr-2" />
+                        <p>No submission activity in the last year.</p>
+                    </div>
+                 )}
             </CardContent>
         </Card>
       </div>

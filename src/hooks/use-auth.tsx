@@ -24,6 +24,7 @@ import {
   deleteUser,
 } from "firebase/auth";
 import { ref, set, get, child, update, remove, push, onValue, query, orderByChild, equalTo } from "firebase/database";
+import { format, subMonths } from 'date-fns';
 
 
 export type UserRole = "CMLRE" | "Researcher" | "Student";
@@ -89,6 +90,12 @@ export type SubmissionStatusCounts = {
 } & {
     total: number;
 }
+
+export interface MonthlySubmission {
+  month: string;
+  submissions: number;
+}
+
 interface AuthContextType {
   user: User | null;
   role: UserRole | null;
@@ -130,6 +137,7 @@ interface AuthContextType {
   getUserSubmissionsCount: (userId: string) => Promise<number>;
   getUserTotalRecords: (userId: string) => Promise<number>;
   getUserSubmissionsStatusCounts: (userId: string) => Promise<SubmissionStatusCounts>;
+  getUserSubmissionHistory: (userId: string) => Promise<MonthlySubmission[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -680,9 +688,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ...counts, total: submissions.length };
   };
 
+  const getUserSubmissionHistory = async (userId: string): Promise<MonthlySubmission[]> => {
+    const submissions = await getRequestedDatasetsByUserId(userId);
+    const now = new Date();
+    const monthlyCounts: { [key: string]: number } = {};
+
+    for (let i = 0; i < 12; i++) {
+        const date = subMonths(now, 11 - i);
+        const monthKey = format(date, 'MMM yy');
+        monthlyCounts[monthKey] = 0;
+    }
+    
+    submissions.forEach(s => {
+      const subDate = new Date(s.date);
+      const oneYearAgo = subMonths(now, 11);
+      oneYearAgo.setDate(1);
+
+      if (subDate >= oneYearAgo) {
+          const monthKey = format(subDate, 'MMM yy');
+          if (monthlyCounts.hasOwnProperty(monthKey)) {
+             monthlyCounts[monthKey]++;
+          }
+      }
+    });
+    
+    return Object.entries(monthlyCounts).map(([month, count]) => ({
+        month: month,
+        submissions: count,
+    }));
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords, getUserSubmissionsStatusCounts }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords, getUserSubmissionsStatusCounts, getUserSubmissionHistory }}>
       {children}
     </AuthContext.Provider>
   );
@@ -695,19 +733,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
