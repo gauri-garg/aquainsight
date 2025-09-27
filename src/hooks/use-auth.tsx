@@ -63,6 +63,7 @@ export interface Notification {
 interface UserDetails {
   fullName?: string;
   approvedId?: string;
+  role?: UserRole;
 }
 interface AuthContextType {
   user: User | null;
@@ -94,6 +95,9 @@ interface AuthContextType {
   deleteRequestedDataset: (id: string, userId: string) => Promise<void>;
   getUserNotifications: (userId: string, callback: (notifications: Notification[]) => void) => () => void;
   markNotificationsAsRead: () => Promise<void>;
+  getTotalDatasets: () => Promise<number>;
+  getTotalUsers: () => Promise<UserDetails[]>;
+  getTotalRecords: () => Promise<number>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -342,15 +346,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (role !== "CMLRE" || !request.id) throw new Error("Permission denied.");
     const { id, status, ...datasetData } = request;
     
-    // Add to main datasets
     const datasetsRef = ref(database, "datasets");
     const newDatasetRef = push(datasetsRef);
     await set(newDatasetRef, datasetData);
 
-    // Update status of request
     await update(ref(database, `requested-data/${id}`), { status: 'approved' });
     
-    // Send notification
     const newNotifRef = push(ref(database, `notifications/${request.userId}`));
     await set(newNotifRef, {
       userId: request.userId,
@@ -449,9 +450,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await remove(ref(database, `datasets/${id}`));
   };
 
+  const getTotalDatasets = async (): Promise<number> => {
+    const snapshot = await get(ref(database, 'datasets'));
+    return snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+  }
+  
+  const getTotalUsers = async (): Promise<UserDetails[]> => {
+    const snapshot = await get(ref(database, 'users'));
+    return snapshot.exists() ? Object.values(snapshot.val()) : [];
+  };
+
+  const getTotalRecords = async (): Promise<number> => {
+    const snapshot = await get(ref(database, 'datasets'));
+    if (!snapshot.exists()) return 0;
+    const datasets = snapshot.val();
+    return Object.values<Dataset>(datasets).reduce((acc, ds) => {
+        // -1 for header row
+        const rowCount = (ds.csvData?.split('\n').length || 1) - 1;
+        return acc + (rowCount > 0 ? rowCount : 0);
+    }, 0);
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, getTotalDatasets, getTotalUsers, getTotalRecords }}>
       {children}
     </AuthContext.Provider>
   );
