@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth, RequestedDataset, UserRole } from "@/hooks/use-auth";
 import Link from "next/link";
-import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell, ResponsiveContainer, AreaChart, Area, Tooltip, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell, ResponsiveContainer, AreaChart, Area, Tooltip, YAxis, ScatterChart, Scatter, Label } from "recharts";
 import {
   Card,
   CardContent,
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, Users, Database, FileText, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowUpRight, Users, Database, FileText, TrendingUp, TrendingDown, MapPin } from "lucide-react";
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, getMonth, getYear } from 'date-fns';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
@@ -50,6 +50,10 @@ const chartConfig = {
     label: "Submissions",
     color: "hsl(var(--chart-1))",
   },
+   locations: {
+    label: "Locations",
+    color: "hsl(var(--chart-2))",
+  },
 } satisfies ChartConfig;
 
 
@@ -63,7 +67,8 @@ export function CMLREDashboard() {
   const [userRoleData, setUserRoleData] = useState<{name: UserRole, value: number}[]>([]);
   const [monthlyTrend, setMonthlyTrend] = useState({ recordsThisMonth: 0, percentageChange: 0 });
   const [monthlyData, setMonthlyData] = useState<{ month: string, submissions: number }[]>([]);
-  
+  const [locationData, setLocationData] = useState<{ lat: number, lon: number }[]>([]);
+
   useEffect(() => {
     const fetchData = async () => {
       const [datasetsCount, users, recordsCount, approvedSubmissions, requestedData] = await Promise.all([
@@ -96,6 +101,33 @@ export function CMLREDashboard() {
 
       const allSubmissions = [...submissions, ...approvedSubmissions];
       const uniqueSubmissions = Array.from(new Map(allSubmissions.map(item => [item.id, item])).values());
+      
+      const allApproved = uniqueSubmissions.filter(s => s.status === 'approved');
+
+      // Process location data from all approved submissions
+      const locations: { lat: number; lon: number }[] = [];
+      allApproved.forEach(sub => {
+        if (sub.csvData) {
+          const lines = sub.csvData.trim().split('\n');
+          if (lines.length < 2) return;
+          const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+          const latIndex = headers.findIndex(h => h.includes('lat'));
+          const lonIndex = headers.findIndex(h => h.includes('lon'));
+
+          if (latIndex !== -1 && lonIndex !== -1) {
+            for (let i = 1; i < lines.length; i++) {
+              const values = lines[i].split(',');
+              const lat = parseFloat(values[latIndex]);
+              const lon = parseFloat(values[lonIndex]);
+              if (!isNaN(lat) && !isNaN(lon)) {
+                locations.push({ lat, lon });
+              }
+            }
+          }
+        }
+      });
+      setLocationData(locations);
+
 
       const recordsThisMonth = uniqueSubmissions
         .filter(s => new Date(s.date) >= startOfThisMonth)
@@ -205,25 +237,49 @@ export function CMLREDashboard() {
         </Card>
       </div>
 
-       <Card>
-        <CardHeader>
-          <CardTitle>Monthly Submissions</CardTitle>
-          <CardDescription>
-            A look at the total number of data submissions per month over the last year.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[250px] w-full">
-            <AreaChart accessibilityLayer data={monthlyData} margin={{ left: 12, right: 12, top: 12 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
-              <YAxis />
-              <Tooltip content={<ChartTooltipContent indicator="dot" />} />
-              <Area dataKey="submissions" type="natural" fill="var(--color-submissions)" fillOpacity={0.4} stroke="var(--color-submissions)" />
-            </AreaChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Submissions</CardTitle>
+              <CardDescription>
+                A look at the total number of data submissions per month over the last year.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <AreaChart accessibilityLayer data={monthlyData} margin={{ left: 12, right: 12, top: 12 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                  <YAxis />
+                  <Tooltip content={<ChartTooltipContent indicator="dot" />} />
+                  <Area dataKey="submissions" type="natural" fill="var(--color-submissions)" fillOpacity={0.4} stroke="var(--color-submissions)" />
+                </AreaChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+                <CardTitle>Geographic Distribution</CardTitle>
+                <CardDescription>A scatter plot of data points by latitude and longitude.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                        <CartesianGrid />
+                        <XAxis type="number" dataKey="lon" name="longitude" domain={['auto', 'auto']}>
+                           <Label value="Longitude" offset={-15} position="insideBottom" />
+                        </XAxis>
+                        <YAxis type="number" dataKey="lat" name="latitude" domain={['auto', 'auto']}>
+                           <Label value="Latitude" angle={-90} offset={-15} position="insideLeft" />
+                        </YAxis>
+                        <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent indicator="dot" />} />
+                        <Scatter name="Data Points" data={locationData} fill="var(--color-locations)" />
+                    </ScatterChart>
+                </ChartContainer>
+            </CardContent>
+          </Card>
+       </div>
+       
 
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
