@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, Users, Database, FileText, TrendingUp, TrendingDown, MapPin } from "lucide-react";
+import { ArrowUpRight, Users, Database, FileText, TrendingUp, TrendingDown, MapPin, Wind, Thermometer, Droplets } from "lucide-react";
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, getMonth, getYear } from 'date-fns';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
@@ -54,6 +54,21 @@ const chartConfig = {
     label: "Locations",
     color: "hsl(var(--chart-2))",
   },
+  temperature: {
+    label: "Temperature",
+    color: "hsl(var(--chart-3))",
+    icon: Thermometer,
+  },
+  salinity: {
+    label: "Salinity",
+    color: "hsl(var(--chart-4))",
+    icon: Droplets,
+  },
+  wind_speed: {
+      label: "Wind Speed",
+      color: "hsl(var(--chart-5))",
+      icon: Wind,
+  }
 } satisfies ChartConfig;
 
 
@@ -68,6 +83,7 @@ export function CMLREDashboard() {
   const [monthlyTrend, setMonthlyTrend] = useState({ recordsThisMonth: 0, percentageChange: 0 });
   const [monthlyData, setMonthlyData] = useState<{ month: string, submissions: number }[]>([]);
   const [locationData, setLocationData] = useState<{ lat: number, lon: number }[]>([]);
+  const [oceanParamData, setOceanParamData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -104,8 +120,10 @@ export function CMLREDashboard() {
       
       const allApproved = uniqueSubmissions.filter(s => s.status === 'approved');
 
-      // Process location data from all approved submissions
+      // Process location and ocean parameter data from all approved submissions
       const locations: { lat: number; lon: number }[] = [];
+      const oceanParams: any[] = [];
+      
       allApproved.forEach(sub => {
         if (sub.csvData) {
           const lines = sub.csvData.trim().split('\n');
@@ -113,6 +131,10 @@ export function CMLREDashboard() {
           const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
           const latIndex = headers.findIndex(h => h.includes('lat'));
           const lonIndex = headers.findIndex(h => h.includes('lon'));
+          const dateIndex = headers.findIndex(h => h.includes('date'));
+          const tempIndex = headers.findIndex(h => h.includes('temp'));
+          const salinityIndex = headers.findIndex(h => h.includes('salinity'));
+          const windIndex = headers.findIndex(h => h.includes('wind'));
 
           if (latIndex !== -1 && lonIndex !== -1) {
             for (let i = 1; i < lines.length; i++) {
@@ -122,11 +144,61 @@ export function CMLREDashboard() {
               if (!isNaN(lat) && !isNaN(lon)) {
                 locations.push({ lat, lon });
               }
+
+              if (dateIndex !== -1) {
+                 try {
+                    const record: any = {
+                        date: format(parseISO(values[dateIndex].split(' ')[0]), 'MMM d'),
+                    };
+                    if (tempIndex !== -1) record.temperature = parseFloat(values[tempIndex]);
+                    if (salinityIndex !== -1) record.salinity = parseFloat(values[salinityIndex]);
+                    if (windIndex !== -1) record.wind_speed = parseFloat(values[windIndex]);
+
+                    if (Object.keys(record).length > 1) {
+                        oceanParams.push(record);
+                    }
+                 } catch (e) {
+                     // Ignore rows with invalid dates
+                 }
+              }
             }
           }
         }
       });
       setLocationData(locations);
+      
+      // Aggregate ocean param data by date (average values if multiple for same day)
+      const aggregatedParams = oceanParams.reduce((acc, curr) => {
+        const existing = acc[curr.date];
+        if (existing) {
+          Object.keys(curr).forEach(key => {
+            if (key !== 'date') {
+              existing[key] = existing[key] || { sum: 0, count: 0 };
+              existing[key].sum += curr[key];
+              existing[key].count += 1;
+            }
+          });
+        } else {
+          acc[curr.date] = {};
+          Object.keys(curr).forEach(key => {
+             if (key !== 'date') {
+                acc[curr.date][key] = { sum: curr[key], count: 1 };
+             }
+          });
+        }
+        return acc;
+      }, {});
+
+      const averagedParams = Object.keys(aggregatedParams).map(date => {
+        const record: any = { date };
+        Object.keys(aggregatedParams[date]).forEach(key => {
+          record[key] = aggregatedParams[date][key].sum / aggregatedParams[date][key].count;
+        });
+        return record;
+      }).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      // Limit to last 100 points for performance
+      setOceanParamData(averagedParams.slice(-100));
 
 
       const recordsThisMonth = uniqueSubmissions
@@ -242,7 +314,7 @@ export function CMLREDashboard() {
             <CardHeader>
               <CardTitle>Monthly Submissions</CardTitle>
               <CardDescription>
-                A look at the total number of data submissions per month over the last year.
+                Total data submissions per month over the last year.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -279,6 +351,34 @@ export function CMLREDashboard() {
             </CardContent>
           </Card>
        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Ocean Parameter Trends</CardTitle>
+                <CardDescription>Daily average trends for key oceanographic parameters.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                    <AreaChart accessibilityLayer data={oceanParamData} margin={{ left: 12, right: 12, top: 12 }}>
+                         <CartesianGrid vertical={false} />
+                         <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                         <YAxis hide domain={['auto', 'auto']} />
+                         <Tooltip content={<ChartTooltipContent indicator="dot" />} />
+                         {Object.keys(chartConfig).filter(k => k.startsWith('temp') || k.startsWith('sal') || k.startsWith('wind')).map(key => (
+                            <Area 
+                                key={key}
+                                dataKey={key} 
+                                type="natural" 
+                                fill={`var(--color-${key})`}
+                                fillOpacity={0.4}
+                                stroke={`var(--color-${key})`}
+                                name={chartConfig[key as keyof typeof chartConfig].label as string}
+                            />
+                         ))}
+                    </AreaChart>
+                 </ChartContainer>
+            </CardContent>
+        </Card>
        
 
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -299,7 +399,7 @@ export function CMLREDashboard() {
                 </TableHeader>
                 <TableBody>
                     {recentSubmissions.length > 0 ? (
-                      recentSubmissions.map((sub) => (
+                      recentSubmissions.slice(0, 5).map((sub) => (
                          <TableRow key={sub.id}>
                             <TableCell>
                                 <div className="font-medium">{sub.name}</div>
@@ -361,7 +461,5 @@ export function CMLREDashboard() {
     </div>
   );
 }
-
-    
 
     
