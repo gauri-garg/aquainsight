@@ -52,12 +52,11 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
 
   const columnsToKeep = originalHeaders.filter(header => {
     const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
-    return rawData.some(row => 
-        row[sanitizedHeader] !== null && 
-        row[sanitizedHeader] !== undefined &&
-        String(row[sanitizedHeader]).trim() !== '' && 
-        String(row[sanitizedHeader]).trim().toUpperCase() !== 'N/A'
-    );
+    // Check if at least one row has a meaningful value for this column
+    return rawData.some(row => {
+      const value = row[sanitizedHeader];
+      return value !== null && value !== undefined && String(value).trim() !== '' && String(value).trim().toUpperCase() !== 'N/A';
+    });
   });
 
   const filteredHeaders = originalHeaders.filter(h => columnsToKeep.includes(h));
@@ -476,7 +475,5 @@ export default function DatasetViewPage() {
     </div>
   );
 }
-
-    
 
     
