@@ -52,7 +52,8 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
   const columnsToKeep = originalHeaders.filter(header => {
     return rawData.some(row => {
       const value = row[header];
-      return value !== null && value !== undefined && String(value).trim() !== '' && String(value).trim().toUpperCase() !== 'N/A';
+      const stringValue = String(value).trim().toUpperCase();
+      return value !== null && value !== undefined && stringValue !== '' && stringValue !== 'N/A';
     });
   });
 
@@ -420,6 +421,7 @@ export default function DatasetViewPage() {
                             dataKey={chartableKeys[0]}
                             position="right"
                             className="fill-foreground font-medium"
+                            formatter={(value: number) => (typeof value === 'number' ? value.toLocaleString() : '')}
                         />
                     </Bar>
                 </BarChart>
