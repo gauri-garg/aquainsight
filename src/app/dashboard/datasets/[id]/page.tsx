@@ -49,13 +49,14 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
     return entry;
   });
 
-  const columnsToKeep = originalHeaders.filter(header => {
-    return rawData.some(row => {
+  const columnsToKeep = originalHeaders.filter(header => 
+    rawData.some(row => {
       const value = row[header];
-      const stringValue = String(value).trim().toUpperCase();
-      return value !== null && value !== undefined && stringValue !== '' && stringValue !== 'N/A';
-    });
-  });
+      if (value === null || value === undefined) return false;
+      const stringValue = String(value).trim();
+      return stringValue !== '' && stringValue.toUpperCase() !== 'N/A';
+    })
+  );
 
   const filteredHeaders = originalHeaders.filter(h => columnsToKeep.includes(h));
   
@@ -76,7 +77,8 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
       } else if (isNumeric) {
         newRow[sanitizedHeader] = Number(value);
       } else {
-        newRow[sanitizedHeader] = (value === '' || value === 'N/A') ? null : value;
+        const stringValue = String(value).trim();
+        newRow[sanitizedHeader] = (stringValue === '' || stringValue.toUpperCase() === 'N/A') ? null : value;
       }
     });
     return newRow;
@@ -133,7 +135,7 @@ export default function DatasetViewPage() {
                     setChartType('time-series');
                     setDateHeader(detectedDateHeader);
                     setChartableKeys(numericKeys);
-                    setChartConfig(generateChartConfig(numericKeys));
+                    setChartConfig(generateChartConfig(numericKeys.map(key => headers.find(h => h.replace(/[^a-zA-Z0-9]/g, '_') === key)!)));
                     
                     const dates = data.map(d => d[detectedDateHeader] ? parseISO(d[detectedDateHeader]) : null).filter(d => d && !isNaN(d.getTime()));
                     if (dates.length > 0) {
@@ -384,7 +386,10 @@ export default function DatasetViewPage() {
                         <Legend />
                         {chartableKeys.map((key, index) => {
                             const yAxisId = index % 2 === 0 ? 'left' : 'right';
-                            return <Area key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[key].color} fillOpacity={0.4} fill={`url(#fill-${key})`} name={(chartConfig as any)[key].label} dot={false} activeDot={{ r: 8 }} />
+                            const originalKey = Object.keys(chartConfig!).find(k => k.replace(/[^a-zA-Z0-9]/g, '_') === key);
+                            const name = originalKey ? (chartConfig as any)[originalKey]?.label : key;
+
+                            return <Area key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[originalKey!]?.color} fillOpacity={0.4} fill={`url(#fill-${key})`} name={name} dot={false} activeDot={{ r: 8 }} />
                         })}
                     </AreaChart>
                     </ChartContainer>
@@ -413,7 +418,7 @@ export default function DatasetViewPage() {
              <ChartContainer config={chartConfig!} className="min-h-[400px] w-full">
                 <BarChart data={filteredData} layout="vertical" margin={{ left: 120 }}>
                     <CartesianGrid horizontal={false} />
-                    <YAxis dataKey={categoryHeader!} type="category" width={150} />
+                    <YAxis dataKey={categoryHeader!} type="category" width={150} tick={{width: 150}} />
                     <XAxis type="number" />
                     <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
                     <Bar dataKey={chartableKeys[0]} fill={(chartConfig as any)[chartableKeys[0]].color} radius={[0, 4, 4, 0]}>
