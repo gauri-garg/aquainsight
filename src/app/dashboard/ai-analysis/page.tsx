@@ -37,15 +37,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, TrendingUp, AlertTriangle, BarChart, PieChart, LineChart } from "lucide-react";
+import { Loader2, BarChart, LineChart } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   generateDatasetSummary,
   type GenerateDatasetSummaryOutput,
 } from "@/ai/flows/generate-dataset-summary";
 import { useAuth, Dataset } from "@/hooks/use-auth";
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Pie, Cell, Line } from "recharts";
-import { BarChart as BarChartRe, PieChart as PieChartRe, LineChart as LineChartRe } from "recharts";
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line } from "recharts";
+import { BarChart as BarChartRe, LineChart as LineChartRe } from "recharts";
 
 const analysisFormSchema = z.object({
   datasetId: z.string({
@@ -54,21 +54,6 @@ const analysisFormSchema = z.object({
 });
 
 type AnalysisFormValues = z.infer<typeof analysisFormSchema>;
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-};
-
 
 export default function AiAnalysisPage() {
   const { toast } = useToast();
@@ -149,7 +134,7 @@ export default function AiAnalysisPage() {
         <CardHeader>
           <CardTitle>AI-Powered Analysis</CardTitle>
           <CardDescription>
-            Select a dataset to generate an automated summary, key trends, and visualizations.
+            Select a dataset to generate an automated summary and trend visualizations.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -195,7 +180,7 @@ export default function AiAnalysisPage() {
               </div>
                {selectedDataset && (
                 <div className="w-full md:w-2/3 mt-6 md:mt-0">
-                    <FormLabel>Dataset Preview</FormLabel>
+                    <FormLabel>Dataset Preview (first 5 rows)</FormLabel>
                      <Card className="mt-2">
                         <CardContent className="p-0">
                              <div className="overflow-x-auto">
@@ -244,33 +229,6 @@ export default function AiAnalysisPage() {
                 </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><TrendingUp className="text-primary" /> Key Trends</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul className="list-disc space-y-2 pl-5">
-                            {result.trends.map((trend, i) => <li key={i}>{trend}</li>)}
-                        </ul>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><AlertTriangle className="text-orange-500" /> Data Quality</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {result.dataQualityIssues.length > 0 ? (
-                             <ul className="list-disc space-y-2 pl-5">
-                                {result.dataQualityIssues.map((issue, i) => <li key={i}>{issue}</li>)}
-                            </ul>
-                        ) : (
-                            <p className="text-muted-foreground">No apparent data quality issues were found in the sample.</p>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
             {result.suggestedVisualizations.length > 0 && (
                 <Card>
                     <CardHeader>
@@ -283,7 +241,6 @@ export default function AiAnalysisPage() {
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         {vis.chartType === 'bar' && <BarChart className="h-5 w-5 text-primary" />}
-                                        {vis.chartType === 'pie' && <PieChart className="h-5 w-5 text-primary" />}
                                         {vis.chartType === 'line' && <LineChart className="h-5 w-5 text-primary" />}
                                         {vis.title}
                                     </CardTitle>
@@ -300,15 +257,6 @@ export default function AiAnalysisPage() {
                                                 <Legend />
                                                 <Bar dataKey={vis.yKey} fill="hsl(var(--chart-1))" />
                                             </BarChartRe>
-                                        )}
-                                        {vis.chartType === 'pie' && (
-                                            <PieChartRe>
-                                                <Pie data={vis.data} dataKey={vis.yKey} nameKey={vis.xKey} cx="50%" cy="50%" outerRadius={100} fill="hsl(var(--chart-1))" label={renderCustomizedLabel} labelLine={false}>
-                                                    {vis.data.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                                                </Pie>
-                                                <Tooltip />
-                                                <Legend />
-                                            </PieChartRe>
                                         )}
                                         {vis.chartType === 'line' && (
                                              <LineChartRe data={vis.data}>
