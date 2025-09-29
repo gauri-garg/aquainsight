@@ -103,7 +103,7 @@ export function UserNav() {
   };
 
   const displayName = userDetails?.fullName || user?.email || "User";
-  const roleDescription = role === "CMLRE" ? "Staff" : "Student";
+  const roleDescription = role === "CMLRE" ? "Staff" : "User";
   const fallback = displayName ? displayName.charAt(0).toUpperCase() : "U";
   
   const NotificationIcon = ({status}: {status: Notification['status']}) => {

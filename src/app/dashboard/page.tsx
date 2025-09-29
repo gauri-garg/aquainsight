@@ -21,7 +21,7 @@ export default function Dashboard() {
     return <CMLREDashboard />;
   }
 
-  if (role === 'Student') {
+  if (role === 'User') {
     return <UserDashboard />;
   }
 

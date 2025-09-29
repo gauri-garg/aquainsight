@@ -28,7 +28,7 @@ import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/u
 
 const COLORS = {
     'CMLRE': 'hsl(var(--chart-1))',
-    'Researcher': 'hsl(var(--chart-2))',
+    'User': 'hsl(var(--chart-2))',
     'Student': 'hsl(var(--chart-3))',
 };
 
@@ -100,7 +100,7 @@ export function CMLREDashboard() {
       setTotalDatasets(datasetsCount);
       
       const roleCounts = users.reduce((acc, user) => {
-        acc[user.role] = (acc[user.role] || 0) + 1;
+        acc[user.role!] = (acc[user.role!] || 0) + 1;
         return acc;
       }, {} as Record<UserRole, number>);
 
@@ -461,5 +461,3 @@ export function CMLREDashboard() {
     </div>
   );
 }
-
-    

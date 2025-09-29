@@ -95,7 +95,7 @@ export default function DashboardLayout({
         <BrainCircuit className="h-4 w-4" />
         AI Analysis
       </Link>
-      {role === 'Student' && (
+      {role === 'User' && (
         <>
           <Link
             href="/dashboard/submit-data"
@@ -209,7 +209,7 @@ export default function DashboardLayout({
                   <BrainCircuit className="h-5 w-5" />
                   AI Analysis
                 </Link>
-                {role === 'Student' && (
+                {role === 'User' && (
                   <>
                     <Link
                       href="/dashboard/submit-data"

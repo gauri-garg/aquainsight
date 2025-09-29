@@ -70,7 +70,7 @@ export function UserDashboard() {
   };
 
   const getDescription = () => {
-     if (userDetails?.role === "Student") {
+     if (userDetails?.role === "User") {
         return "Explore datasets, submit your findings, and contribute to marine science.";
       }
       return "Welcome to the AquaInsight platform.";

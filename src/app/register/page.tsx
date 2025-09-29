@@ -31,7 +31,7 @@ import { ref, get } from "firebase/database";
 export default function RegisterPage() {
   const { signUp } = useAuth();
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<UserRole>("Student");
+  const [selectedRole, setSelectedRole] = useState<UserRole>("User");
   const [approvedId, setApprovedId] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -93,7 +93,7 @@ export default function RegisterPage() {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="User">User</SelectItem>
                     <SelectItem value="CMLRE">CMLRE Staff</SelectItem>
                   </SelectContent>
                 </Select>

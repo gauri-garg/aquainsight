@@ -16,7 +16,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  User,
+  User as FirebaseUser,
   updateProfile,
   EmailAuthProvider,
   reauthenticateWithCredential,
@@ -27,7 +27,7 @@ import { ref, set, get, child, update, remove, push, onValue, query, orderByChil
 import { format, subMonths } from 'date-fns';
 
 
-export type UserRole = "CMLRE" | "Student";
+export type UserRole = "CMLRE" | "User";
 
 export interface Dataset {
   id?: string;
@@ -97,7 +97,7 @@ export interface MonthlySubmission {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: FirebaseUser | null;
   role: UserRole | null;
   loading: boolean;
   userDetails: UserDetails | null;
@@ -156,7 +156,7 @@ const seedCmlreApprovedIds = async () => {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
