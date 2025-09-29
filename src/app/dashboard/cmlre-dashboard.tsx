@@ -250,7 +250,7 @@ export function CMLREDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -309,7 +309,7 @@ export function CMLREDashboard() {
         </Card>
       </div>
 
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+       <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Monthly Submissions</CardTitle>
@@ -381,8 +381,8 @@ export function CMLREDashboard() {
         </Card>
        
 
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+       <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle>Recent Submissions</CardTitle>
             <CardDescription>
@@ -422,7 +422,7 @@ export function CMLREDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-4 lg:col-span-3">
+        <Card>
           <CardHeader>
             <CardTitle>User Roles</CardTitle>
             <CardDescription>Distribution of users on the platform.</CardDescription>
@@ -461,3 +461,5 @@ export function CMLREDashboard() {
     </div>
   );
 }
+
+    
