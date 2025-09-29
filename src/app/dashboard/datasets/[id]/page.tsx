@@ -41,32 +41,48 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
   if (lines.length < 2) return { data: [], headers: originalHeaders };
 
   const dateHeaderKey = originalHeaders.find(h => h.toLowerCase().includes('date'));
-
-  const data = lines.slice(1).map((line) => {
+  
+  const rawData = lines.slice(1).map((line) => {
     const values = line.split(",");
     const entry: any = {};
     originalHeaders.forEach((header, index) => {
       const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
-      let value = values[index] ? values[index].trim() : '';
-      
-      if (header === dateHeaderKey && value) {
-        try {
-          const cleanedDate = value.split(' ')[0];
-          entry[sanitizedHeader] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
-        } catch (e) {
-          entry[sanitizedHeader] = value; 
-        }
-      } else if (value === '' || isNaN(Number(value)) || !isFinite(Number(value))) {
-         entry[sanitizedHeader] = value === '' ? null : value;
-      }
-      else {
-        entry[sanitizedHeader] = Number(value);
-      }
+      entry[sanitizedHeader] = values[index] ? values[index].trim() : null;
     });
     return entry;
   });
 
-  return { data, headers: originalHeaders };
+  const columnsToKeep = originalHeaders.filter((header, index) => {
+    const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
+    return rawData.some(row => row[sanitizedHeader] !== null && row[sanitizedHeader] !== 'N/A' && row[sanitizedHeader] !== '');
+  });
+
+  const filteredHeaders = originalHeaders.filter(h => columnsToKeep.includes(h));
+  
+  const data = rawData.map(row => {
+    const newRow: any = {};
+    filteredHeaders.forEach(header => {
+      const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
+      let value = row[sanitizedHeader];
+
+       if (header === dateHeaderKey && value) {
+        try {
+          const cleanedDate = String(value).split(' ')[0];
+          newRow[sanitizedHeader] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
+        } catch (e) {
+          newRow[sanitizedHeader] = value; 
+        }
+      } else if (value === '' || value === null || isNaN(Number(value)) || !isFinite(Number(value))) {
+         newRow[sanitizedHeader] = value === '' ? null : value;
+      }
+      else {
+        newRow[sanitizedHeader] = Number(value);
+      }
+    });
+    return newRow;
+  });
+  
+  return { data, headers: filteredHeaders };
 };
 
 
@@ -456,3 +472,5 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
