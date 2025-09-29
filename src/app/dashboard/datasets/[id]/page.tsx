@@ -422,15 +422,15 @@ export default function DatasetViewPage() {
           </CardHeader>
           <CardContent>
               <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
-                  <BarChart data={filteredData} layout="vertical" margin={{ left: 120 }}>
-                      <CartesianGrid horizontal={false} />
-                      <YAxis dataKey={categoryHeader} type="category" width={150} tick={{fontSize: 12}} />
-                      <XAxis type="number" />
+                  <BarChart data={filteredData} margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
+                      <CartesianGrid vertical={false} />
+                      <YAxis />
+                      <XAxis dataKey={categoryHeader} type="category" tickLine={false} axisLine={false} tickMargin={8} angle={-45} textAnchor="end" />
                       <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
-                      <Bar dataKey={dataKey} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                      <Bar dataKey={dataKey} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]}>
                         <LabelList 
                               dataKey={dataKey}
-                              position="right"
+                              position="top"
                               offset={8}
                               className="fill-foreground font-medium"
                               formatter={(value: number) => (typeof value === 'number' ? value.toLocaleString() : '')}
@@ -483,5 +483,7 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
 
     
