@@ -11,6 +11,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FlaskConical, Loader2 } from "lucide-react";
@@ -20,12 +31,15 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { signIn } = useAuth();
+  const { signIn, sendPasswordReset } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("cmlre.user@example.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [openAlertDialog, setOpenAlertDialog] = useState(false);
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -42,6 +56,31 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      toast({ title: "Email required", description: "Please enter your email address.", variant: "destructive" });
+      return;
+    }
+    setIsResetting(true);
+    try {
+      await sendPasswordReset(resetEmail);
+      toast({
+        title: "Password Reset Email Sent",
+        description: `If an account exists for ${resetEmail}, a password reset link has been sent.`,
+      });
+      setOpenAlertDialog(false);
+    } catch (error: any) {
+      toast({
+        title: "Reset Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
@@ -79,12 +118,39 @@ export default function LoginPage() {
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="#"
-                    className="ml-auto inline-block text-sm underline"
-                  >
-                    Forgot your password?
-                  </Link>
+                   <AlertDialog open={openAlertDialog} onOpenChange={setOpenAlertDialog}>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="link" className="ml-auto inline-block p-0 h-auto text-sm underline">
+                          Forgot your password?
+                       </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Forgot Password?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Enter your email address and we will send you a link to reset your password.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                       <div className="grid gap-2">
+                          <Label htmlFor="reset-email">Email Address</Label>
+                          <Input
+                            id="reset-email"
+                            type="email"
+                            placeholder="m@example.com"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            disabled={isResetting}
+                          />
+                        </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isResetting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handlePasswordReset} disabled={isResetting}>
+                          {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                          Send Reset Link
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
                 <Input
                   id="password"

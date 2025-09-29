@@ -22,6 +22,7 @@ import {
   reauthenticateWithCredential,
   updatePassword,
   deleteUser,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { ref, set, get, child, update, remove, push, onValue, query, orderByChild, equalTo } from "firebase/database";
 import { format, subMonths } from 'date-fns';
@@ -109,6 +110,7 @@ interface AuthContextType {
   ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   updateUserProfile: (details: Partial<UserDetails>) => Promise<void>;
   changeUserPassword: (email:string, oldPass: string, newPass: string) => Promise<void>;
   deleteUserAccount: (email: string, password: string) => Promise<void>;
@@ -265,6 +267,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
   };
   
   const updateUserProfile = async (details: Partial<UserDetails>) => {
@@ -720,7 +726,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords, getUserSubmissionsStatusCounts, getUserSubmissionHistory }}>
+    <AuthContext.Provider value={{ user, role, userDetails, loading, signUp, signIn, logout, sendPasswordReset, updateUserProfile, changeUserPassword, deleteUserAccount, createDataset, createRequestedDataset, getAllDatasets, getDatasetById, getRequestedDatasetById, updateDataset, deleteDataset, getRequestedDatasets, getAllApprovedSubmissions, getRequestedDatasetsByUserId, approveDatasetRequest, rejectDatasetRequest, deleteRequestedDataset, getUserNotifications, markNotificationsAsRead, deleteNotification, getTotalDatasets, getTotalUsers, getTotalRecords, clearSubmissionHistory, getArchivedData, permanentlyDeleteSubmission, getUserSubmissionsCount, getUserTotalRecords, getUserSubmissionsStatusCounts, getUserSubmissionHistory }}>
       {children}
     </AuthContext.Provider>
   );
