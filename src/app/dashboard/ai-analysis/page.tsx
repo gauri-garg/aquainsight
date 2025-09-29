@@ -37,15 +37,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, BarChart, LineChart } from "lucide-react";
+import { Loader2, BrainCircuit, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   generateDatasetSummary,
   type GenerateDatasetSummaryOutput,
 } from "@/ai/flows/generate-dataset-summary";
 import { useAuth, Dataset } from "@/hooks/use-auth";
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line } from "recharts";
-import { BarChart as BarChartRe, LineChart as LineChartRe } from "recharts";
+
 
 const analysisFormSchema = z.object({
   datasetId: z.string({
@@ -111,7 +110,7 @@ export default function AiAnalysisPage() {
       setResult(response);
       toast({
         title: "Analysis Complete",
-        description: "The AI summary and visualizations have been generated.",
+        description: "The AI summary has been generated.",
       });
     } catch (error: any) {
       toast({
@@ -134,7 +133,7 @@ export default function AiAnalysisPage() {
         <CardHeader>
           <CardTitle>AI-Powered Analysis</CardTitle>
           <CardDescription>
-            Select a dataset to generate an automated summary and trend visualizations.
+            Select a dataset to generate an automated summary.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -222,68 +221,24 @@ export default function AiAnalysisPage() {
         <div className="space-y-6 animate-in fade-in-50">
             <Card>
                 <CardHeader>
-                    <CardTitle>AI Summary</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        AI-Generated Summary
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-card-foreground">{result.summary}</p>
+                    <p className="text-card-foreground whitespace-pre-wrap">{result.summary}</p>
                 </CardContent>
             </Card>
-
-            {result.suggestedVisualizations.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Trend Visualizations</CardTitle>
-                        <CardDescription>The AI has generated the following charts based on the data sample to illustrate key trends.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
-                        {result.suggestedVisualizations.map((vis, i) => (
-                            <Card key={i} className="flex flex-col">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        {vis.chartType === 'bar' && <BarChart className="h-5 w-5 text-primary" />}
-                                        {vis.chartType === 'line' && <LineChart className="h-5 w-5 text-primary" />}
-                                        {vis.title}
-                                    </CardTitle>
-                                    <CardDescription>{vis.description}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-grow">
-                                     <ResponsiveContainer width="100%" height={300}>
-                                        {vis.chartType === 'bar' && (
-                                            <BarChartRe data={vis.data}>
-                                                <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis dataKey={vis.xKey} />
-                                                <YAxis />
-                                                <Tooltip />
-                                                <Legend />
-                                                <Bar dataKey={vis.yKey} fill="hsl(var(--chart-1))" />
-                                            </BarChartRe>
-                                        )}
-                                        {vis.chartType === 'line' && (
-                                             <LineChartRe data={vis.data}>
-                                                <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis dataKey={vis.xKey} />
-                                                <YAxis />
-                                                <Tooltip />
-                                                <Legend />
-                                                <Line type="monotone" dataKey={vis.yKey} stroke="hsl(var(--chart-1))" />
-                                            </LineChartRe>
-                                        )}
-                                     </ResponsiveContainer>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
         </div>
       )}
 
       {!result && !isSubmitting && (
          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center h-96">
-            <BarChart className="h-12 w-12 text-muted-foreground" />
+            <BrainCircuit className="h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">Ready to Analyze</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Select a dataset and click &quot;Analyze Dataset&quot; to see AI-generated insights.
+              Select a dataset and click &quot;Analyze Dataset&quot; to see an AI-generated summary.
             </p>
         </div>
       )}
