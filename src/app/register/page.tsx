@@ -63,7 +63,7 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-12 animate-in fade-in-50 duration-500">
         <div className="mx-auto grid w-[380px] gap-6">
           <div className="grid gap-2 text-center">
             <div className="flex justify-center items-center gap-2">
@@ -74,7 +74,7 @@ export default function RegisterPage() {
               Create your account to get started.
             </p>
           </div>
-          <Card className="shadow-2xl">
+          <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Register</CardTitle>
               <CardDescription>
@@ -100,7 +100,7 @@ export default function RegisterPage() {
               </div>
 
               {selectedRole !== "CMLRE" && (
-                <div className="grid gap-2 animate-accordion-down">
+                <div className="grid gap-2 animate-in fade-in-0 duration-300">
                   <Label htmlFor="fullname">Full Name</Label>
                   <Input
                     id="fullname"
@@ -127,7 +127,7 @@ export default function RegisterPage() {
               </div>
 
               {selectedRole === "CMLRE" && (
-                <div className="grid gap-2 animate-accordion-down">
+                <div className="grid gap-2 animate-in fade-in-0 duration-300">
                   <Label htmlFor="approved-id">Approved ID</Label>
                   <Input
                     id="approved-id"

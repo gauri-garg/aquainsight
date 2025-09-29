@@ -62,7 +62,7 @@ export default function DashboardLayout({
               <CheckCheck className="h-4 w-4" />
               Data Approvals
             </div>
-            {pendingCount > 0 && <Badge variant="destructive">{pendingCount}</Badge>}
+            {pendingCount > 0 && <Badge variant="destructive" className="animate-in fade-in zoom-in">{pendingCount}</Badge>}
           </Link>
           <Link
             href="/dashboard/datasets"
@@ -238,7 +238,7 @@ export default function DashboardLayout({
           </div>
           <UserNav />
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 animate-in fade-in-50">
           {children}
         </main>
       </div>
