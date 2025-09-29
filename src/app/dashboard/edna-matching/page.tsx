@@ -29,14 +29,8 @@ import {
   matchEdnaSequence,
   type MatchEdnaSequenceOutput,
 } from "@/ai/flows/edna-matching-assistant";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 const ednaFormSchema = z.object({
   ednaSequence: z.string().min(10, {
@@ -46,13 +40,12 @@ const ednaFormSchema = z.object({
 
 type EdnaFormValues = z.infer<typeof ednaFormSchema>;
 
-const EXAMPLE_SEQUENCE = "GATTACAAGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGAT-ACT";
+const EXAMPLE_SEQUENCE = "GATTACAAGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGatc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg-atc-gat-cga-tcg";
 
 export default function EdnaMatchingPage() {
-_id: "667ae967a5b3a3286f34cd41"
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [results, setResults] = useState<MatchEdnaSequenceOutput | null>(null);
+  const [results, setResults] = useState<any[] | null>(null);
 
   const form = useForm<EdnaFormValues>({
     resolver: zodResolver(ednaFormSchema),
@@ -71,7 +64,15 @@ _id: "667ae967a5b3a3286f34cd41"
         speciesDatabaseDescription:
           "A comprehensive database of marine species found in the Southern Ocean, including fish, mammals, and invertebrates.",
       });
-      setResults(response);
+
+      if (response && response.speciesMatches && response.confidenceScores) {
+         const formattedResults = response.speciesMatches.map((species, index) => ({
+            name: species,
+            confidence: response.confidenceScores[index] * 100,
+         }));
+         setResults(formattedResults);
+      }
+      
       toast({
         title: "Matching Complete",
         description: `Found ${response.speciesMatches.length} potential species.`,
@@ -147,34 +148,32 @@ _id: "667ae967a5b3a3286f34cd41"
           </CardHeader>
           <CardContent>
             {isSubmitting ? (
-              <div className="flex items-center justify-center h-48">
+              <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-4 text-muted-foreground">
                   Analyzing sequence...
                 </p>
               </div>
             ) : results ? (
-              results.speciesMatches.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Species Match</TableHead>
-                      <TableHead className="text-right">
-                        Confidence Score
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {results.speciesMatches.map((species, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{species}</TableCell>
-                        <TableCell className="text-right">
-                          {(results.confidenceScores[index] * 100).toFixed(2)}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              results.length > 0 ? (
+                <ChartContainer config={{}} className="h-[400px] w-full">
+                    <ResponsiveContainer>
+                        <BarChart layout="vertical" data={results} margin={{ left: 20, right: 40 }}>
+                             <CartesianGrid horizontal={false} />
+                             <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                             <YAxis dataKey="name" type="category" width={150} />
+                             <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
+                             <Bar dataKey="confidence" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                                <LabelList 
+                                    dataKey="confidence" 
+                                    position="right" 
+                                    formatter={(value: number) => `${value.toFixed(1)}%`}
+                                    className="fill-foreground font-medium"
+                                />
+                             </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
               ) : (
                 <div className="flex items-center justify-center h-48">
                   <p className="text-muted-foreground">
