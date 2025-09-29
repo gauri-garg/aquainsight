@@ -44,6 +44,8 @@ import {
   type GenerateDatasetSummaryOutput,
 } from "@/ai/flows/generate-dataset-summary";
 import { useAuth, Dataset } from "@/hooks/use-auth";
+import { BarChart, Bar, PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from "recharts";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 
 const analysisFormSchema = z.object({
@@ -53,6 +55,76 @@ const analysisFormSchema = z.object({
 });
 
 type AnalysisFormValues = z.infer<typeof analysisFormSchema>;
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+const DynamicChart = ({ viz }: { viz: NonNullable<GenerateDatasetSummaryOutput['visualizations']>[0] }) => {
+    try {
+        const data = JSON.parse(viz.data);
+        if (!data || data.length === 0) return <p className="text-muted-foreground">No data for this chart.</p>;
+
+        const keys = Object.keys(data[0]);
+        const categoryKey = keys.find(k => typeof data[0][k] === 'string');
+        const valueKey = keys.find(k => typeof data[0][k] === 'number');
+
+        if (!categoryKey || !valueKey) return <p className="text-muted-foreground">Could not determine chart keys.</p>;
+
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>{viz.title}</CardTitle>
+              <CardDescription>{viz.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={{}} className="h-[400px] w-full">
+                <ResponsiveContainer>
+                  {viz.chartType === 'bar' && (
+                    <BarChart data={data} layout="vertical" margin={{ left: 120 }}>
+                      <CartesianGrid horizontal={false} />
+                      <YAxis dataKey={categoryKey} type="category" width={150}/>
+                      <XAxis type="number" />
+                      <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{ fill: 'hsl(var(--muted))' }} />
+                      <Bar dataKey={valueKey} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                         <LabelList 
+                            dataKey={valueKey}
+                            position="right"
+                            className="fill-foreground font-medium"
+                        />
+                      </Bar>
+                    </BarChart>
+                  )}
+                  {viz.chartType === 'line' && (
+                    <LineChart data={data}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey={categoryKey} />
+                      <YAxis />
+                      <Tooltip content={<ChartTooltipContent indicator="dot" />} />
+                      <Legend />
+                      <Line type="monotone" dataKey={valueKey} stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                    </LineChart>
+                  )}
+                  {viz.chartType === 'pie' && (
+                    <PieChart>
+                      <Pie data={data} dataKey={valueKey} nameKey={categoryKey} cx="50%" cy="50%" outerRadius={120} label>
+                        {data.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<ChartTooltipContent />} />
+                      <Legend />
+                    </PieChart>
+                  )}
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        );
+
+    } catch (e) {
+        console.error("Chart rendering error:", e);
+        return <p className="text-destructive">Could not render chart. Invalid data format.</p>
+    }
+}
 
 export default function AiAnalysisPage() {
   const { toast } = useToast();
@@ -88,6 +160,7 @@ export default function AiAnalysisPage() {
     const findDataset = datasets.find(d => d.id === datasetId);
     setSelectedDataset(findDataset || null);
     form.setValue('datasetId', datasetId);
+    setResult(null); // Clear previous results
   }
 
   async function onSubmit(data: AnalysisFormValues) {
@@ -100,7 +173,12 @@ export default function AiAnalysisPage() {
     }
 
     try {
-      const dataSample = selectedDataset.csvData.split("\n").slice(0, 100).join("\n");
+      // Use a larger sample, up to 100 rows or ~4000 characters
+      const sampleLines = selectedDataset.csvData.split("\n");
+      let dataSample = sampleLines.slice(0, 101).join("\n"); // Header + 100 rows
+      if (dataSample.length > 4000) {
+        dataSample = dataSample.substring(0, 4000);
+      }
 
       const response = await generateDatasetSummary({
         datasetDescription: selectedDataset.description,
@@ -110,13 +188,14 @@ export default function AiAnalysisPage() {
       setResult(response);
       toast({
         title: "Analysis Complete",
-        description: "The AI summary has been generated.",
+        description: "The AI summary and visualizations have been generated.",
       });
     } catch (error: any) {
+      console.error("AI Analysis Error:", error);
       toast({
         title: "Analysis Failed",
         description:
-          error.message || "An unexpected error occurred with the AI model. The model might not be able to process this dataset's format.",
+          error.message || "An unexpected error occurred. The AI model may be unable to process this dataset.",
         variant: "destructive",
       });
     } finally {
@@ -133,7 +212,7 @@ export default function AiAnalysisPage() {
         <CardHeader>
           <CardTitle>AI-Powered Analysis</CardTitle>
           <CardDescription>
-            Select a dataset to generate an automated summary.
+            Select a dataset to generate an automated summary and visualizations.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -230,6 +309,14 @@ export default function AiAnalysisPage() {
                     <p className="text-card-foreground whitespace-pre-wrap">{result.summary}</p>
                 </CardContent>
             </Card>
+
+            {result.visualizations && result.visualizations.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {result.visualizations.map((viz, index) => (
+                        <DynamicChart key={index} viz={viz} />
+                    ))}
+                </div>
+            )}
         </div>
       )}
 
@@ -238,7 +325,7 @@ export default function AiAnalysisPage() {
             <BrainCircuit className="h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">Ready to Analyze</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Select a dataset and click &quot;Analyze Dataset&quot; to see an AI-generated summary.
+              Select a dataset and click &quot;Analyze Dataset&quot; to see an AI-generated summary and visualizations.
             </p>
         </div>
       )}
