@@ -425,7 +425,7 @@ export default function DatasetViewPage() {
               <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                   <BarChart data={filteredData} margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
                       <CartesianGrid vertical={false} />
-                      <YAxis>
+                      <YAxis domain={[0, 'dataMax + 1']}>
                         <Label
                           angle={-90}
                           position="insideLeft"
