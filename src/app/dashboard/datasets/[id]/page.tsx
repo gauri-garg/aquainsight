@@ -35,10 +35,9 @@ const generateChartConfig = (keys: string[]): ChartConfig => {
 const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
   if (!csvData) return { data: [], headers: [] };
   const lines = csvData.trim().split("\n");
-  if (lines.length < 1) return { data: [], headers: [] };
+  if (lines.length < 2) return { data: [], headers: lines[0] ? lines[0].split(',').map(h => h.trim()) : [] };
 
   const originalHeaders = lines[0].split(",").map(h => h.trim());
-  if (lines.length < 2) return { data: [], headers: originalHeaders };
   
   const rawData = lines.slice(1).map((line) => {
     const values = line.split(",");
@@ -57,7 +56,7 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
       return stringValue !== '' && stringValue.toUpperCase() !== 'N/A';
     })
   );
-
+  
   const filteredHeaders = originalHeaders.filter(h => columnsToKeep.includes(h));
   
   const data = rawData.map(row => {
@@ -408,32 +407,37 @@ export default function DatasetViewPage() {
     </div>
   );
 
-  const CategoricalChart = () => (
-     <Card>
-        <CardHeader>
-            <CardTitle>Categorical Distribution</CardTitle>
-            <CardDescription>Distribution of data by category.</CardDescription>
-        </CardHeader>
-        <CardContent>
-             <ChartContainer config={chartConfig!} className="min-h-[400px] w-full">
-                <BarChart data={filteredData} layout="vertical" margin={{ left: 120 }}>
-                    <CartesianGrid horizontal={false} />
-                    <YAxis dataKey={categoryHeader!} type="category" width={150} tick={{width: 150}} />
-                    <XAxis type="number" />
-                    <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
-                    <Bar dataKey={chartableKeys[0]} fill={(chartConfig as any)[chartableKeys[0]].color} radius={[0, 4, 4, 0]}>
-                       <LabelList 
-                            dataKey={chartableKeys[0]}
-                            position="right"
-                            className="fill-foreground font-medium"
-                            formatter={(value: number) => (typeof value === 'number' ? value.toLocaleString() : '')}
-                        />
-                    </Bar>
-                </BarChart>
-             </ChartContainer>
-        </CardContent>
-     </Card>
-  );
+  const CategoricalChart = () => {
+    if (!filteredData || filteredData.length === 0) {
+      return null;
+    }
+    return (
+      <Card>
+          <CardHeader>
+              <CardTitle>Categorical Distribution</CardTitle>
+              <CardDescription>Distribution of data by category.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <ChartContainer config={chartConfig!} className="min-h-[400px] w-full">
+                  <BarChart data={filteredData} layout="vertical" margin={{ left: 120 }}>
+                      <CartesianGrid horizontal={false} />
+                      <YAxis dataKey={categoryHeader!} type="category" width={120} />
+                      <XAxis type="number" />
+                      <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
+                      <Bar dataKey={chartableKeys[0]} fill={(chartConfig as any)[chartableKeys[0]]?.color || 'hsl(var(--primary))'} radius={[0, 4, 4, 0]}>
+                        <LabelList 
+                              dataKey={chartableKeys[0]}
+                              position="right"
+                              className="fill-foreground font-medium"
+                              formatter={(value: number) => (typeof value === 'number' ? value.toLocaleString() : '')}
+                          />
+                      </Bar>
+                  </BarChart>
+              </ChartContainer>
+          </CardContent>
+      </Card>
+    )
+  };
 
   return (
     <div className="space-y-6">
@@ -475,5 +479,3 @@ export default function DatasetViewPage() {
     </div>
   );
 }
-
-    
