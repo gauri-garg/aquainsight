@@ -433,7 +433,10 @@ export default function DatasetViewPage() {
                               position="top"
                               offset={8}
                               className="fill-foreground font-medium"
-                              formatter={(value: number) => (typeof value === 'number' ? value.toLocaleString() : '')}
+                              valueAccessor={(props: any) => {
+                                const { value } = props;
+                                return typeof value === 'number' ? value.toLocaleString() : '';
+                              }}
                           />
                       </Bar>
                   </BarChart>
@@ -483,6 +486,8 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
 
     
 
