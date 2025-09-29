@@ -37,14 +37,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lightbulb, AlertTriangle, BarChart, PieChart, LineChart } from "lucide-react";
+import { Loader2, TrendingUp, AlertTriangle, BarChart, PieChart, LineChart } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   generateDatasetSummary,
   type GenerateDatasetSummaryOutput,
 } from "@/ai/flows/generate-dataset-summary";
 import { useAuth, Dataset } from "@/hooks/use-auth";
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Pie, Cell } from "recharts";
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Pie, Cell, Line } from "recharts";
 import { BarChart as BarChartRe, PieChart as PieChartRe, LineChart as LineChartRe } from "recharts";
 
 const analysisFormSchema = z.object({
@@ -149,7 +149,7 @@ export default function AiAnalysisPage() {
         <CardHeader>
           <CardTitle>AI-Powered Analysis</CardTitle>
           <CardDescription>
-            Select a dataset to generate an automated summary, key insights, and visualizations.
+            Select a dataset to generate an automated summary, key trends, and visualizations.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -247,11 +247,11 @@ export default function AiAnalysisPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                  <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Lightbulb className="text-yellow-400" /> Key Insights</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><TrendingUp className="text-primary" /> Key Trends</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ul className="list-disc space-y-2 pl-5">
-                            {result.keyInsights.map((insight, i) => <li key={i}>{insight}</li>)}
+                            {result.trends.map((trend, i) => <li key={i}>{trend}</li>)}
                         </ul>
                     </CardContent>
                 </Card>
@@ -274,8 +274,8 @@ export default function AiAnalysisPage() {
             {result.suggestedVisualizations.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>Suggested Visualizations</CardTitle>
-                        <CardDescription>The AI has generated the following charts based on the data sample.</CardDescription>
+                        <CardTitle>Trend Visualizations</CardTitle>
+                        <CardDescription>The AI has generated the following charts based on the data sample to illustrate key trends.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
                         {result.suggestedVisualizations.map((vis, i) => (
@@ -298,12 +298,12 @@ export default function AiAnalysisPage() {
                                                 <YAxis />
                                                 <Tooltip />
                                                 <Legend />
-                                                <Bar dataKey={vis.yKey} fill="#8884d8" />
+                                                <Bar dataKey={vis.yKey} fill="hsl(var(--chart-1))" />
                                             </BarChartRe>
                                         )}
                                         {vis.chartType === 'pie' && (
                                             <PieChartRe>
-                                                <Pie data={vis.data} dataKey={vis.yKey} nameKey={vis.xKey} cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label={renderCustomizedLabel} labelLine={false}>
+                                                <Pie data={vis.data} dataKey={vis.yKey} nameKey={vis.xKey} cx="50%" cy="50%" outerRadius={100} fill="hsl(var(--chart-1))" label={renderCustomizedLabel} labelLine={false}>
                                                     {vis.data.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                                                 </Pie>
                                                 <Tooltip />
@@ -317,7 +317,7 @@ export default function AiAnalysisPage() {
                                                 <YAxis />
                                                 <Tooltip />
                                                 <Legend />
-                                                <LineChartRe type="monotone" dataKey={vis.yKey} stroke="#8884d8" />
+                                                <Line type="monotone" dataKey={vis.yKey} stroke="hsl(var(--chart-1))" />
                                             </LineChartRe>
                                         )}
                                      </ResponsiveContainer>

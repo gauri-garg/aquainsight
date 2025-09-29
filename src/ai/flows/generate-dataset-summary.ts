@@ -32,9 +32,9 @@ const VisualizationSchema = z.object({
 
 const GenerateDatasetSummaryOutputSchema = z.object({
   summary: z.string().describe('A concise, one-paragraph summary of the dataset.'),
-  keyInsights: z.array(z.string()).describe('A list of 3-5 bullet-point insights or interesting facts discovered in the data sample.'),
+  trends: z.array(z.string()).describe('A list of 2-3 bullet-point observations about the trends found in the data sample.'),
   dataQualityIssues: z.array(z.string()).describe('A list of potential data quality issues, such as missing values or inconsistencies. If none, return an empty array.'),
-  suggestedVisualizations: z.array(VisualizationSchema).describe('An array of 1-2 suggested visualizations based on the data. The AI should analyze columns to determine suitable chart types (e.g., categorical for pie/bar, time-series for line).')
+  suggestedVisualizations: z.array(VisualizationSchema).describe('An array of 1-2 suggested trend-based visualizations (line or bar charts) based on the data.')
 });
 
 export type GenerateDatasetSummaryOutput = z.infer<typeof GenerateDatasetSummaryOutputSchema>;
@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
   name: 'generateDatasetSummaryPrompt',
   input: {schema: GenerateDatasetSummaryInputSchema},
   output: {schema: GenerateDatasetSummaryOutputSchema},
-  prompt: `You are an expert data analyst tasked with providing a comprehensive analysis of a dataset. Based on the provided description and CSV sample, generate a structured analysis.
+  prompt: `You are an expert data storyteller tasked with providing a clear analysis of a dataset. Based on the provided description and CSV sample, generate a structured analysis.
 
   **Dataset Description:**
   {{{datasetDescription}}}
@@ -58,14 +58,14 @@ const prompt = ai.definePrompt({
   \`\`\`
 
   **Your Task:**
-  1.  **Summarize the Dataset:** Write a single, concise paragraph that explains what the dataset is about.
-  2.  **Identify Key Insights:** Extract 3 to 5 interesting, non-obvious insights from the data. These should be things a casual observer might miss.
+  1.  **Write a Narrative Summary:** Write a single, concise paragraph that explains what the dataset is about, as if you were telling a story.
+  2.  **Identify Key Trends:** Extract 2 to 3 interesting, non-obvious trends from the data. Focus on changes over time or significant distributions.
   3.  **Assess Data Quality:** Point out any potential quality issues like missing values, inconsistent formatting, or outliers. If there are no obvious issues, return an empty array.
-  4.  **Suggest Visualizations:** Propose 1 or 2 meaningful charts based on the data.
-      *   Analyze the columns to choose an appropriate chart type. For categorical data (e.g., species, locations), suggest a 'pie' or 'bar' chart. For numerical data over time, suggest a 'line' chart.
+  4.  **Suggest Trend Visualizations:** Propose 1 or 2 meaningful charts that visualize the trends you identified.
+      *   Prioritize 'line' charts for time-series data or 'bar' charts for categorical comparisons. Avoid pie charts unless it's for showing simple proportions.
       *   Provide a title, description, and the data formatted for a Recharts component (an array of objects).
-      *   For bar/line charts, specify the xKey and yKey. For pie charts, use 'name' for the label and 'value' for the metric as the keys in the data array, and set xKey to 'name' and yKey to 'value'.
-      *   Aggregate data if necessary. For example, if suggesting a pie chart for species distribution, count the occurrences of each species.
+      *   For bar/line charts, specify the xKey and yKey.
+      *   Aggregate data if necessary to show a clear trend. For example, if suggesting a chart for species count, count the occurrences of each species.
       *   Ensure the generated data for the chart is directly usable.
 
   Produce the output in the required JSON format.
