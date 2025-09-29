@@ -412,7 +412,7 @@ export default function DatasetViewPage() {
              <ChartContainer config={chartConfig!} className="min-h-[400px] w-full">
                 <BarChart data={filteredData} layout="vertical" margin={{ left: 120 }}>
                     <CartesianGrid horizontal={false} />
-                    <YAxis dataKey={categoryHeader!} type="category" width={150}/>
+                    <YAxis dataKey={categoryHeader!} type="category" width={150} />
                     <XAxis type="number" />
                     <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
                     <Bar dataKey={chartableKeys[0]} fill={(chartConfig as any)[chartableKeys[0]].color} radius={[0, 4, 4, 0]}>
@@ -468,3 +468,5 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
