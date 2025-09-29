@@ -345,7 +345,7 @@ export default function DatasetViewPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                <ChartContainer config={chartConfig!} className="min-h-[300px] w-full">
+                <ChartContainer config={chartConfig!} className="min-h-[250px] w-full">
                     <AreaChart
                         data={filteredData}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -495,3 +495,5 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
