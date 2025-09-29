@@ -429,23 +429,29 @@ export function CMLREDashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                    <Pie
-                        data={userRoleData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={renderCustomizedLabel}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                    >
-                        {userRoleData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />
-                        ))}
-                    </Pie>
-                </PieChart>
+              {userRoleData.length > 0 ? (
+                  <PieChart>
+                      <Pie
+                          data={userRoleData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={renderCustomizedLabel}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          nameKey="name"
+                      >
+                          {userRoleData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />
+                          ))}
+                      </Pie>
+                  </PieChart>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Loading user data...
+                </div>
+              )}
             </ResponsiveContainer>
             <div className="flex justify-center gap-4 mt-4">
                 {userRoleData.map((entry, index) => (
@@ -461,5 +467,3 @@ export function CMLREDashboard() {
     </div>
   );
 }
-
-    
