@@ -408,9 +408,12 @@ export default function DatasetViewPage() {
   );
 
   const CategoricalChart = () => {
-    if (!filteredData || filteredData.length === 0) {
+    if (!filteredData || filteredData.length === 0 || !chartConfig || !categoryHeader) {
       return null;
     }
+    const dataKey = chartableKeys[0];
+    if (!dataKey) return null;
+
     return (
       <Card>
           <CardHeader>
@@ -418,16 +421,17 @@ export default function DatasetViewPage() {
               <CardDescription>Distribution of data by category.</CardDescription>
           </CardHeader>
           <CardContent>
-              <ChartContainer config={chartConfig!} className="min-h-[400px] w-full">
+              <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
                   <BarChart data={filteredData} layout="vertical" margin={{ left: 120 }}>
                       <CartesianGrid horizontal={false} />
-                      <YAxis dataKey={categoryHeader!} type="category" width={120} />
+                      <YAxis dataKey={categoryHeader} type="category" width={150} tick={{fontSize: 12}} />
                       <XAxis type="number" />
                       <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
-                      <Bar dataKey={chartableKeys[0]} fill={(chartConfig as any)[chartableKeys[0]]?.color || 'hsl(var(--primary))'} radius={[0, 4, 4, 0]}>
+                      <Bar dataKey={dataKey} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
                         <LabelList 
-                              dataKey={chartableKeys[0]}
+                              dataKey={dataKey}
                               position="right"
+                              offset={8}
                               className="fill-foreground font-medium"
                               formatter={(value: number) => (typeof value === 'number' ? value.toLocaleString() : '')}
                           />
@@ -479,3 +483,5 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
