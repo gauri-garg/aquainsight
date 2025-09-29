@@ -385,7 +385,7 @@ export default function DatasetViewPage() {
                         <Legend />
                         {chartableKeys.map((key, index) => {
                             const yAxisId = index % 2 === 0 ? 'left' : 'right';
-                            const originalHeader = headers.find(h => h.replace(/[^a-zA-Z0-9]/g, '_') === key);
+                            const originalHeader = originalHeaders.find(h => h.replace(/[^a-zA-Z0-9]/g, '_') === key);
                             const name = originalHeader ? (chartConfig as any)[key]?.label : key;
 
                             return <Area key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[key!]?.color} fillOpacity={0.4} fill={`url(#fill-${key})`} name={name} dot={false} activeDot={{ r: 8 }} />
@@ -494,5 +494,3 @@ export default function DatasetViewPage() {
     </div>
   );
 }
-
-    
