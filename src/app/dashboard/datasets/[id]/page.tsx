@@ -44,42 +44,38 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
     const values = line.split(",");
     const entry: any = {};
     originalHeaders.forEach((header, index) => {
-      const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
-      entry[sanitizedHeader] = values[index] ? values[index].trim() : null;
+      entry[header] = values[index] ? values[index].trim() : null;
     });
     return entry;
   });
 
   const columnsToKeep = originalHeaders.filter(header => {
-    const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
-    // Check if at least one row has a meaningful value for this column
     return rawData.some(row => {
-      const value = row[sanitizedHeader];
+      const value = row[header];
       return value !== null && value !== undefined && String(value).trim() !== '' && String(value).trim().toUpperCase() !== 'N/A';
     });
   });
 
   const filteredHeaders = originalHeaders.filter(h => columnsToKeep.includes(h));
-  const dateHeaderKey = filteredHeaders.find(h => h.toLowerCase().includes('date'))?.replace(/[^a-zA-Z0-9]/g, '_');
-
+  
   const data = rawData.map(row => {
     const newRow: any = {};
     filteredHeaders.forEach(header => {
       const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
-      let value = row[sanitizedHeader];
+      let value = row[header];
 
-       if (sanitizedHeader === dateHeaderKey && value) {
-        try {
-          const cleanedDate = String(value).split(' ')[0];
-          newRow[sanitizedHeader] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
-        } catch (e) {
-          newRow[sanitizedHeader] = value; 
-        }
-      } else if (value === '' || value === null || value === 'N/A' || isNaN(Number(value)) || !isFinite(Number(value))) {
-         newRow[sanitizedHeader] = (value === '' || value === 'N/A') ? null : value;
-      }
-      else {
+      const isDate = header.toLowerCase().includes('date') && value;
+      const isNumeric = value !== null && value !== '' && !isNaN(Number(value)) && isFinite(Number(value));
+
+      if (isDate) {
+         try {
+            const cleanedDate = String(value).split(' ')[0];
+            newRow[sanitizedHeader] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
+         } catch (e) { newRow[sanitizedHeader] = value; }
+      } else if (isNumeric) {
         newRow[sanitizedHeader] = Number(value);
+      } else {
+        newRow[sanitizedHeader] = (value === '' || value === 'N/A') ? null : value;
       }
     });
     return newRow;
@@ -125,38 +121,35 @@ export default function DatasetViewPage() {
               if (data.length > 0) {
                   const sanitizedHeaders = headers.map(h => h.replace(/[^a-zA-Z0-9]/g, '_'));
                   const detectedDateHeader = sanitizedHeaders.find(h => h.toLowerCase().includes('date'));
-                  const detectedSpeciesHeader = sanitizedHeaders.find(h => h.toLowerCase().includes('species'));
-                  const detectedCountHeader = sanitizedHeaders.find(h => h.toLowerCase().includes('count'));
+                  const numericKeys = sanitizedHeaders.filter(
+                      key => key !== detectedDateHeader && data.some(d => typeof d[key] === 'number')
+                  );
+                  const stringKeys = sanitizedHeaders.filter(
+                      key => key !== detectedDateHeader && data.some(d => typeof d[key] === 'string')
+                  );
 
-                  if (detectedDateHeader) {
+                  if (detectedDateHeader && numericKeys.length > 0) {
                     setChartType('time-series');
                     setDateHeader(detectedDateHeader);
-
-                    const numericKeys = sanitizedHeaders.filter(
-                      key => key !== detectedDateHeader && data.some(d => typeof d[key] === 'number')
-                    );
+                    setChartableKeys(numericKeys);
+                    setChartConfig(generateChartConfig(numericKeys));
                     
-                    if (numericKeys.length > 0) {
-                      setChartableKeys(numericKeys);
-                      const config = generateChartConfig(numericKeys);
-                      setChartConfig(config);
-
-                      const dates = data.map(d => d[detectedDateHeader] ? parseISO(d[detectedDateHeader]) : null).filter(d => d && !isNaN(d.getTime()));
-                      if (dates.length > 0) {
-                        const minDate = new Date(Math.min(...dates.map(d => d!.getTime())));
-                        const maxDate = new Date(Math.max(...dates.map(d => d!.getTime())));
-                        setDate({ from: minDate, to: maxDate });
-                      } else {
-                         setDate({ from: addDays(new Date(), -28), to: new Date() });
-                      }
-
+                    const dates = data.map(d => d[detectedDateHeader] ? parseISO(d[detectedDateHeader]) : null).filter(d => d && !isNaN(d.getTime()));
+                    if (dates.length > 0) {
+                      const minDate = new Date(Math.min(...dates.map(d => d!.getTime())));
+                      const maxDate = new Date(Math.max(...dates.map(d => d!.getTime())));
+                      setDate({ from: minDate, to: maxDate });
+                    } else {
+                      setDate({ from: addDays(new Date(), -28), to: new Date() });
                     }
-                  } else if (detectedSpeciesHeader && detectedCountHeader) {
+                  } else if (stringKeys.length > 0 && numericKeys.length > 0) {
                     setChartType('categorical');
-                    setCategoryHeader(detectedSpeciesHeader);
-                    setChartableKeys([detectedCountHeader]);
-                    const config = generateChartConfig([detectedCountHeader]);
-                    setChartConfig(config);
+                    // Prefer a 'name' or 'species' like column for category
+                    const preferredCategory = stringKeys.find(k => k.toLowerCase().includes('name') || k.toLowerCase().includes('species')) || stringKeys[0];
+                    setCategoryHeader(preferredCategory);
+                    const countKey = numericKeys.find(k => k.toLowerCase().includes('count')) || numericKeys[0];
+                    setChartableKeys([countKey]);
+                    setChartConfig(generateChartConfig([headers.find(h => h.replace(/[^a-zA-Z0-9]/g, '_') === countKey)!]));
                   }
               }
             }
@@ -399,8 +392,8 @@ export default function DatasetViewPage() {
         </div>
         <Card>
             <CardHeader>
-                <CardTitle>Daily Summary</CardTitle>
-                <CardDescription>{activeEntry && activeEntry[dateHeader!] ? format(parseISO(activeEntry[dateHeader!]), "PPP") : "N/A"}</CardDescription>
+                <CardTitle>Data Point Summary</CardTitle>
+                <CardDescription>{activeEntry && activeEntry[dateHeader!] ? format(parseISO(activeEntry[dateHeader!]), "PPP") : "Select a point on the chart"}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
                 <DynamicSummary />
@@ -412,14 +405,14 @@ export default function DatasetViewPage() {
   const CategoricalChart = () => (
      <Card>
         <CardHeader>
-            <CardTitle>Species Distribution</CardTitle>
-            <CardDescription>Count of each species in the dataset.</CardDescription>
+            <CardTitle>Categorical Distribution</CardTitle>
+            <CardDescription>Distribution of data by category.</CardDescription>
         </CardHeader>
         <CardContent>
              <ChartContainer config={chartConfig!} className="min-h-[400px] w-full">
                 <BarChart data={filteredData} layout="vertical" margin={{ left: 120 }}>
                     <CartesianGrid horizontal={false} />
-                    <YAxis dataKey={categoryHeader!} type="category" />
+                    <YAxis dataKey={categoryHeader!} type="category" width={150}/>
                     <XAxis type="number" />
                     <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
                     <Bar dataKey={chartableKeys[0]} fill={(chartConfig as any)[chartableKeys[0]].color} radius={[0, 4, 4, 0]}>
@@ -475,5 +468,3 @@ export default function DatasetViewPage() {
     </div>
   );
 }
-
-    
