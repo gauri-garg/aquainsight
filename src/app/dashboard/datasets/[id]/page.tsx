@@ -123,7 +123,7 @@ export default function DatasetViewPage() {
 
               if (data.length > 0) {
                   const sanitizedHeaders = headers.map(h => h.replace(/[^a-zA-Z0-9]/g, '_'));
-                  const detectedDateHeader = sanitizedHeaders.find(h => h.toLowerCase().includes('date'));
+                  const detectedDateHeader = sanitizedHeaders.find(h => h.toLowerCase().includes('date') && data.some(d => d[h] && !isNaN(parseISO(d[h]).getTime())));
                   const numericKeys = sanitizedHeaders.filter(
                       key => key !== detectedDateHeader && data.some(d => typeof d[key] === 'number')
                   );
@@ -147,10 +147,9 @@ export default function DatasetViewPage() {
                     }
                   } else if (stringKeys.length > 0 && numericKeys.length > 0) {
                     setChartType('categorical');
-                    // Prefer a 'name' or 'species' like column for category
                     const preferredCategory = stringKeys.find(k => k.toLowerCase().includes('name') || k.toLowerCase().includes('species')) || stringKeys[0];
                     setCategoryHeader(preferredCategory);
-                    const countKey = numericKeys.find(k => k.toLowerCase().includes('count')) || numericKeys[0];
+                    const countKey = numericKeys.find(k => k.toLowerCase().includes('count') || k.toLowerCase().includes('value')) || numericKeys[0];
                     setChartableKeys([countKey]);
                     setChartConfig(generateChartConfig([headers.find(h => h.replace(/[^a-zA-Z0-9]/g, '_') === countKey)!]));
                   }
@@ -349,7 +348,7 @@ export default function DatasetViewPage() {
                     <AreaChart
                         data={filteredData}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        onMouseMove={(state) => { if (state.isTooltipActive && state.activePayload?.[0]?.payload) { setActiveEntry(state.activePayload[0].payload) } }}
+                        onMouseLeave={() => setActiveEntry(filteredData[filteredData.length - 1] || filteredData[0] || null)}
                     >
                         <defs>
                           {chartableKeys.map((key) => {
@@ -386,10 +385,10 @@ export default function DatasetViewPage() {
                         <Legend />
                         {chartableKeys.map((key, index) => {
                             const yAxisId = index % 2 === 0 ? 'left' : 'right';
-                            const originalKey = Object.keys(chartConfig!).find(k => k.replace(/[^a-zA-Z0-9]/g, '_') === key);
-                            const name = originalKey ? (chartConfig as any)[originalKey]?.label : key;
+                            const originalHeader = headers.find(h => h.replace(/[^a-zA-Z0-9]/g, '_') === key);
+                            const name = originalHeader ? (chartConfig as any)[key]?.label : key;
 
-                            return <Area key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[originalKey!]?.color} fillOpacity={0.4} fill={`url(#fill-${key})`} name={name} dot={false} activeDot={{ r: 8 }} />
+                            return <Area key={key} yAxisId={yAxisId} type="monotone" dataKey={key} stroke={(chartConfig as any)[key!]?.color} fillOpacity={0.4} fill={`url(#fill-${key})`} name={name} dot={false} activeDot={{ r: 8 }} />
                         })}
                     </AreaChart>
                     </ChartContainer>
@@ -495,3 +494,5 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
