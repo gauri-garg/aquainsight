@@ -6,7 +6,7 @@ AquaInsight is a modern, AI-powered web platform for submitting, managing, and a
 
 ## ✨ Key Features
 
-*   **Role-Based Access Control:** Tailored experiences for different user roles (CMLRE Staff, Researcher, Student).
+*   **Role-Based Access Control:** Tailored experiences for different user roles (CMLRE Staff, User).
 *   **Dataset Submission:** Simple and intuitive interface for uploading CSV datasets.
 *   **AI-Powered Summarization:** Leverages Google's Genkit to automatically generate summaries of submitted datasets, aiding in the review process.
 *   **eDNA Matching Assistant:** An AI flow to match eDNA sequences against a database of known species.
@@ -85,6 +85,8 @@ The project follows the standard Next.js App Router structure. Here are some key
 src
 ├── ai/
 │   └── flows/        # Genkit AI flows (e.g., summarization, eDNA matching)
+├── api-examples/
+│   └── copernicus_marine_client.py # Example Python client for Copernicus
 ├── app/
 │   ├── (auth)/       # Authentication pages (login, register)
 │   └── dashboard/    # Main application dashboard and protected routes
@@ -106,6 +108,31 @@ This project uses **Genkit** to power its AI features. The core AI logic is defi
 *   **`edna-matching-assistant.ts`**: This flow is designed to take an eDNA sequence and match it against a species database, providing a list of potential species and confidence scores.
 
 These flows are called from the frontend as server actions, ensuring that API keys and complex logic remain on the server.
+
+## 🌐 External API Integration (Copernicus Example)
+
+The `api-examples/` directory contains a sample Python script (`copernicus_marine_client.py`) for fetching real-time data from the **Copernicus Marine Service**.
+
+### Important Notes:
+
+*   **This is an example script and is NOT currently integrated into the Next.js application.**
+*   The Next.js environment in this project does not run Python code directly.
+*   To use this script, you would need to deploy it as a separate backend service (e.g., a Google Cloud Function, Cloud Run service, or on another serverless platform) and call it from a Next.js API route.
+
+### How to Use the Copernicus Example
+
+1.  **Set Up a Python Environment:** Create a Python virtual environment and install the required packages:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate
+    pip install -r api-examples/requirements.txt
+    ```
+
+2.  **Get Copernicus Credentials:** You must register on the [Copernicus Marine Service website](https://marine.copernicus.eu/) and store your username and password as environment variables.
+
+3.  **Run the Script:** You can test the script from your command line. See the comments within the file for usage instructions.
+
+4.  **Deploy as a Service:** To integrate with your Next.js app, you should wrap this script in a web framework (like Flask or FastAPI) and deploy it. Your Next.js app would then make requests to your deployed service.
 
 ## 🤝 Contributing
 
