@@ -39,8 +39,6 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
 
   const originalHeaders = lines[0].split(",").map(h => h.trim());
   if (lines.length < 2) return { data: [], headers: originalHeaders };
-
-  const dateHeaderKey = originalHeaders.find(h => h.toLowerCase().includes('date'));
   
   const rawData = lines.slice(1).map((line) => {
     const values = line.split(",");
@@ -52,28 +50,34 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
     return entry;
   });
 
-  const columnsToKeep = originalHeaders.filter((header, index) => {
+  const columnsToKeep = originalHeaders.filter(header => {
     const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
-    return rawData.some(row => row[sanitizedHeader] !== null && row[sanitizedHeader] !== 'N/A' && row[sanitizedHeader] !== '');
+    return rawData.some(row => 
+        row[sanitizedHeader] !== null && 
+        row[sanitizedHeader] !== undefined &&
+        String(row[sanitizedHeader]).trim() !== '' && 
+        String(row[sanitizedHeader]).trim().toUpperCase() !== 'N/A'
+    );
   });
 
   const filteredHeaders = originalHeaders.filter(h => columnsToKeep.includes(h));
-  
+  const dateHeaderKey = filteredHeaders.find(h => h.toLowerCase().includes('date'))?.replace(/[^a-zA-Z0-9]/g, '_');
+
   const data = rawData.map(row => {
     const newRow: any = {};
     filteredHeaders.forEach(header => {
       const sanitizedHeader = header.replace(/[^a-zA-Z0-9]/g, '_');
       let value = row[sanitizedHeader];
 
-       if (header === dateHeaderKey && value) {
+       if (sanitizedHeader === dateHeaderKey && value) {
         try {
           const cleanedDate = String(value).split(' ')[0];
           newRow[sanitizedHeader] = format(parseISO(cleanedDate), 'yyyy-MM-dd');
         } catch (e) {
           newRow[sanitizedHeader] = value; 
         }
-      } else if (value === '' || value === null || isNaN(Number(value)) || !isFinite(Number(value))) {
-         newRow[sanitizedHeader] = value === '' ? null : value;
+      } else if (value === '' || value === null || value === 'N/A' || isNaN(Number(value)) || !isFinite(Number(value))) {
+         newRow[sanitizedHeader] = (value === '' || value === 'N/A') ? null : value;
       }
       else {
         newRow[sanitizedHeader] = Number(value);
@@ -472,5 +476,7 @@ export default function DatasetViewPage() {
     </div>
   );
 }
+
+    
 
     
