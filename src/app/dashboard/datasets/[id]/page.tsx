@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, LabelList } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, LabelList, Label } from "recharts";
 import { cn } from "@/lib/utils";
 
 const generateChartConfig = (keys: string[]): ChartConfig => {
@@ -35,10 +35,11 @@ const generateChartConfig = (keys: string[]): ChartConfig => {
 const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
   if (!csvData) return { data: [], headers: [] };
   const lines = csvData.trim().split("\n");
-  if (lines.length < 2) return { data: [], headers: lines[0] ? lines[0].split(',').map(h => h.trim()) : [] };
-
-  const originalHeaders = lines[0].split(",").map(h => h.trim());
+  if (lines.length < 1) return { data: [], headers: [] };
   
+  const originalHeaders = lines[0].split(",").map(h => h.trim());
+  if (lines.length < 2) return { data: [], headers: originalHeaders };
+
   const rawData = lines.slice(1).map((line) => {
     const values = line.split(",");
     const entry: any = {};
@@ -56,9 +57,9 @@ const parseCSV = (csvData: string): { data: any[], headers: string[] } => {
       return stringValue !== '' && stringValue.toUpperCase() !== 'N/A';
     })
   );
-  
+
   const filteredHeaders = originalHeaders.filter(h => columnsToKeep.includes(h));
-  
+
   const data = rawData.map(row => {
     const newRow: any = {};
     filteredHeaders.forEach(header => {
@@ -421,10 +422,18 @@ export default function DatasetViewPage() {
               <CardDescription>Distribution of data by category.</CardDescription>
           </CardHeader>
           <CardContent>
-              <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
+              <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                   <BarChart data={filteredData} margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
                       <CartesianGrid vertical={false} />
-                      <YAxis />
+                      <YAxis>
+                        <Label
+                          angle={-90}
+                          position="insideLeft"
+                          style={{ textAnchor: 'middle' }}
+                          value={chartConfig[dataKey]?.label || dataKey}
+                          className="hidden sm:block"
+                        />
+                      </YAxis>
                       <XAxis dataKey={categoryHeader} type="category" tickLine={false} axisLine={false} tickMargin={8} angle={-45} textAnchor="end" />
                       <Tooltip content={<ChartTooltipContent indicator="dot" />} cursor={{fill: 'hsl(var(--muted))'}} />
                       <Bar dataKey={dataKey} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]}>
@@ -486,9 +495,3 @@ export default function DatasetViewPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
