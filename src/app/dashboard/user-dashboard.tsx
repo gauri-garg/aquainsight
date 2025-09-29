@@ -73,9 +73,6 @@ export function UserDashboard() {
      if (userDetails?.role === "Student") {
         return "Explore datasets, submit your findings, and contribute to marine science.";
       }
-      if (userDetails?.role === "Researcher") {
-        return "Access data, analyze trends, and collaborate with a community of scientists.";
-      }
       return "Welcome to the AquaInsight platform.";
   };
 

@@ -94,7 +94,6 @@ export default function RegisterPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Student">Student</SelectItem>
-                    <SelectItem value="Researcher">Researcher</SelectItem>
                     <SelectItem value="CMLRE">CMLRE Staff</SelectItem>
                   </SelectContent>
                 </Select>

@@ -27,7 +27,7 @@ import { ref, set, get, child, update, remove, push, onValue, query, orderByChil
 import { format, subMonths } from 'date-fns';
 
 
-export type UserRole = "CMLRE" | "Researcher" | "Student";
+export type UserRole = "CMLRE" | "Student";
 
 export interface Dataset {
   id?: string;
