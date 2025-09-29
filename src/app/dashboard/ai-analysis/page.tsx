@@ -22,6 +22,14 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,13 +37,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lightbulb, AlertTriangle, BarChart, PieChart, LineChart } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   generateDatasetSummary,
   type GenerateDatasetSummaryOutput,
 } from "@/ai/flows/generate-dataset-summary";
 import { useAuth, Dataset } from "@/hooks/use-auth";
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Pie, Cell } from "recharts";
+import { BarChart as BarChartRe, PieChart as PieChartRe, LineChart as LineChartRe } from "recharts";
 
 const analysisFormSchema = z.object({
   datasetId: z.string({
@@ -45,6 +55,21 @@ const analysisFormSchema = z.object({
 
 type AnalysisFormValues = z.infer<typeof analysisFormSchema>;
 
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
+
 export default function AiAnalysisPage() {
   const { toast } = useToast();
   const { getAllDatasets } = useAuth();
@@ -53,6 +78,7 @@ export default function AiAnalysisPage() {
   const [result, setResult] = useState<GenerateDatasetSummaryOutput | null>(
     null
   );
+  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
 
   useEffect(() => {
     const fetchDatasets = async () => {
@@ -74,17 +100,23 @@ export default function AiAnalysisPage() {
     resolver: zodResolver(analysisFormSchema),
   });
 
+  const handleDatasetChange = (datasetId: string) => {
+    const findDataset = datasets.find(d => d.id === datasetId);
+    setSelectedDataset(findDataset || null);
+    form.setValue('datasetId', datasetId);
+  }
+
   async function onSubmit(data: AnalysisFormValues) {
     setIsSubmitting(true);
     setResult(null);
-    try {
-      const selectedDataset = datasets.find((d) => d.id === data.datasetId);
-      if (!selectedDataset) {
-        throw new Error("Selected dataset not found.");
-      }
+    if (!selectedDataset) {
+        toast({ title: "Error", description: "Please select a dataset first.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+    }
 
-      // Limit data sample to first 50 lines to keep the payload small
-      const dataSample = selectedDataset.csvData.split("\n").slice(0, 50).join("\n");
+    try {
+      const dataSample = selectedDataset.csvData.split("\n").slice(0, 100).join("\n");
 
       const response = await generateDatasetSummary({
         datasetDescription: selectedDataset.description,
@@ -94,36 +126,39 @@ export default function AiAnalysisPage() {
       setResult(response);
       toast({
         title: "Analysis Complete",
-        description: "The AI summary has been generated.",
+        description: "The AI summary and visualizations have been generated.",
       });
     } catch (error: any) {
       toast({
         title: "Analysis Failed",
         description:
-          error.message || "An unexpected error occurred with the AI model.",
+          error.message || "An unexpected error occurred with the AI model. The model might not be able to process this dataset's format.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   }
+  
+  const datasetHeaders = selectedDataset?.csvData.split('\n')[0].split(',') || [];
+  const datasetSample = selectedDataset?.csvData.split('\n').slice(1, 6) || [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-1">
-        <Card>
-          <CardHeader>
-            <CardTitle>AI-Powered Analysis</CardTitle>
-            <CardDescription>
-              Select a dataset to generate an automated summary.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8"
-              >
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>AI-Powered Analysis</CardTitle>
+          <CardDescription>
+            Select a dataset to generate an automated summary, key insights, and visualizations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex flex-col md:flex-row items-start gap-6"
+            >
+              <div className="w-full md:w-1/3">
                 <FormField
                   control={form.control}
                   name="datasetId"
@@ -131,7 +166,7 @@ export default function AiAnalysisPage() {
                     <FormItem>
                       <FormLabel>Dataset</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={handleDatasetChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -147,56 +182,163 @@ export default function AiAnalysisPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        The AI will analyze the selected dataset&apos;s
-                        description and data.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Analyze Dataset
+                 <Button type="submit" disabled={isSubmitting || !selectedDataset} className="mt-6 w-full md:w-auto">
+                    {isSubmitting && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Analyze Dataset
                 </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+               {selectedDataset && (
+                <div className="w-full md:w-2/3 mt-6 md:mt-0">
+                    <FormLabel>Dataset Preview</FormLabel>
+                     <Card className="mt-2">
+                        <CardContent className="p-0">
+                             <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                    <TableRow>
+                                        {datasetHeaders.map(header => <TableHead key={header}>{header}</TableHead>)}
+                                    </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {datasetSample.map((row, i) => (
+                                        <TableRow key={i}>
+                                        {row.split(',').map((cell, j) => <TableCell key={j}>{cell}</TableCell>)}
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </Table>
+                             </div>
+                        </CardContent>
+                    </Card>
+                </div>
+               )}
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+      
+      {isSubmitting && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center h-96">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 text-lg text-muted-foreground">
+                The AI is analyzing your data...
+            </p>
+             <p className="text-sm text-muted-foreground">This may take a moment.</p>
+        </div>
+      )}
 
-      <div className="lg:col-span-2">
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle>Analysis Result</CardTitle>
-            <CardDescription>
-              The AI-generated summary will appear here.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isSubmitting ? (
-              <div className="flex items-center justify-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">
-                  Generating summary...
-                </p>
-              </div>
-            ) : result ? (
-              <div className="prose prose-sm max-w-none text-card-foreground">
-                <p>{result.summary}</p>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-48">
-                <p className="text-muted-foreground">
-                  Results will be displayed here after submission.
-                </p>
-              </div>
+      {result && (
+        <div className="space-y-6 animate-in fade-in-50">
+            <Card>
+                <CardHeader>
+                    <CardTitle>AI Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-card-foreground">{result.summary}</p>
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Lightbulb className="text-yellow-400" /> Key Insights</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ul className="list-disc space-y-2 pl-5">
+                            {result.keyInsights.map((insight, i) => <li key={i}>{insight}</li>)}
+                        </ul>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><AlertTriangle className="text-orange-500" /> Data Quality</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {result.dataQualityIssues.length > 0 ? (
+                             <ul className="list-disc space-y-2 pl-5">
+                                {result.dataQualityIssues.map((issue, i) => <li key={i}>{issue}</li>)}
+                            </ul>
+                        ) : (
+                            <p className="text-muted-foreground">No apparent data quality issues were found in the sample.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            {result.suggestedVisualizations.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Suggested Visualizations</CardTitle>
+                        <CardDescription>The AI has generated the following charts based on the data sample.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
+                        {result.suggestedVisualizations.map((vis, i) => (
+                            <Card key={i} className="flex flex-col">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        {vis.chartType === 'bar' && <BarChart className="h-5 w-5 text-primary" />}
+                                        {vis.chartType === 'pie' && <PieChart className="h-5 w-5 text-primary" />}
+                                        {vis.chartType === 'line' && <LineChart className="h-5 w-5 text-primary" />}
+                                        {vis.title}
+                                    </CardTitle>
+                                    <CardDescription>{vis.description}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                     <ResponsiveContainer width="100%" height={300}>
+                                        {vis.chartType === 'bar' && (
+                                            <BarChartRe data={vis.data}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey={vis.xKey} />
+                                                <YAxis />
+                                                <Tooltip />
+                                                <Legend />
+                                                <Bar dataKey={vis.yKey} fill="#8884d8" />
+                                            </BarChartRe>
+                                        )}
+                                        {vis.chartType === 'pie' && (
+                                            <PieChartRe>
+                                                <Pie data={vis.data} dataKey={vis.yKey} nameKey={vis.xKey} cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label={renderCustomizedLabel} labelLine={false}>
+                                                    {vis.data.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                                </Pie>
+                                                <Tooltip />
+                                                <Legend />
+                                            </PieChartRe>
+                                        )}
+                                        {vis.chartType === 'line' && (
+                                             <LineChartRe data={vis.data}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey={vis.xKey} />
+                                                <YAxis />
+                                                <Tooltip />
+                                                <Legend />
+                                                <LineChartRe type="monotone" dataKey={vis.yKey} stroke="#8884d8" />
+                                            </LineChartRe>
+                                        )}
+                                     </ResponsiveContainer>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </CardContent>
+                </Card>
             )}
-          </CardContent>
-        </Card>
-      </div>
+        </div>
+      )}
+
+      {!result && !isSubmitting && (
+         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center h-96">
+            <BarChart className="h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">Ready to Analyze</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Select a dataset and click &quot;Analyze Dataset&quot; to see AI-generated insights.
+            </p>
+        </div>
+      )}
     </div>
   );
 }
