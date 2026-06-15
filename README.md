@@ -147,3 +147,4 @@ Contributions are welcome! If you have suggestions for improving AquaInsight, pl
 ## 📄 License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
+### Maintained by the AquaInsight development team.
