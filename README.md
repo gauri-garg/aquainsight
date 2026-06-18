@@ -2,8 +2,6 @@
 
 AquaInsight is a modern, AI-powered web platform for submitting, managing, and analyzing marine environmental datasets. It's designed to streamline the data review process for organizations like CMLRE and provide researchers and students with access to valuable data.
 
-![AquaInsight Dashboard](https://picsum.photos/seed/ocean-dashboard/1200/630)
-
 ## ✨ Key Features
 
 *   **Role-Based Access Control:** Tailored experiences for different user roles (CMLRE Staff, User).
